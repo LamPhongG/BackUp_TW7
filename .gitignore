@@ -21,6 +21,10 @@ htmlcov/
 *.log
 uploads/
 sample_documents/
-.DS_Store
-Thumbs.db
+# IDE & Editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
 

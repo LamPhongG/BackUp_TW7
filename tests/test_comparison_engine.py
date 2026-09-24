@@ -1,7 +1,5 @@
 # Unit tests for Comparison Engine, Hallucination Detector, and Contradiction Checker
 
-import pytest
-
 from src.comparison_engine.classifier import classify_verification_status
 from src.comparison_engine.engine import ComparisonEngine
 from src.contradiction_checks.checker import check_contradictions

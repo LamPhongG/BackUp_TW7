@@ -1,15 +1,16 @@
-# Unit tests for document processing and validation pipeline
-
-from pathlib import Path
-
 import pytest
+from docx import Document
+import fitz
 
 from src.document_processing.chunker import split_into_chunks
+from src.document_processing.docx_reader import DOCXReadError, read_docx
+from src.document_processing.pdf_reader import PDFReadError, read_pdf
 from src.document_validation.validator import (
     FileSizeError,
     UnsupportedFormatError,
     validate_document,
 )
+
 
 
 # ---------------------------------------------------------------------------
@@ -143,12 +144,6 @@ class TestSplitIntoChunks:
 
 class TestHardenedDocumentReaders:
     def test_raises_for_scanned_image_only_pdf(self, tmp_path):
-        try:
-            import pymupdf as fitz
-        except ImportError:
-            import fitz
-        from src.document_processing.pdf_reader import PDFReadError, read_pdf
-
         pdf_path = tmp_path / "scanned.pdf"
         doc = fitz.open()
         doc.new_page()  # Blank page without any selectable text
@@ -159,12 +154,6 @@ class TestHardenedDocumentReaders:
             read_pdf(pdf_path)
 
     def test_raises_for_encrypted_pdf(self, tmp_path):
-        try:
-            import pymupdf as fitz
-        except ImportError:
-            import fitz
-        from src.document_processing.pdf_reader import PDFReadError, read_pdf
-
         pdf_path = tmp_path / "encrypted.pdf"
         doc = fitz.open()
         p = doc.new_page()
@@ -176,9 +165,6 @@ class TestHardenedDocumentReaders:
             read_pdf(pdf_path)
 
     def test_docx_extracts_table_rows(self, tmp_path):
-        from docx import Document
-        from src.document_processing.docx_reader import read_docx
-
         docx_path = tmp_path / "policy_table.docx"
         doc = Document()
         doc.add_paragraph("POLICY TABLE SUMMARY")
@@ -194,9 +180,6 @@ class TestHardenedDocumentReaders:
         assert "Software Engineer | 15 Days" in pages[0]["raw_text"]
 
     def test_docx_raises_on_whitespace_only(self, tmp_path):
-        from docx import Document
-        from src.document_processing.docx_reader import DOCXReadError, read_docx
-
         docx_path = tmp_path / "blank.docx"
         doc = Document()
         doc.add_paragraph("   \n\t  ")
@@ -204,4 +187,5 @@ class TestHardenedDocumentReaders:
 
         with pytest.raises(DOCXReadError, match="no readable text content"):
             read_docx(docx_path)
+
 
