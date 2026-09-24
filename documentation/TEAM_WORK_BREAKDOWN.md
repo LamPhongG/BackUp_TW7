@@ -10,9 +10,9 @@
 | Thành viên | Vai trò chuyên trách | Nhánh Git phụ trách | Thư mục code đảm nhận |
 | :--- | :--- | :--- | :--- |
 | **Châu Quốc Lâm Phong** | **AI & Ingestion Engineer** | `feat/genai-pipeline` | `src/document_processing/` `src/document_validation/` `src/genai_pipeline/` `src/prompt_templates/` |
-| **Thành viên 2** | **Backend & Rule Engine Engineer** | `feat/python-rule-engine` | `src/python_validation/` `src/role_matrix/` `src/comparison_engine/` `src/hallucination_checks/` `src/contradiction_checks/` |
-| **Thành viên 3** | **Fullstack & Database Developer** | `feat/frontend-dashboard` | `src/database/` `templates/` `static/` `src/schemas/` |
-| **Thành viên 4** | **QA, Security, Data & Docs Lead** | `docs/test-and-reports` | `tests/` `sample_documents/` `hidden_test_ready/` `documentation/` `reports/` |
+| **Đoàn Thị Quỳnh Nhi** | **Backend & Rule Engine Engineer** | `feat/python-rule-engine` | `src/python_validation/` `src/role_matrix/` `src/comparison_engine/` `src/hallucination_checks/` `src/contradiction_checks/` |
+| **Phạm Tấn Tài** | **Fullstack & Database Developer** | `feat/frontend-dashboard` | `src/database/` `templates/` `static/` `src/schemas/` |
+| **Lê Thị Kiều Duyên** | **QA, Security, Data & Docs Lead** | `docs/test-and-reports` | `tests/` `sample_documents/` `hidden_test_ready/` `documentation/` `reports/` |
 
 > **Quy ước:** Mỗi ngày làm việc 10 giờ. Ước tính giờ/task là tham chiếu — thực tế linh hoạt ±1h.
 
