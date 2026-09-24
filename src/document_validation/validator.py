@@ -14,17 +14,7 @@ class FileSizeError(Exception):
 
 
 def validate_document(file_path: Path) -> None:
-    """
-    Validate a document file before processing.
-
-    Args:
-        file_path: path to the document file
-
-    Raises:
-        FileNotFoundError: file does not exist
-        UnsupportedFormatError: file extension is not supported
-        FileSizeError: file is too small (likely empty) or exceeds size limit
-    """
+    """Check if file exists, is PDF/DOCX, and fits within size limits."""
     if not file_path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
 

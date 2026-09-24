@@ -1,4 +1,3 @@
-import json
 from src.document_processing.chunker import DocumentChunk
 from src.genai_pipeline.gemini_client import generate_content_with_retry
 from src.genai_pipeline.response_schemas import OnboardingPlanSchema
@@ -21,21 +20,7 @@ def generate_onboarding_plan(
     role: str,
     prompt_version: str = "v1.0",
 ) -> OnboardingPlanSchema:
-    """
-    Generate a validated, role-tailored onboarding plan from policy chunks.
-
-    Args:
-        doc_chunks: List of DocumentChunk extracted during ingestion
-        role: Job role for the new hire (e.g. 'Software Engineer', 'HR Manager')
-        prompt_version: Template version identifier, default 'v1.0'
-
-    Returns:
-        Validated OnboardingPlanSchema object with citations
-
-    Raises:
-        ValueError: If doc_chunks is empty or role is empty
-        GeminiAPIError: If the API call fails
-    """
+    """Generate an onboarding plan for a specific role from document chunks."""
     if not doc_chunks:
         raise ValueError("doc_chunks cannot be empty.")
     if not role or not role.strip():

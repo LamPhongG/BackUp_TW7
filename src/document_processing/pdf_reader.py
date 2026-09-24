@@ -9,7 +9,6 @@ class PDFReadError(Exception):
 
 
 def _get_doc_id(file_path: Path) -> str:
-    """Generate doc_id from file content hash to avoid duplicate uploads."""
     sha = hashlib.sha256()
     with open(file_path, "rb") as f:
         while data := f.read(8192):
@@ -18,19 +17,7 @@ def _get_doc_id(file_path: Path) -> str:
 
 
 def read_pdf(file_path: Path) -> list[dict]:
-    """
-    Read PDF file and return a list of pages with text and metadata.
-
-    Args:
-        file_path: path to the PDF file
-
-    Returns:
-        list of dicts containing: doc_id, page_number, raw_text, source_file
-
-    Raises:
-        FileNotFoundError: file does not exist
-        PDFReadError: failed to open or parse PDF
-    """
+    """Read text from each page of a PDF file."""
     if not file_path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
 

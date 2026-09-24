@@ -7,21 +7,7 @@ from src.document_validation.validator import validate_document
 
 
 def ingest_document(file_path: str | Path) -> list[DocumentChunk]:
-    """
-    Main entry point to read and process documents (PDF or DOCX).
-
-    Executes 3 steps: validate -> read file -> split into chunks.
-
-    Args:
-        file_path: path to the document file
-
-    Returns:
-        list of DocumentChunk ready for GenAI pipeline
-
-    Raises:
-        FileNotFoundError, UnsupportedFormatError, FileSizeError,
-        PDFReadError, DOCXReadError, ValueError
-    """
+    """Validate, read, and split a document into chunks."""
     path = Path(file_path)
     validate_document(path)
 

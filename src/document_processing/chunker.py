@@ -2,13 +2,11 @@ import re
 import uuid
 from typing import NamedTuple
 
-
-# Regex patterns for detecting section headings in policy documents
 HEADING_PATTERNS = [
     re.compile(r"^(CHAPTER|SECTION|PART)\s+[\dIVXA-Z]+[\.:\s]", re.IGNORECASE),
-    re.compile(r"^\d+(\.\d+)*\s+[A-Z]"),       # e.g., "1.2 Policy Name"
-    re.compile(r"^[A-Z][A-Z\s]{4,}$"),          # ALL CAPS like "LEAVE ENTITLEMENT"
-    re.compile(r"^[A-Z][^.!?]{5,50}:$"),        # e.g., "Eligibility Criteria:"
+    re.compile(r"^\d+(\.\d+)*\s+[A-Z]"),
+    re.compile(r"^[A-Z][A-Z\s]{4,}$"),
+    re.compile(r"^[A-Z][^.!?]{5,50}:$"),
 ]
 
 MIN_CHUNK = 80
@@ -47,19 +45,7 @@ def _make_chunk(doc_id, section_id, heading, page_number, lines, source_file):
 
 
 def split_into_chunks(raw_pages: list[dict]) -> list[DocumentChunk]:
-    """
-    Split raw pages into structured chunks based on section headings.
-
-    Args:
-        raw_pages: output from read_pdf() or read_docx(),
-                   each dict must contain: doc_id, page_number, raw_text, source_file
-
-    Returns:
-        list of DocumentChunk ordered by appearance in document
-
-    Raises:
-        ValueError: if raw_pages is empty or missing required keys
-    """
+    """Split page text into chunks based on headings."""
     if not raw_pages:
         raise ValueError("raw_pages cannot be empty.")
 
@@ -85,7 +71,6 @@ def split_into_chunks(raw_pages: list[dict]) -> list[DocumentChunk]:
                 continue
 
             if _is_heading(line):
-                # Save previous chunk before moving to new section
                 chunk = _make_chunk(doc_id, section_id, cur_heading, cur_page, cur_lines, source_file)
                 if chunk:
                     result.append(chunk)
@@ -96,7 +81,6 @@ def split_into_chunks(raw_pages: list[dict]) -> list[DocumentChunk]:
             else:
                 cur_lines.append(line)
 
-    # Flush remaining text of final section
     last = _make_chunk(doc_id, section_id, cur_heading, cur_page, cur_lines, source_file)
     if last:
         result.append(last)

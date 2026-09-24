@@ -19,7 +19,7 @@ class GeminiAPIError(Exception):
 
 
 def configure_client() -> str:
-    """Read API key from environment and configure the Gemini SDK."""
+    """Setup Gemini API key from environment."""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise GeminiAPIError("GEMINI_API_KEY is not set in environment or .env file.")
@@ -34,22 +34,7 @@ def generate_content_with_retry(
     max_retries: int = 3,
     base_delay: float = 3.0,
 ) -> str:
-    """
-    Call Gemini API with exponential backoff retry logic.
-
-    Args:
-        prompt: Rendered prompt string sent to Gemini
-        response_schema: Optional Pydantic model class to append schema constraints
-        model_name: Gemini model identifier (defaults to env GEMINI_MODEL or gemini-flash-lite-latest)
-        max_retries: Maximum number of retry attempts for transient errors
-        base_delay: Initial backoff delay in seconds
-
-    Returns:
-        Generated text response string in valid JSON format
-
-    Raises:
-        GeminiAPIError: If all retries fail or if an unrecoverable API error occurs
-    """
+    """Send prompt to Gemini with retry logic for rate limits or network issues."""
     configure_client()
 
     selected_model = model_name or os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest")
@@ -64,10 +49,8 @@ def generate_content_with_retry(
         schema_json = json.dumps(response_schema.model_json_schema(), indent=2)
         full_prompt = (
             f"{prompt}\n\n"
-            "### JSON OUTPUT REQUIREMENTS:\n"
-            "You MUST output valid, parseable JSON conforming strictly to this JSON Schema:\n"
-            f"```json\n{schema_json}\n```\n"
-            "Output only the JSON object."
+            "Return valid JSON matching this schema:\n"
+            f"{schema_json}"
         )
 
     model = genai.GenerativeModel(selected_model, generation_config=config)
@@ -89,6 +72,7 @@ def generate_content_with_retry(
         except ResourceExhausted as e:
             last_error = e
             if attempt < max_retries - 1:
+                # wait for rate limit cooldown
                 delay = max(12.0, base_delay * (2 ** attempt))
                 time.sleep(delay)
             else:

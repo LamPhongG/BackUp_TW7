@@ -10,7 +10,6 @@ class DOCXReadError(Exception):
 
 
 def _get_doc_id(file_path: Path) -> str:
-    """Generate doc_id from file content hash."""
     sha = hashlib.sha256()
     with open(file_path, "rb") as f:
         while data := f.read(8192):
@@ -19,7 +18,6 @@ def _get_doc_id(file_path: Path) -> str:
 
 
 def _has_page_break(para) -> bool:
-    """Check if paragraph contains a page break."""
     return any(
         br.get(qn("w:type")) == "page"
         for run in para.runs
@@ -28,22 +26,7 @@ def _has_page_break(para) -> bool:
 
 
 def read_docx(file_path: Path) -> list[dict]:
-    """
-    Read DOCX file and return a list of pages with text and metadata.
-
-    DOCX does not store explicit page numbers in XML,
-    so we estimate pages by counting page breaks.
-
-    Args:
-        file_path: path to the .docx file
-
-    Returns:
-        list of dicts containing: doc_id, page_number, raw_text, source_file
-
-    Raises:
-        FileNotFoundError: file does not exist
-        DOCXReadError: failed to open or parse DOCX
-    """
+    """Read text from a DOCX file page by page."""
     if not file_path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
 
@@ -78,7 +61,6 @@ def read_docx(file_path: Path) -> list[dict]:
         if not text:
             continue
 
-        # Uppercase heading style to make it easier for chunker to detect
         style = para.style.name if para.style else ""
         if style.lower().startswith("heading"):
             cur_lines.append(text.upper())
