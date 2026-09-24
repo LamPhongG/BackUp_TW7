@@ -1,9 +1,26 @@
+# Python & Virtual Environments
 venv/
+.venv/
+env/
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+
+# Environment Variables & Secrets
 .env
 *.local
+
+# Database
 *.sqlite3
 *.db
+
+# Temporary & Test Artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
 uploads/
+sample_documents/
 .DS_Store
+Thumbs.db
+

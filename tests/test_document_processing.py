@@ -135,3 +135,67 @@ class TestSplitIntoChunks:
         pages = [_make_raw_page(text, doc_id=doc_id)]
         chunks = split_into_chunks(pages)
         assert all(c.doc_id == doc_id for c in chunks)
+
+
+# ---------------------------------------------------------------------------
+# Reader hardening & edge cases tests
+# ---------------------------------------------------------------------------
+
+class TestHardenedDocumentReaders:
+    def test_raises_for_scanned_image_only_pdf(self, tmp_path):
+        import fitz
+        from src.document_processing.pdf_reader import PDFReadError, read_pdf
+
+        pdf_path = tmp_path / "scanned.pdf"
+        doc = fitz.open()
+        doc.new_page()  # Blank page without any selectable text
+        doc.save(str(pdf_path))
+        doc.close()
+
+        with pytest.raises(PDFReadError, match="scanned image-only"):
+            read_pdf(pdf_path)
+
+    def test_raises_for_encrypted_pdf(self, tmp_path):
+        import fitz
+        from src.document_processing.pdf_reader import PDFReadError, read_pdf
+
+        pdf_path = tmp_path / "encrypted.pdf"
+        doc = fitz.open()
+        p = doc.new_page()
+        p.insert_text((50, 50), "Confidential data")
+        doc.save(str(pdf_path), encryption=fitz.PDF_ENCRYPT_AES_256, user_pw="secret123")
+        doc.close()
+
+        with pytest.raises(PDFReadError, match="encrypted"):
+            read_pdf(pdf_path)
+
+    def test_docx_extracts_table_rows(self, tmp_path):
+        from docx import Document
+        from src.document_processing.docx_reader import read_docx
+
+        docx_path = tmp_path / "policy_table.docx"
+        doc = Document()
+        doc.add_paragraph("POLICY TABLE SUMMARY")
+        table = doc.add_table(rows=2, cols=2)
+        table.cell(0, 0).text = "Role"
+        table.cell(0, 1).text = "Annual Leave"
+        table.cell(1, 0).text = "Software Engineer"
+        table.cell(1, 1).text = "15 Days"
+        doc.save(str(docx_path))
+
+        pages = read_docx(docx_path)
+        assert len(pages) == 1
+        assert "Software Engineer | 15 Days" in pages[0]["raw_text"]
+
+    def test_docx_raises_on_whitespace_only(self, tmp_path):
+        from docx import Document
+        from src.document_processing.docx_reader import DOCXReadError, read_docx
+
+        docx_path = tmp_path / "blank.docx"
+        doc = Document()
+        doc.add_paragraph("   \n\t  ")
+        doc.save(str(docx_path))
+
+        with pytest.raises(DOCXReadError, match="no readable text content"):
+            read_docx(docx_path)
+

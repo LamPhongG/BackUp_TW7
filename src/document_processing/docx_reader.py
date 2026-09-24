@@ -26,7 +26,7 @@ def _has_page_break(para) -> bool:
 
 
 def read_docx(file_path: Path) -> list[dict]:
-    """Read text from a DOCX file page by page."""
+    """Read text and tables from a DOCX file page by page with edge case hardening."""
     if not file_path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
 
@@ -39,13 +39,14 @@ def read_docx(file_path: Path) -> list[dict]:
     except OSError as e:
         raise DOCXReadError(f"Cannot open file '{file_path.name}': {e}") from e
 
-    if not doc.paragraphs:
+    if not doc.paragraphs and not doc.tables:
         raise DOCXReadError(f"File '{file_path.name}' has no content.")
 
     pages = []
     cur_page = 1
     cur_lines = []
 
+    # 1. Extract paragraphs
     for para in doc.paragraphs:
         if _has_page_break(para) and cur_lines:
             pages.append({
@@ -67,6 +68,13 @@ def read_docx(file_path: Path) -> list[dict]:
         else:
             cur_lines.append(text)
 
+    # 2. Extract tables (often contains policies, matrices, rules)
+    for table in doc.tables:
+        for row in table.rows:
+            row_cells = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+            if row_cells:
+                cur_lines.append(" | ".join(row_cells))
+
     if cur_lines:
         pages.append({
             "doc_id": doc_id,
@@ -75,4 +83,8 @@ def read_docx(file_path: Path) -> list[dict]:
             "source_file": file_path.name,
         })
 
+    if not pages:
+        raise DOCXReadError(f"File '{file_path.name}' contains no readable text content.")
+
     return pages
+
