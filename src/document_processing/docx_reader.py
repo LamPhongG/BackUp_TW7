@@ -1,12 +1,3 @@
-"""
-DOCX document reader for SkillSprint AI ingestion pipeline.
-
-Extracts text from Word documents paragraph-by-paragraph, preserving
-heading-level information available in DOCX styles. DOCX files provide
-richer structural signals than PDF, so heading detection here is style-based
-rather than regex-based, giving the chunker higher-fidelity section boundaries.
-"""
-
 import hashlib
 from pathlib import Path
 
@@ -15,112 +6,91 @@ from docx.oxml.ns import qn
 
 
 class DOCXReadError(Exception):
-    """Raised when a DOCX file cannot be opened or its structure is invalid."""
+    pass
 
 
-def generate_doc_id(file_path: Path) -> str:
-    """
-    Produces a stable document identifier from file content hash.
-
-    Mirrors the same hashing logic as pdf_reader so both formats produce
-    comparable doc_ids for deduplication and cross-format tracking.
-
-    Args:
-        file_path: Absolute path to the DOCX file.
-
-    Returns:
-        12-character hex digest of the file's SHA-256 hash.
-    """
+def _get_doc_id(file_path: Path) -> str:
+    """Generate doc_id from file content hash."""
     sha = hashlib.sha256()
     with open(file_path, "rb") as f:
-        for block in iter(lambda: f.read(65536), b""):
-            sha.update(block)
+        while data := f.read(8192):
+            sha.update(data)
     return sha.hexdigest()[:12]
 
 
-def _style_is_heading(paragraph) -> bool:
-    """
-    Returns True if the paragraph uses a Word heading style (Heading 1–6).
-
-    DOCX heading styles are the most reliable section boundary signal
-    available — far more accurate than regex heuristics on rendered text.
-    """
-    style_name = paragraph.style.name if paragraph.style else ""
-    return style_name.lower().startswith("heading")
+def _has_page_break(para) -> bool:
+    """Check if paragraph contains a page break."""
+    return any(
+        br.get(qn("w:type")) == "page"
+        for run in para.runs
+        for br in run._element.findall(qn("w:br"))
+    )
 
 
 def read_docx(file_path: Path) -> list[dict]:
     """
-    Extracts raw text from a DOCX file, tagging each paragraph with its
-    approximate page number and whether it is a heading.
+    Read DOCX file and return a list of pages with text and metadata.
 
-    DOCX format does not embed explicit page numbers in its XML, so page
-    numbers are estimated by counting manual page-break elements. This is
-    accurate for most policy documents where breaks are explicit.
+    DOCX does not store explicit page numbers in XML,
+    so we estimate pages by counting page breaks.
 
     Args:
-        file_path: Path to a valid .docx file.
+        file_path: path to the .docx file
 
     Returns:
-        List of page dicts compatible with chunker.split_into_chunks().
-        Each dict: doc_id, page_number, raw_text, source_file.
+        list of dicts containing: doc_id, page_number, raw_text, source_file
 
     Raises:
-        FileNotFoundError: If the file path does not exist.
-        DOCXReadError: If python-docx cannot open or parse the file.
+        FileNotFoundError: file does not exist
+        DOCXReadError: failed to open or parse DOCX
     """
     if not file_path.exists():
-        raise FileNotFoundError(f"DOCX not found: {file_path}")
+        raise FileNotFoundError(f"File not found: {file_path}")
 
-    doc_id = generate_doc_id(file_path)
+    doc_id = _get_doc_id(file_path)
 
     try:
         doc = Document(str(file_path))
-    except Exception as exc:
-        raise DOCXReadError(f"Cannot open DOCX '{file_path.name}': {exc}") from exc
+    except ValueError as e:
+        raise DOCXReadError(f"Cannot read DOCX '{file_path.name}': {e}") from e
+    except OSError as e:
+        raise DOCXReadError(f"Cannot open file '{file_path.name}': {e}") from e
 
     if not doc.paragraphs:
-        raise DOCXReadError(f"DOCX '{file_path.name}' contains no paragraphs.")
+        raise DOCXReadError(f"File '{file_path.name}' has no content.")
 
-    raw_pages: list[dict] = []
-    current_page = 1
-    page_lines: list[str] = []
+    pages = []
+    cur_page = 1
+    cur_lines = []
 
     for para in doc.paragraphs:
-        # Detect explicit page break — signals start of a new logical page
-        has_page_break = any(
-            br.get(qn("w:type")) == "page"
-            for run in para.runs
-            for br in run._element.findall(qn("w:br"))
-        )
-
-        if has_page_break and page_lines:
-            raw_pages.append({
+        if _has_page_break(para) and cur_lines:
+            pages.append({
                 "doc_id": doc_id,
-                "page_number": current_page,
-                "raw_text": "\n".join(page_lines),
+                "page_number": cur_page,
+                "raw_text": "\n".join(cur_lines),
                 "source_file": file_path.name,
             })
-            page_lines = []
-            current_page += 1
+            cur_lines = []
+            cur_page += 1
 
         text = para.text.strip()
         if not text:
             continue
 
-        # Prefix heading paragraphs so the chunker's heading patterns fire correctly
-        if _style_is_heading(para):
-            page_lines.append(text.upper())
+        # Uppercase heading style to make it easier for chunker to detect
+        style = para.style.name if para.style else ""
+        if style.lower().startswith("heading"):
+            cur_lines.append(text.upper())
         else:
-            page_lines.append(text)
+            cur_lines.append(text)
 
-    # Flush remaining content after the last explicit page break (or entire doc)
-    if page_lines:
-        raw_pages.append({
+    if cur_lines:
+        pages.append({
             "doc_id": doc_id,
-            "page_number": current_page,
-            "raw_text": "\n".join(page_lines),
+            "page_number": cur_page,
+            "raw_text": "\n".join(cur_lines),
             "source_file": file_path.name,
         })
 
-    return raw_pages
+    return pages

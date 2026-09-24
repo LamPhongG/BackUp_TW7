@@ -1,89 +1,63 @@
-"""
-PDF document reader for SkillSprint AI ingestion pipeline.
-
-Extracts text content page-by-page from PDF files while preserving
-structural metadata needed for downstream chunking and citation tracking.
-"""
-
 import hashlib
 from pathlib import Path
-from typing import Generator
 
 import fitz  # PyMuPDF
 
 
 class PDFReadError(Exception):
-    """Raised when a PDF file cannot be parsed or is structurally invalid."""
+    pass
 
 
-def generate_doc_id(file_path: Path) -> str:
-    """
-    Produces a stable document identifier from file content hash.
-
-    Using content hash (not filename) so re-uploads of the same policy
-    document are deduplicated correctly across ingestion runs.
-
-    Args:
-        file_path: Absolute path to the PDF file.
-
-    Returns:
-        12-character hex digest of the file's SHA-256 hash.
-    """
+def _get_doc_id(file_path: Path) -> str:
+    """Generate doc_id from file content hash to avoid duplicate uploads."""
     sha = hashlib.sha256()
     with open(file_path, "rb") as f:
-        for block in iter(lambda: f.read(65536), b""):
-            sha.update(block)
+        while data := f.read(8192):
+            sha.update(data)
     return sha.hexdigest()[:12]
 
 
 def read_pdf(file_path: Path) -> list[dict]:
     """
-    Extracts raw text from each page of a PDF, preserving page numbers.
-
-    Each returned item maps directly to one physical page so chunkers
-    can cite exact page references in structured outputs.
+    Read PDF file and return a list of pages with text and metadata.
 
     Args:
-        file_path: Path to a valid PDF file.
+        file_path: path to the PDF file
 
     Returns:
-        List of page dicts with keys: doc_id, page_number, raw_text.
+        list of dicts containing: doc_id, page_number, raw_text, source_file
 
     Raises:
-        FileNotFoundError: If the path does not point to an existing file.
-        PDFReadError: If PyMuPDF cannot open or decode the document.
+        FileNotFoundError: file does not exist
+        PDFReadError: failed to open or parse PDF
     """
     if not file_path.exists():
-        raise FileNotFoundError(f"PDF not found: {file_path}")
+        raise FileNotFoundError(f"File not found: {file_path}")
 
-    doc_id = generate_doc_id(file_path)
-    raw_pages: list[dict] = []
-
-    try:
-        pdf_doc = fitz.open(str(file_path))
-    except fitz.FileDataError as exc:
-        raise PDFReadError(f"Cannot open PDF '{file_path.name}': {exc}") from exc
-
-    if pdf_doc.page_count == 0:
-        pdf_doc.close()
-        raise PDFReadError(f"PDF '{file_path.name}' contains no pages.")
+    doc_id = _get_doc_id(file_path)
+    pages = []
 
     try:
-        for page_index in range(pdf_doc.page_count):
-            page = pdf_doc[page_index]
-            page_text = page.get_text("text").strip()
+        pdf = fitz.open(str(file_path))
+    except fitz.FileDataError as e:
+        raise PDFReadError(f"Cannot read PDF '{file_path.name}': {e}") from e
 
-            # Skip entirely blank pages — they carry no policy content
-            if not page_text:
+    if pdf.page_count == 0:
+        pdf.close()
+        raise PDFReadError(f"File '{file_path.name}' has no pages.")
+
+    try:
+        for i in range(pdf.page_count):
+            text = pdf[i].get_text("text").strip()
+            if not text:
                 continue
-
-            raw_pages.append({
+            pages.append({
                 "doc_id": doc_id,
-                "page_number": page_index + 1,
-                "raw_text": page_text,
+                "page_number": i + 1,
+                "raw_text": text,
                 "source_file": file_path.name,
             })
     finally:
-        pdf_doc.close()
+        pdf.close()
 
-    return raw_pages
+    return pages

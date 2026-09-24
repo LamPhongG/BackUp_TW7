@@ -1,11 +1,3 @@
-"""
-Document ingestion pipeline entry point for SkillSprint AI.
-
-External callers (FastAPI endpoints, test suites, CLI scripts) should use
-only `ingest_document()` from this module. The internal reader selection
-logic is an implementation detail that may change as new formats are added.
-"""
-
 from pathlib import Path
 
 from src.document_processing.chunker import DocumentChunk, split_into_chunks
@@ -16,41 +8,34 @@ from src.document_validation.validator import validate_document
 
 def ingest_document(file_path: str | Path) -> list[DocumentChunk]:
     """
-    Full ingestion pipeline: validates, reads, and chunks a policy document.
+    Main entry point to read and process documents (PDF or DOCX).
 
-    This is the single entry point for both PDF and DOCX formats. Format
-    detection is extension-based because MIME sniffing adds complexity
-    without meaningful accuracy gains for known policy document uploads.
+    Executes 3 steps: validate -> read file -> split into chunks.
 
     Args:
-        file_path: Path (str or Path) to the document to ingest.
+        file_path: path to the document file
 
     Returns:
-        Ordered list of DocumentChunk objects ready for GenAI pipeline input.
+        list of DocumentChunk ready for GenAI pipeline
 
     Raises:
-        FileNotFoundError: File does not exist.
-        UnsupportedFormatError: File type not supported.
-        FileSizeError: File outside acceptable size bounds.
-        PDFReadError: PDF is corrupt or unreadable.
-        DOCXReadError: DOCX is corrupt or unreadable.
-        ValueError: Document produced no extractable content after chunking.
+        FileNotFoundError, UnsupportedFormatError, FileSizeError,
+        PDFReadError, DOCXReadError, ValueError
     """
-    doc_path = Path(file_path)
-    validate_document(doc_path)
+    path = Path(file_path)
+    validate_document(path)
 
-    ext = doc_path.suffix.lower()
-    if ext == ".pdf":
-        raw_pages = read_pdf(doc_path)
+    if path.suffix.lower() == ".pdf":
+        raw_pages = read_pdf(path)
     else:
-        raw_pages = read_docx(doc_path)
+        raw_pages = read_docx(path)
 
     chunks = split_into_chunks(raw_pages)
 
     if not chunks:
         raise ValueError(
-            f"'{doc_path.name}' yielded no content chunks after processing. "
-            "The document may contain only images or non-extractable content."
+            f"No chunks extracted from '{path.name}'. "
+            "The document might contain only images or have no readable text."
         )
 
     return chunks

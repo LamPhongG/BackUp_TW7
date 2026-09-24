@@ -1,18 +1,10 @@
-"""
-Unit tests for the document processing and validation pipeline.
+# Unit tests for document processing and validation pipeline
 
-Tests cover the happy path, known edge cases, and error handling across
-both readers and the validator gate. Each test is isolated — no shared
-mutable state, no network calls, no real file I/O beyond the fixtures.
-"""
-
-import uuid
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.document_processing.chunker import DocumentChunk, split_into_chunks
+from src.document_processing.chunker import split_into_chunks
 from src.document_validation.validator import (
     FileSizeError,
     UnsupportedFormatError,
@@ -59,7 +51,7 @@ class TestValidateDocument:
         big_file = tmp_path / "huge.pdf"
         # Write slightly over 50 MB
         big_file.write_bytes(b"x" * (51 * 1024 * 1024))
-        with pytest.raises(FileSizeError, match="50 MB"):
+        with pytest.raises(FileSizeError, match="50MB"):
             validate_document(big_file)
 
     def test_raises_for_empty_file(self, tmp_path):
