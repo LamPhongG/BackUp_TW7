@@ -1,13 +1,11 @@
-// ────────────────────────────────────────────────────────────
 // Kiểm tra tài liệu tải lên (SRS Step 5) và vòng đời phiên bản (SRS Step 8)
 // Mọi lỗi/cảnh báo trả về dạng { key, vars } để giao diện dịch bằng t()
-// ────────────────────────────────────────────────────────────
 import { DOCUMENT_CATALOG, UPLOAD_RULES } from "../data/company";
 
 const CODE_PATTERN = /^DOC-\d{2,}$/;
 const VERSION_PATTERN = /^\d+(\.\d+){0,2}$/;
 
-export function getExtension(fileName = "") {
+function getExtension(fileName = "") {
   const dot = fileName.lastIndexOf(".");
   return dot === -1 ? "" : fileName.slice(dot + 1).toLowerCase();
 }
@@ -46,7 +44,7 @@ export function familyOf({ code, titleEn }) {
 }
 
 // "DOC-01_Employee_Handbook_v2.0.docx" → { code: "DOC-01", version: "2.0", titleEn: "Employee Handbook", obsoleteHint: false }
-export function parseFileName(fileName) {
+function parseFileName(fileName) {
   const base = fileName.replace(/\.[^.]+$/, "");
   const code = base.match(/^(DOC-\d{2,})/i)?.[1]?.toUpperCase() || "";
   const version = base.match(/[_\s-]v(\d+(?:\.\d+){0,2})/i)?.[1] || "";
@@ -126,14 +124,12 @@ export function validateDraft(draft, { existing, batch, today }) {
   const version = normalizeVersion(draft.version);
   const family = familyOf({ code, titleEn: draft.titleEn });
 
-  // File
   if (!allowedExtensions.includes(draft.ext)) {
     errors.push({ key: "err_file_type", vars: { ext: draft.ext || "?", list: allowedExtensions.map(e => `.${e}`).join(", ") } });
   }
   if (draft.file.size > maxSizeMB * 1024 * 1024) errors.push({ key: "err_file_too_large", vars: { max: maxSizeMB } });
   if (draft.contentIssues) errors.push(...draft.contentIssues);
 
-  // Trùng lặp nội dung
   if (draft.hash) {
     const same = existing.find(d => d.hash === draft.hash);
     if (same) errors.push({ key: "err_duplicate_file", vars: { code: same.code, version: same.version } });
@@ -142,7 +138,6 @@ export function validateDraft(draft, { existing, batch, today }) {
     }
   }
 
-  // Metadata bắt buộc
   if (!CODE_PATTERN.test(code)) errors.push({ key: "err_code_format" });
   if (!draft.titleEn.trim()) errors.push({ key: "err_title_required" });
   if (!draft.category) errors.push({ key: "err_category_required" });
@@ -155,7 +150,6 @@ export function validateDraft(draft, { existing, batch, today }) {
   const codeOwner = existing.find(d => d.code === code && d.family !== family);
   if (CODE_PATTERN.test(code) && codeOwner) errors.push({ key: "err_code_family", vars: { code, title: codeOwner.titleEn } });
 
-  // Phiên bản
   if (VERSION_PATTERN.test(version)) {
     const sameFamily = existing.filter(d => d.family === family);
     if (sameFamily.some(d => compareVersions(d.version, version) === 0)) {
@@ -170,7 +164,6 @@ export function validateDraft(draft, { existing, batch, today }) {
     if (batchTwin) errors.push({ key: "err_version_in_batch" });
   }
 
-  // Cảnh báo không chặn
   if (draft.effectiveDate > today) warnings.push({ key: "warn_future_effective" });
   if (draft.expiryDate && draft.expiryDate < today) warnings.push({ key: "warn_expired" });
   if (CODE_PATTERN.test(code) && !findCatalogEntry(code)) warnings.push({ key: "warn_not_in_catalog" });

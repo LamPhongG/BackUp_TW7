@@ -1,67 +1,85 @@
-import { useAuth } from "../../hooks/useAuth";
-import { Card, Badge, ProgressBar } from "../../components/UI";
-import { Mail, CalendarDays, BriefcaseBusiness, Building2 } from "../../components/Icons";
-import { tasks, modules, employees } from "../../data/mock";
+import { Mail, BriefcaseBusiness, Building2 } from "../../components/Icons";
+import { Card, SectionHeader, Badge } from "../../components/UI";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { formatLocalDate } from "../../utils/helpers";
+import { useEnrollment } from "../../contexts/EnrollmentContext";
+import { useAuth } from "../../hooks/useAuth";
+import { ROLES as JOB_ROLES } from "../../data/company";
+import { useMyPaths } from "../../hooks/useMyPaths";
+import { bestAttempt, pathProgress, PASS_RATIO } from "../../utils/progress";
+import { formatDateTime } from "../../utils/helpers";
 
 export default function Profile() {
-  const { user } = useAuth();
-  const { t, tv, locale } = useLanguage();
-  const completedTasks = tasks.filter(task => task.status === "Completed").length;
-  const completedModules = modules.filter(m => m.status === "Completed").length;
-  const name = user?.name || "Alex Morgan";
-  const department = user?.department || "Engineering";
-  // Lấy ngày gia nhập từ dữ liệu nhân viên thay vì hard-code
-  const joined = employees.find(e => e.name === name)?.joined;
+  const { t, tv, pick, locale } = useLanguage();
+  const { user, setEmployeePosition } = useAuth();
+  const { enrollmentFor } = useEnrollment();
+  const myPaths = useMyPaths();
+  const job = JOB_ROLES.find(r => r.id === user.role_id);
+
+  const attempts = myPaths.flatMap(p => p.stages.flatMap(s => s.modules.filter(m => m.quiz.length).map(m => ({ p, m, best: bestAttempt(enrollmentFor(p.id), m.id) })))).filter(x => x.best);
 
   return (
     <div>
       <div className="page-heading">
-        <div>
-          <span className="eyebrow">{t("account_eyebrow")}</span>
-          <h1>{t("my_profile")}</h1>
-          <p>{t("profile_desc")}</p>
-        </div>
-        <Badge tone="green">{t("active_employee")}</Badge>
+        <div><span className="eyebrow">{t("menu_profile")}</span><h1>{user.name}</h1><p>{pick(job, "name")}</p></div>
       </div>
-      <div className="dashboard-grid">
+      <div className="run-grid" style={{ marginBottom: 18 }}>
         <Card>
-          <div className="profile-hero">
-            <div className="avatar xl">{user?.avatar || "AM"}</div>
-            <div>
-              <span className="eyebrow">{t("employee_profile")}</span>
-              <h1>{name}</h1>
-              <p>{user?.role || "Software Support Engineer"} · {tv(department)}</p>
-              <div className="detail-meta">
-                <span><Mail size={15} /> {name.toLowerCase().replace(" ", ".")}@fourangrybirds.vn</span>
-                {joined && <span><CalendarDays size={15} /> {t("joined_on", { date: formatLocalDate(joined, locale, { day: "2-digit", month: "short", year: "numeric" }) })}</span>}
-              </div>
-            </div>
-          </div>
-          <div style={{ marginTop: 20 }}>
-            <span className="eyebrow">{t("onboarding_progress")}</span>
-            <h2 style={{ margin: "8px 0 4px" }}>{user?.onboardingProgress || 68}%</h2>
-            <ProgressBar value={user?.onboardingProgress || 68} />
-          </div>
-          <div className="metric-grid" style={{ marginTop: 20 }}>
-            <div><strong>{completedTasks}</strong><span>{t("tasks_done")}</span></div>
-            <div><strong>{completedModules}</strong><span>{t("modules_done")}</span></div>
-            <div><strong>4</strong><span>{t("days_to_milestone")}</span></div>
-          </div>
+          <SectionHeader title={t("profile_info")} />
+          <dl className="meta-list">
+            <dt><BriefcaseBusiness size={14} /> {t("role_position")}</dt><dd>{pick(job, "name")}</dd>
+            <dt><Building2 size={14} /> {t("department")}</dt><dd>{tv(user.department)}</dd>
+            <dt><Mail size={14} /> Email</dt><dd>alex.morgan@fourangrybirds.vn</dd>
+          </dl>
         </Card>
         <Card>
-          <span className="eyebrow">{t("role_info")}</span>
-          <h3 style={{ marginTop: 8 }}>{t("job_details")}</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 16 }}>
-            <div className="detail-meta" style={{ flexDirection: "column", gap: 12 }}>
-              <span><BriefcaseBusiness size={15} /> {user?.role || "Software Support Engineer"}</span>
-              <span><Building2 size={15} /> {tv(department)}</span>
-              <span><Mail size={15} /> {t("manager_label", { name: "Sarah Chen" })}</span>
-            </div>
-          </div>
+          <SectionHeader title={t("demo_position_title")} subtitle={t("demo_position_desc")} />
+          <select className="filter-select" style={{ width: "100%" }} value={user.role_id} onChange={e => setEmployeePosition(e.target.value)}>
+            {JOB_ROLES.map(r => <option key={r.id} value={r.id}>{pick(r, "name")} · {tv(r.department)}</option>)}
+          </select>
         </Card>
       </div>
+
+      <Card style={{ marginBottom: 18 }}>
+        <SectionHeader title={t("menu_my_paths")} />
+        {myPaths.length === 0 ? <p className="cell-sub">{t("no_assigned_paths_desc", { department: tv(user.department) })}</p> : (
+          <ul className="dept-list">
+            {myPaths.map(p => {
+              const e = enrollmentFor(p.id);
+              const prog = pathProgress(p, e);
+              return (
+                <li key={p.id}>
+                  <strong>{pick(p, "title")}</strong>
+                  <span>
+                    <Badge tone={prog.complete ? "green" : "purple"}>{prog.percent}%</Badge>
+                    {e.completedAt && <span className="cell-sub">{t("completed_on", { date: formatDateTime(e.completedAt, locale) })}</span>}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
+
+      <Card>
+        <SectionHeader title={t("quiz_history")} />
+        {attempts.length === 0 ? <p className="cell-sub">{t("quiz_history_empty")}</p> : (
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>{t("col_module")}</th><th>{t("col_path")}</th><th>{t("best_score_col")}</th><th>{t("col_updated")}</th></tr></thead>
+              <tbody>
+                {attempts.map(({ p, m, best }) => (
+                  <tr key={m.id}>
+                    <td>{pick(m, "title")}</td>
+                    <td>{pick(p, "title")}</td>
+                    <td><Badge tone={best.score / best.total >= PASS_RATIO ? "green" : "red"}>{best.score}/{best.total}</Badge></td>
+                    <td>{formatDateTime(best.at, locale)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

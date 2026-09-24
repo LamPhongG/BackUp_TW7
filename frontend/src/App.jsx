@@ -1,53 +1,33 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { AuthContext, useAuthProvider } from "./hooks/useAuth";
+import { Routes, Route, Navigate, Link } from "react-router-dom";
+import { AuthContext, useAuthProvider, HOME_PATH } from "./hooks/useAuth";
 import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
 import { DocumentsProvider } from "./contexts/DocumentsContext";
+import { PathsProvider } from "./contexts/PathsContext";
+import { EnrollmentProvider } from "./contexts/EnrollmentContext";
 
-// Layouts
 import AuthLayout from "./layouts/AuthLayout";
-import EmployeeLayout from "./layouts/EmployeeLayout";
-import ManagerLayout from "./layouts/ManagerLayout";
-import AdminLayout from "./layouts/AdminLayout";
+import RoleLayout from "./layouts/RoleLayout";
 
-// Auth pages
 import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
-import ForgotPassword from "./pages/auth/ForgotPassword";
 
-// Employee pages
+import HrDashboard from "./pages/hr/Dashboard";
+import HrDocuments from "./pages/hr/Documents";
+import CreatePath from "./pages/hr/CreatePath";
+
+import ReviewerDashboard from "./pages/reviewer/Dashboard";
+
+import PathList from "./pages/shared/PathList";
+import PathDetail from "./pages/shared/PathDetail";
+import AuditLog from "./pages/shared/AuditLog";
+
 import EmployeeDashboard from "./pages/employee/Dashboard";
-import OnboardingPlan from "./pages/employee/OnboardingPlan";
-import LearningModules from "./pages/employee/LearningModules";
-import ModuleDetail from "./pages/employee/ModuleDetail";
-import Quiz from "./pages/employee/Quiz";
-import EmployeeTasks from "./pages/employee/Tasks";
-import Checklist from "./pages/employee/Checklist";
+import MyPaths from "./pages/employee/MyPaths";
+import PathView from "./pages/employee/PathView";
+import ModuleView from "./pages/employee/ModuleView";
 import EmployeeDocuments from "./pages/employee/Documents";
 import Profile from "./pages/employee/Profile";
 
-// Manager pages
-import ManagerDashboard from "./pages/manager/Dashboard";
-import Team from "./pages/manager/Team";
-import EmployeeDetail from "./pages/manager/EmployeeDetail";
-import ManagerTasks from "./pages/manager/Tasks";
-import Reviews from "./pages/manager/Reviews";
-import ManagerReports from "./pages/manager/Reports";
-
-// Admin pages
-import AdminDashboard from "./pages/admin/Dashboard";
-import Employees from "./pages/admin/Employees";
-import Departments from "./pages/admin/Departments";
-import JobRoles from "./pages/admin/JobRoles";
-import AdminDocuments from "./pages/admin/Documents";
-import KnowledgeBase from "./pages/admin/KnowledgeBase";
-import Onboarding from "./pages/admin/Onboarding";
-import AdminLearningModules from "./pages/admin/LearningModules";
-import Quizzes from "./pages/admin/Quizzes";
-import AIStudio from "./pages/admin/AIStudio";
-import AdminReports from "./pages/admin/Reports";
-import Settings from "./pages/admin/Settings";
-
-function NotFound() {
+function NotFound({ user }) {
   const { t } = useLanguage();
   return (
     <div className="page-empty">
@@ -55,8 +35,34 @@ function NotFound() {
         <div className="empty-icon">404</div>
         <h2>{t("page_not_found")}</h2>
         <p style={{ color: "var(--muted)" }}>{t("page_not_found_desc")}</p>
+        <Link className="btn btn-primary" to={user ? HOME_PATH[user.userRole] : "/login"}>{t(user ? "go_home" : "crash_login")}</Link>
       </div>
     </div>
+  );
+}
+
+function HrPaths() {
+  const { t } = useLanguage();
+  return (
+    <PathList basePath="/hr/paths" createPath="/hr/paths/new"
+      tabs={["all", "draft", "in_review", "changes_requested", "published", "archived"]}
+      eyebrow={t("role_hr")} title={t("menu_paths")} description={t("hr_paths_desc")} />
+  );
+}
+
+function ReviewerQueue() {
+  const { t } = useLanguage();
+  return (
+    <PathList basePath="/reviewer/paths" tabs={["in_review"]}
+      eyebrow={t("review_queue_eyebrow")} title={t("menu_review_queue")} description={t("review_queue_desc")} />
+  );
+}
+
+function ReviewerPaths() {
+  const { t } = useLanguage();
+  return (
+    <PathList basePath="/reviewer/paths" tabs={["all", "in_review", "changes_requested", "published", "archived"]}
+      eyebrow={t("role_reviewer")} title={t("menu_paths")} description={t("reviewer_paths_desc")} />
   );
 }
 
@@ -67,60 +73,50 @@ export default function App() {
     <LanguageProvider>
       <AuthContext.Provider value={auth}>
         <DocumentsProvider>
-        <Routes>
-          {/* Auth routes */}
-          <Route element={<AuthLayout />}>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-          </Route>
+            <PathsProvider>
+              <EnrollmentProvider>
+                <Routes>
+                  <Route element={<AuthLayout />}>
+                    <Route path="/login" element={<Login />} />
+                  </Route>
 
-          {/* Employee routes */}
-          <Route path="/employee" element={<EmployeeLayout />}>
-            <Route index element={<Navigate to="/employee/dashboard" replace />} />
-            <Route path="dashboard" element={<EmployeeDashboard />} />
-            <Route path="onboarding" element={<OnboardingPlan />} />
-            <Route path="learning" element={<LearningModules />} />
-            <Route path="learning/:id" element={<ModuleDetail />} />
-            <Route path="quiz" element={<Quiz />} />
-            <Route path="tasks" element={<EmployeeTasks />} />
-            <Route path="checklist" element={<Checklist />} />
-            <Route path="documents" element={<EmployeeDocuments />} />
-            <Route path="profile" element={<Profile />} />
-          </Route>
+                  <Route path="/hr" element={<RoleLayout role="hr" />}>
+                    <Route index element={<Navigate to="/hr/dashboard" replace />} />
+                    <Route path="dashboard" element={<HrDashboard />} />
+                    <Route path="documents" element={<HrDocuments />} />
+                    <Route path="paths" element={<HrPaths />} />
+                    <Route path="paths/new" element={<CreatePath />} />
+                    <Route path="paths/:id" element={<PathDetail basePath="/hr/paths" />} />
+                    <Route path="audit-log" element={<AuditLog pathBasePath="/hr/paths" />} />
+                  </Route>
 
-          {/* Manager routes */}
-          <Route path="/manager" element={<ManagerLayout />}>
-            <Route index element={<Navigate to="/manager/dashboard" replace />} />
-            <Route path="dashboard" element={<ManagerDashboard />} />
-            <Route path="team" element={<Team />} />
-            <Route path="team/:id" element={<EmployeeDetail />} />
-            <Route path="tasks" element={<ManagerTasks />} />
-            <Route path="reviews" element={<Reviews />} />
-            <Route path="reports" element={<ManagerReports />} />
-          </Route>
+                  <Route path="/reviewer" element={<RoleLayout role="reviewer" />}>
+                    <Route index element={<Navigate to="/reviewer/dashboard" replace />} />
+                    <Route path="dashboard" element={<ReviewerDashboard />} />
+                    <Route path="queue" element={<ReviewerQueue />} />
+                    <Route path="paths" element={<ReviewerPaths />} />
+                    <Route path="paths/:id" element={<PathDetail basePath="/reviewer/paths" />} />
+                    <Route path="audit-log" element={<AuditLog pathBasePath="/reviewer/paths" />} />
+                  </Route>
 
-          {/* Admin routes */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="employees" element={<Employees />} />
-            <Route path="departments" element={<Departments />} />
-            <Route path="job-roles" element={<JobRoles />} />
-            <Route path="documents" element={<AdminDocuments />} />
-            <Route path="knowledge-base" element={<KnowledgeBase />} />
-            <Route path="onboarding" element={<Onboarding />} />
-            <Route path="learning-modules" element={<AdminLearningModules />} />
-            <Route path="quizzes" element={<Quizzes />} />
-            <Route path="ai-studio" element={<AIStudio />} />
-            <Route path="reports" element={<AdminReports />} />
-            <Route path="settings" element={<Settings />} />
-          </Route>
+                  <Route path="/employee" element={<RoleLayout role="employee" />}>
+                    <Route index element={<Navigate to="/employee/dashboard" replace />} />
+                    <Route path="dashboard" element={<EmployeeDashboard />} />
+                    <Route path="paths" element={<MyPaths />} />
+                    <Route path="paths/:id" element={<PathView />} />
+                    <Route path="paths/:id/modules/:moduleId" element={<ModuleView />} />
+                    <Route path="documents" element={<EmployeeDocuments />} />
+                    <Route path="profile" element={<Profile />} />
+                  </Route>
 
-          {/* Default redirect */}
-          <Route index element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+                  {/* Đường dẫn cũ trước khi đổi tên vai trò */}
+                  <Route path="/admin/*" element={<Navigate to="/hr/dashboard" replace />} />
+                  <Route path="/manager/*" element={<Navigate to="/reviewer/dashboard" replace />} />
+                  <Route index element={<Navigate to={auth.user ? HOME_PATH[auth.user.userRole] : "/login"} replace />} />
+                  <Route path="*" element={<NotFound user={auth.user} />} />
+                </Routes>
+              </EnrollmentProvider>
+            </PathsProvider>
         </DocumentsProvider>
       </AuthContext.Provider>
     </LanguageProvider>

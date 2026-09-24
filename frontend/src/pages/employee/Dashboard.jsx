@@ -1,95 +1,85 @@
 import { useNavigate } from "react-router-dom";
-import { BookOpen, CheckSquare, Clock3, Target, ArrowUpRight, Play, CircleCheck, CalendarDays } from "../../components/Icons";
-import { Card, ProgressBar, Badge, SectionHeader, StatCard, Button } from "../../components/UI";
-import { useAuth } from "../../hooks/useAuth";
-import { phases, tasks, modules } from "../../data/mock";
+import { RouteIcon, BookOpen, CheckSquare, ClipboardCheck, ArrowUpRight, Play, CircleCheck } from "../../components/Icons";
+import { Card, SectionHeader, StatCard, Button, ProgressBar, Badge, EmptyState } from "../../components/UI";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { formatLocalDate, todayISO } from "../../utils/helpers";
+import { useEnrollment } from "../../contexts/EnrollmentContext";
+import { useAuth } from "../../hooks/useAuth";
+import { useMyPaths } from "../../hooks/useMyPaths";
+import { bestAttempt, moduleProgress, nextModule, pathProgress } from "../../utils/progress";
 
 export default function EmployeeDashboard() {
   const navigate = useNavigate();
+  const { t, tv, pick } = useLanguage();
   const { user } = useAuth();
-  const { t, pick, locale } = useLanguage();
-  const completed = tasks.filter(task => task.status === "Completed").length;
-  const firstName = user?.name?.split(" ")[0] || "Alex";
+  const { enrollmentFor } = useEnrollment();
+  const myPaths = useMyPaths();
 
-  const greeting = t("dashboard_greeting", { name: firstName });
-  const today = formatLocalDate(todayISO(), locale, { weekday: "long", month: "long", day: "numeric" });
+  let modulesDone = 0, modulesTotal = 0, tasksDone = 0, tasksTotal = 0;
+  const scores = [];
+  for (const p of myPaths) {
+    const e = enrollmentFor(p.id);
+    for (const s of p.stages) {
+      for (const m of s.modules) {
+        const mp = moduleProgress(m, e);
+        modulesTotal++;
+        if (mp.complete) modulesDone++;
+        tasksDone += mp.tasksDone;
+        tasksTotal += m.tasks.length;
+        const best = bestAttempt(e, m.id);
+        if (best) scores.push(best.score / best.total);
+      }
+    }
+  }
+  const avg = scores.length ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100) : null;
 
   return (
     <div>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">{today}</span>
-          <h1>{greeting}</h1>
-          <p>{t("dashboard_subtitle")}</p>
+          <span className="eyebrow">{t("role_employee")} · {tv(user.department)}</span>
+          <h1>{t("dashboard_greeting", { name: user.name.split(" ")[0] })}</h1>
+          <p>{t("employee_dashboard_desc", { role: user.role })}</p>
         </div>
-        <Button variant="secondary" icon={<CalendarDays size={16} />}>{t("view_calendar")}</Button>
       </div>
+
       <div className="stat-grid">
-        <StatCard label={t("onboarding_progress")} value="68%" change={`+12% ${t("this_week")}`} icon={Target} tone="purple" />
-        <StatCard label={t("learning_modules")} value="3 / 6" change={`2 ${t("in_progress_count")}`} icon={BookOpen} tone="blue" />
-        <StatCard label={t("tasks_completed")} value={`${completed} / ${tasks.length}`} change={`1 ${t("awaiting_review")}`} icon={CheckSquare} tone="green" />
-        <StatCard label={t("next_milestone")} value={t("day_n", { n: 30 })} change={`4 ${t("days_remaining")}`} icon={Clock3} tone="orange" />
+        <StatCard label={t("my_paths_count")} value={myPaths.length} icon={RouteIcon} tone="purple" />
+        <StatCard label={t("modules_done")} value={`${modulesDone} / ${modulesTotal}`} icon={BookOpen} tone="blue" />
+        <StatCard label={t("tasks_completed")} value={`${tasksDone} / ${tasksTotal}`} icon={CheckSquare} tone="green" />
+        <StatCard label={t("quiz_average")} value={avg == null ? "—" : `${avg}%`} icon={ClipboardCheck} tone="orange" />
       </div>
-      <div className="dashboard-grid">
-        <Card className="hero-progress">
-          <div className="card-title-row">
-            <div><span className="eyebrow">{t("your_journey")}</span><h3>{t("journey_title")}</h3></div>
-            <Badge tone="purple">{t("percent_complete", { n: 68 })}</Badge>
-          </div>
-          <div className="phase-timeline">
-            {phases.map((p, i) => (
-              <div className={`phase ${p.status}`} key={p.id}>
-                <div className="phase-dot">{p.status === "completed" ? <CircleCheck size={15} /> : i + 1}</div>
-                <div className="phase-content">
-                  <strong>{pick(p, "label")}</strong><span>{pick(p, "sublabel")}</span>
-                  <ProgressBar value={p.progress} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+
+      {myPaths.length === 0 ? (
+        <Card><EmptyState title={t("no_assigned_paths")} description={t("no_assigned_paths_desc", { department: tv(user.department) })} /></Card>
+      ) : (
         <Card>
-          <SectionHeader title={t("todays_focus")} subtitle={t("focus_subtitle")} />
-          <div className="focus-list">
-            {tasks.slice(2, 5).map(task => (
-              <div className="focus-item" key={task.id}>
-                <div className={`task-dot ${task.status === "In Progress" ? "active" : ""}`}>
-                  {task.status === "Completed" ? <CircleCheck size={16} /> : <Play size={13} />}
-                </div>
-                <div><strong>{pick(task, "title")}</strong><span>{t("due")} {formatLocalDate(task.due, locale)} · {pick(task, "phase")}</span></div>
-                <ArrowUpRight size={16} />
-              </div>
-            ))}
-          </div>
-          <Button variant="ghost" onClick={() => navigate("/employee/tasks")}>{t("view_all_tasks")} <ArrowUpRight size={15} /></Button>
-        </Card>
-      </div>
-      <div className="dashboard-grid lower">
-        <Card>
-          <SectionHeader title={t("continue_learning")} subtitle={t("learning_subtitle")} />
+          <SectionHeader title={t("continue_learning")} subtitle={t("continue_learning_desc")} />
           <div className="module-list">
-            {modules.filter(m => m.progress > 0 && m.progress < 100).map(m => (
-              <div className="module-row" key={m.id}>
-                <div className="module-icon"><BookOpen size={17} /></div>
-                <div className="module-info">
-                  <strong>{pick(m, "title")}</strong><span>{t("min_n", { n: m.duration })} · {t("lessons_count", { n: m.lessons })}</span>
-                  <ProgressBar value={m.progress} />
+            {myPaths.map(p => {
+              const e = enrollmentFor(p.id);
+              const prog = pathProgress(p, e);
+              const next = nextModule(p, e);
+              return (
+                <div className="module-row" key={p.id}>
+                  <div className="module-icon">{prog.complete ? <CircleCheck size={17} /> : <RouteIcon size={17} />}</div>
+                  <div className="module-info">
+                    <strong>{pick(p, "title")}</strong>
+                    <span>{next ? t("next_up", { stage: t(`stage_${next.stage.key}`), module: pick(next.module, "title") }) : t("path_completed")}</span>
+                    <ProgressBar value={prog.percent} />
+                  </div>
+                  {prog.complete ? <Badge tone="green">{t("completed")}</Badge> : (
+                    <Button variant="secondary" icon={<Play size={14} />}
+                      onClick={() => navigate(next ? `/employee/paths/${p.id}/modules/${next.module.id}` : `/employee/paths/${p.id}`)}>
+                      {e.startedAt ? t("continue") : t("start")}
+                    </Button>
+                  )}
+                  <Button variant="ghost" onClick={() => navigate(`/employee/paths/${p.id}`)}><ArrowUpRight size={15} /></Button>
                 </div>
-                <Button variant="secondary" onClick={() => navigate(`/employee/learning/${m.id}`)}>{t("continue")}</Button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Card>
-        <Card className="tip-card">
-          <div className="tip-icon">✦</div>
-          <span className="eyebrow">{t("ai_learning_tip")}</span>
-          <h3>{t("tip_title")}</h3>
-          <p>{t("tip_desc")}</p>
-          <Button variant="secondary" onClick={() => navigate("/employee/quiz")}>{t("take_quiz")}</Button>
-        </Card>
-      </div>
+      )}
     </div>
   );
 }

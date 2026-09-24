@@ -1,7 +1,5 @@
-// ────────────────────────────────────────────────────────────
 // HỒ SƠ CÔNG TY — FourAngryBirds EdTech & HR Solutions
 // Field song ngữ: `xxx` = tiếng Việt, `xxxEn` = tiếng Anh (đọc bằng pick())
-// ────────────────────────────────────────────────────────────
 export const company = {
   name: "Công ty Cổ phần Công nghệ Giáo dục và Giải pháp Nhân sự FourAngryBirds",
   nameEn: "FourAngryBirds EdTech & HR Solutions JSC",
@@ -80,3 +78,23 @@ export const UPLOAD_RULES = {
   allowedExtensions: ["pdf", "docx", "txt", "md", "csv"],
   maxSizeMB: 20,
 };
+
+// Mục đích lộ trình: nhân viên mới hội nhập, hoặc bồi dưỡng khi thăng chức / chuyển vị trí
+export const PATH_PURPOSES = ["onboarding", "promotion"];
+
+export const SKILL_LEVELS = ["Beginner", "Intermediate", "Advanced"];
+
+// Thứ tự giai đoạn theo mục đích — thứ tự này là chuẩn để kiểm tra "đúng luồng"
+export const STAGE_TEMPLATES = {
+  onboarding: ["day1", "week1", "week2", "day30", "day60", "day90"],
+  promotion: ["foundation", "deep", "practice", "assessment"],
+};
+
+// Tầng kiến thức của tài liệu: nền tảng công ty học trước, nghiệp vụ phòng ban học sau
+export function docTier(doc) {
+  if (doc.category === "Handbook") return 0;
+  if ((doc.category === "Policy" || doc.category === "Compliance") && doc.department === "Company-wide") return 1;
+  if (["Policy", "Compliance", "Role Description"].includes(doc.category)) return 2;
+  if (doc.category === "SOP" || doc.category === "Process Manual") return 3;
+  return 4;
+}

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo, Fragment } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { en } from "../locales/en";
 import { vi } from "../locales/vi";
 
@@ -40,13 +40,7 @@ export const LanguageProvider = ({ children }) => {
     return text;
   }, [lang]);
 
-  // Như t() nhưng giá trị có thể là phần tử React: tNode("key", { count: <strong>2</strong> })
-  const tNode = useCallback((key, vars = {}) => {
-    const parts = t(key).split(/\{(\w+)\}/);
-    return parts.map((part, i) => (i % 2 === 1 ? <Fragment key={i}>{vars[part] ?? `{${part}}`}</Fragment> : part));
-  }, [t]);
-
-  // Dịch giá trị dữ liệu (trạng thái, phòng ban...): tv("On Track") → key "v_on_track"; không có key thì giữ nguyên
+  // Dịch giá trị dữ liệu (trạng thái, phòng ban...): tv("Human Resources") → key "v_human_resources"; không có key thì giữ nguyên
   const tv = useCallback((value) => {
     if (value == null) return "";
     const key = `v_${String(value).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")}`;
@@ -67,8 +61,8 @@ export const LanguageProvider = ({ children }) => {
   const locale = lang === "vi" ? "vi-VN" : "en-US";
 
   const value = useMemo(
-    () => ({ lang, locale, t, tNode, tv, pick, toggleLanguage, setLang }),
-    [lang, locale, t, tNode, tv, pick, toggleLanguage]
+    () => ({ lang, locale, t, tv, pick, toggleLanguage }),
+    [lang, locale, t, tv, pick, toggleLanguage]
   );
 
   return (
@@ -84,12 +78,12 @@ export const useLanguage = () => {
   return ctx;
 };
 
-export function LanguageToggle({ style }) {
+export function LanguageToggle({ style, className = "btn btn-secondary" }) {
   const { lang, toggleLanguage } = useLanguage();
   return (
     <button
       type="button"
-      className="btn btn-secondary"
+      className={className}
       onClick={toggleLanguage}
       aria-label={lang === "vi" ? "Switch to English" : "Chuyển sang tiếng Việt"}
       style={{ height: 34, padding: "0 10px", fontSize: 13, ...style }}

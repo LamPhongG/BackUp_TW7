@@ -1,8 +1,8 @@
 import { Check, X, Search } from "./Icons";
 import { useLanguage } from "../contexts/LanguageContext";
 
-export function Card({ children, className="" }) {
-  return <div className={`card ${className}`}>{children}</div>;
+export function Card({ children, className="", ...props }) {
+  return <div className={`card ${className}`} {...props}>{children}</div>;
 }
 
 export function Badge({ children, tone="default" }) {

@@ -1,12 +1,9 @@
-export { default as LogoIcon } from "lucide-react/dist/esm/icons/sparkles";
+// Chỉ re-export các icon đang dùng để bundle không kéo theo icon thừa
 export {
-  LayoutDashboard, Route as RouteIcon, BookOpen, ClipboardCheck, CheckSquare,
-  FileText, Users, UserRound, BrainCircuit, BriefcaseBusiness, BarChart3,
-  Settings, Search, Bell, ChevronDown, ChevronRight, ChevronLeft, Menu, X,
-  Plus, Upload, Download, MoreHorizontal, ArrowUpRight, ArrowLeft, ArrowRight,
-  Clock3, CircleCheck, CircleAlert, LockKeyhole, Play, Check, Sparkles,
-  Database, ShieldCheck, FileQuestion, Filter, SlidersHorizontal, Eye,
-  Pencil, Trash2, RefreshCw, LogOut, CalendarDays, Target, TrendingUp, Zap,
-  Building2, Layers3, BookMarked, ClipboardList, CircleHelp, ExternalLink,
-  Send, Loader2, Save, Palette, Shield, WandSparkles, Mail, ClipboardCheck as ClipboardIcon
+  Archive, ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, BrainCircuit, BriefcaseBusiness, Building2,
+  Check, CheckSquare, ChevronDown, CircleAlert, CircleCheck, ClipboardCheck, Clock3, Database,
+  Download, ExternalLink, Eye, EyeOff, FileText, History, Info, Layers3,
+  LayoutDashboard, Loader2, LockKeyhole, LogOut, Mail, Menu, MessageSquare, Pencil,
+  Play, Plus, Quote, RefreshCw, Route as RouteIcon, ScanText, Search, Send,
+  ShieldAlert, ShieldCheck, Sparkles, Trash2, Upload, UserRound, WandSparkles, X
 } from "lucide-react";

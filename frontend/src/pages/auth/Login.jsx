@@ -1,54 +1,91 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowUpRight, Sparkles } from "../../components/Icons";
-import { Button } from "../../components/UI";
-import { useAuth, ROLES } from "../../hooks/useAuth";
+import { Sparkles, Eye, EyeOff, CircleAlert, Info } from "../../components/Icons";
+import { useAuth, HOME_PATH, DEMO_ACCOUNTS, DEMO_PASSWORD } from "../../hooks/useAuth";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const { t } = useLanguage();
-  const [email, setEmail] = useState("alex@acme.com");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
+  const [note, setNote] = useState(null);
+  const [error, setError] = useState("");
 
-  const handleLogin = (roleKey) => {
-    const role = login(roleKey);
-    if (role === ROLES.EMPLOYEE) navigate("/employee/dashboard");
-    else if (role === ROLES.MANAGER) navigate("/manager/dashboard");
-    else navigate("/admin/dashboard");
+  const submit = (e) => {
+    e.preventDefault();
+    if (!email.trim() || !password) {
+      setError(t("login_error_empty"));
+      return;
+    }
+    const role = login(email, password, { remember });
+    if (!role) {
+      setError(t("login_error_invalid"));
+      return;
+    }
+    navigate(HOME_PATH[role]);
   };
 
+  const fillDemo = (account) => {
+    setEmail(account.email);
+    setPassword(DEMO_PASSWORD);
+    setError("");
+  };
+
+  const toggleNote = key => setNote(current => (current === key ? null : key));
+
   return (
-    <form className="auth-form" onSubmit={(e) => { e.preventDefault(); handleLogin("employee"); }}>
-      <div className="mobile-brand"><Sparkles size={18} /> OnboardAI</div>
-      <span className="eyebrow">{t("login_eyebrow")}</span>
+    <form className="glass-card" onSubmit={submit} noValidate>
+      <div className="glass-card__brand"><span className="brand-mark"><Sparkles size={16} /></span> SkillSprint AI</div>
       <h2>{t("login_title")}</h2>
-      <p className="muted">{t("login_subtitle")}</p>
-      <label>
-        {t("work_email")}
-        <input value={email} onChange={e => setEmail(e.target.value)} type="email" />
-      </label>
-      <label>
-        {t("password")}
-        <input value={password} onChange={e => setPassword(e.target.value)} type="password" />
-      </label>
-      <div className="form-row-between">
-        <label className="checkbox"><input type="checkbox" /> {t("remember_me")}</label>
-        <button type="button" className="link-btn" onClick={() => navigate("/forgot-password")}>{t("forgot_password")}</button>
+      <p className="glass-card__subtitle">{t("login_subtitle")}</p>
+
+      {/* placeholder=" " để CSS biết ô đã có chữ (:placeholder-shown) và đẩy nhãn lên mép trên */}
+      <div className="glass-float">
+        <input id="login-email" type="email" autoComplete="username" placeholder=" " value={email}
+          aria-invalid={!!error} onChange={e => { setEmail(e.target.value); setError(""); }} />
+        <label htmlFor="login-email">{t("login_email")}</label>
       </div>
-      <Button type="submit">{t("sign_in")} <ArrowUpRight size={16} /></Button>
-      <p style={{ textAlign: "center", marginTop: 12 }}>
-        {t("no_account")}{" "}
-        <button type="button" className="link-btn" onClick={() => navigate("/register")}>{t("register")}</button>
+
+      <div className="glass-float">
+        <input id="login-password" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder=" "
+          value={password} aria-invalid={!!error} onChange={e => { setPassword(e.target.value); setError(""); }} />
+        <label htmlFor="login-password">{t("login_password")}</label>
+        <button type="button" className="glass-eye" onClick={() => setShowPassword(v => !v)}
+          aria-label={t(showPassword ? "login_hide_password" : "login_show_password")}>
+          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      </div>
+
+      <div className="glass-row">
+        <label className="glass-check">
+          <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} />
+          {t("login_remember")}
+        </label>
+        <button type="button" className="glass-link" onClick={() => toggleNote("forgot")}>{t("login_forgot")}</button>
+      </div>
+
+      {error && <p className="glass-error" role="alert"><CircleAlert size={15} /> {error}</p>}
+
+      <button type="submit" className="glass-btn">{t("login_submit")}</button>
+
+      <p className="glass-register">
+        {t("login_no_account")}{" "}
+        <button type="button" onClick={() => toggleNote("account")}>{t("login_contact_hr")}</button>
       </p>
-      <div className="demo-login">
-        <span>{t("demo_login_as")}</span>
+      {note && <p className="glass-note"><Info size={14} /> {t(note === "forgot" ? "login_forgot_hint" : "login_account_hint")}</p>}
+
+      <div className="glass-demo">
+        <span>{t("login_demo_accounts")}</span>
         <div>
-          <button type="button" onClick={() => handleLogin("employee")}>{t("role_employee")}</button>
-          <button type="button" onClick={() => handleLogin("manager")}>{t("role_manager")}</button>
-          <button type="button" onClick={() => handleLogin("admin")}>{t("role_admin")}</button>
+          {DEMO_ACCOUNTS.map(a => (
+            <button key={a.email} type="button" className="glass-chip" onClick={() => fillDemo(a)}>{t(`role_${a.roleKey}`)}</button>
+          ))}
         </div>
+        <small>{t("login_demo_note", { password: DEMO_PASSWORD })}</small>
       </div>
     </form>
   );
