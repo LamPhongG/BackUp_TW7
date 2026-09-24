@@ -1,6 +1,7 @@
 from src.schemas.comparison_contract import (
     ContradictionFlag,
     HallucinationFlag,
+    SecurityThreatFlag,
     VerificationStatus,
 )
 
@@ -9,16 +10,16 @@ def classify_verification_status(
     match_score: float,
     hallucinations: list[HallucinationFlag],
     contradictions: list[ContradictionFlag],
+    security_threats: list[SecurityThreatFlag] | None = None,
 ) -> tuple[VerificationStatus, str]:
-    """
-    Classify the review decision into one of three statuses.
+    """Classify the review decision into one of three statuses."""
+    if security_threats:
+        threats = [s.pattern_matched for s in security_threats[:2]]
+        return (
+            VerificationStatus.MANUAL_REVIEW_REQUIRED,
+            f"Blocked by {len(security_threats)} security threat(s): {'; '.join(threats)}",
+        )
 
-    Rules:
-    - MANUAL_REVIEW_REQUIRED: If any hallucination or contradiction is detected,
-      or if match_score is below 0.75.
-    - VERIFIED_WITH_WARNING: If match_score is between 0.75 and 0.89 with no critical flags.
-    - VERIFIED: If match_score >= 0.90 with zero hallucinations and zero contradictions.
-    """
     if hallucinations:
         reasons = [h.reason for h in hallucinations[:2]]
         return (

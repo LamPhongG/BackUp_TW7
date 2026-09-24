@@ -6,7 +6,9 @@ from src.genai_pipeline.response_schemas import OnboardingPlanSchema
 from src.schemas.comparison_contract import (
     ComparisonItem,
     ComparisonReport,
+    SecurityThreatFlag,
 )
+from src.security.injection_filter import scan_for_prompt_injection
 
 
 class ComparisonEngine:
@@ -86,7 +88,21 @@ class ComparisonEngine:
             )
         )
 
-        # 5. Run Hallucination & Contradiction checks
+        # 5. Security Scan: Prompt Injection check
+        security_threats: list[SecurityThreatFlag] = []
+        for c in doc_chunks:
+            matches = scan_for_prompt_injection(c.content)
+            for m in matches:
+                security_threats.append(
+                    SecurityThreatFlag(
+                        threat_id=f"THREAT-{uuid.uuid4().hex[:6].upper()}",
+                        pattern_matched=m,
+                        excerpt=c.content[:100],
+                        severity="CRITICAL",
+                    )
+                )
+
+        # 6. Run Hallucination & Contradiction checks
         from src.hallucination_checks.detector import detect_hallucinations
         hallucinations = detect_hallucinations(plan, doc_chunks)
         contradictions = check_contradictions(plan=plan, doc_chunks=doc_chunks)
@@ -100,6 +116,7 @@ class ComparisonEngine:
             match_score=match_score,
             hallucinations=hallucinations,
             contradictions=contradictions,
+            security_threats=security_threats,
         )
 
         return ComparisonReport(
@@ -113,5 +130,6 @@ class ComparisonEngine:
             items=items,
             hallucinations=hallucinations,
             contradictions=contradictions,
+            security_threats=security_threats,
             summary=summary,
         )

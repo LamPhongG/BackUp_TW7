@@ -35,6 +35,13 @@ class ContradictionFlag(BaseModel):
     severity: str = "HIGH"
 
 
+class SecurityThreatFlag(BaseModel):
+    threat_id: str
+    pattern_matched: str
+    excerpt: str
+    severity: str = "CRITICAL"
+
+
 class ComparisonReport(BaseModel):
     report_id: str
     doc_id: str
@@ -46,4 +53,5 @@ class ComparisonReport(BaseModel):
     items: list[ComparisonItem] = []
     hallucinations: list[HallucinationFlag] = []
     contradictions: list[ContradictionFlag] = []
+    security_threats: list[SecurityThreatFlag] = []
     summary: str

@@ -27,15 +27,28 @@ def _check_citation(
     norm_quote = _normalize(citation.exact_quote)
     norm_doc = _normalize(combined_doc_text)
 
-    # Allow partial overlap if quote is long (>5 words)
-    words = norm_quote.split()
-    if len(words) >= 4:
-        sub_phrase = " ".join(words[:4])
-        quote_found = sub_phrase in norm_doc
-    else:
-        quote_found = norm_quote in norm_doc
+    # 1. Exact normalized phrase match
+    if norm_quote in norm_doc:
+        return None
 
-    if not quote_found:
+    # 2. Check numerical claims (e.g. 15 vs 30 days)
+    quote_nums = set(re.findall(r"\b\d+\b", norm_quote))
+    doc_nums = set(re.findall(r"\b\d+\b", norm_doc))
+    missing_nums = quote_nums - doc_nums
+    if missing_nums:
+        return HallucinationFlag(
+            item_id=item_id,
+            field_name=field_name,
+            claimed_text=citation.exact_quote,
+            reason=f"Claimed number(s) {missing_nums} not found in source document text",
+            severity="HIGH",
+        )
+
+    # 3. Word overlap threshold
+    quote_words = set(norm_quote.split())
+    doc_words = set(norm_doc.split())
+    overlap = len(quote_words & doc_words) / len(quote_words) if quote_words else 0
+    if overlap < 0.85:
         return HallucinationFlag(
             item_id=item_id,
             field_name=field_name,
