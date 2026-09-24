@@ -24,6 +24,7 @@ sample_documents/
 # IDE & Editors
 .vscode/
 .idea/
+pyrightconfig.json
 *.sublime-project
 *.sublime-workspace
 
