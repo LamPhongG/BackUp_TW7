@@ -9,7 +9,7 @@
 
 | Thành viên | Vai trò chuyên trách | Nhánh Git phụ trách | Thư mục code đảm nhận |
 | :--- | :--- | :--- | :--- |
-| **Thành viên 1** | **AI & Ingestion Engineer** | `feat/genai-pipeline` | `src/document_processing/` `src/document_validation/` `src/genai_pipeline/` `src/prompt_templates/` |
+| **Châu Quốc Lâm Phong** | **AI & Ingestion Engineer** | `feat/genai-pipeline` | `src/document_processing/` `src/document_validation/` `src/genai_pipeline/` `src/prompt_templates/` |
 | **Thành viên 2** | **Backend & Rule Engine Engineer** | `feat/python-rule-engine` | `src/python_validation/` `src/role_matrix/` `src/comparison_engine/` `src/hallucination_checks/` `src/contradiction_checks/` |
 | **Thành viên 3** | **Fullstack & Database Developer** | `feat/frontend-dashboard` | `src/database/` `templates/` `static/` `src/schemas/` |
 | **Thành viên 4** | **QA, Security, Data & Docs Lead** | `docs/test-and-reports` | `tests/` `sample_documents/` `hidden_test_ready/` `documentation/` `reports/` |
@@ -22,10 +22,10 @@
 
 ---
 
-### PHASE 1 — Ngày 1: Thiết lập Môi trường, Dữ liệu Nền tảng & CSDL
+### PHASE 1 — Ngày 24/9/2026: Thiết lập Môi trường, Dữ liệu Nền tảng & CSDL
 **Tổng thời gian:** 10 giờ | **Mục tiêu:** Hạ tầng dự án hoàn chỉnh, DB chạy, module đọc file hoạt động.
 
-#### Thành viên 1 — AI & Ingestion Engineer (10 giờ)
+#### Châu Quốc Lâm Phong — AI & Ingestion Engineer (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -41,7 +41,7 @@
 
 ---
 
-#### Thành viên 2 — Backend & Rule Engine Engineer (10 giờ)
+#### Đoàn Thị Quỳnh Nhi — Backend & Rule Engine Engineer (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -52,7 +52,7 @@
 
 ---
 
-#### Thành viên 3 — Fullstack & Database Developer (10 giờ)
+#### Phạm Tấn Tài — Fullstack & Database Developer (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -63,7 +63,7 @@
 
 ---
 
-#### Thành viên 4 — QA, Security & Docs Lead (10 giờ)
+#### Lê Thị Kiều Duyên — QA, Security & Docs Lead (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -73,10 +73,10 @@
 
 ---
 
-### PHASE 2 — Ngày 2: Xây dựng Dual Pipeline Core
+### PHASE 2 — Ngày 25/9/2026: Xây dựng Dual Pipeline Core
 **Tổng thời gian:** 10 giờ | **Mục tiêu:** 2 luồng vận hành độc lập, output đúng schema 100%.
 
-#### Thành viên 1 — AI & Ingestion Engineer (10 giờ)
+#### Châu Quốc Lâm Phong — AI & Ingestion Engineer (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -90,7 +90,7 @@
 
 ---
 
-#### Thành viên 2 — Backend & Rule Engine Engineer (10 giờ)
+#### Đoàn Thị Quỳnh Nhi — Backend & Rule Engine Engineer (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -100,7 +100,7 @@
 
 ---
 
-#### Thành viên 3 — Fullstack & Database Developer (10 giờ)
+#### Phạm Tấn Tài — Fullstack & Database Developer (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -109,7 +109,7 @@
 
 ---
 
-#### Thành viên 4 — QA, Security & Docs Lead (10 giờ)
+#### Lê Thị Kiều Duyên — QA, Security & Docs Lead (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -118,10 +118,10 @@
 
 ---
 
-### PHASE 3 — Ngày 3: Tích hợp Comparison Engine & Giao diện Reviewer
+### PHASE 3 — Ngày 26/09/2026: Tích hợp Comparison Engine & Giao diện Reviewer
 **Tổng thời gian:** 10 giờ | **Mục tiêu:** Hệ thống đối soát tự động 2 luồng, giao diện Reviewer hoàn chỉnh.
 
-#### Thành viên 1 & 2 — Cộng tác (10 giờ)
+#### Châu Quốc Lâm Phong & Đoàn Thị Quỳnh Nhi — Cộng tác (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -134,7 +134,7 @@
 
 ---
 
-#### Thành viên 3 — Fullstack & Database Developer (10 giờ)
+#### Phạm Tấn Tài — Fullstack & Database Developer (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -144,7 +144,7 @@
 
 ---
 
-#### Thành viên 4 — QA & Security (10 giờ)
+#### Lê Thị Kiều Duyên — QA & Security (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -153,10 +153,10 @@
 
 ---
 
-### PHASE 4 — Ngày 4: Hidden Test Ready, Blog & Video Demo
+### PHASE 4 — Ngày 27/09/2026: Hidden Test Ready, Blog & Video Demo
 **Tổng thời gian:** 10 giờ | **Mục tiêu:** Sẵn sàng cho Hidden Test, ấn phẩm truyền thông hoàn chỉnh.
 
-#### Thành viên 1 — AI & Ingestion Engineer (10 giờ)
+#### Châu Quốc Lâm Phong — AI & Ingestion Engineer (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -167,7 +167,7 @@
 
 ---
 
-#### Thành viên 2 — Backend & Rule Engine Engineer (10 giờ)
+#### Đoàn Thị Quỳnh Nhi — Backend & Rule Engine Engineer (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -177,7 +177,7 @@
 
 ---
 
-#### Thành viên 3 — Fullstack & Database Developer (10 giờ)
+#### Phạm Tấn Tài — Fullstack & Database Developer (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -186,7 +186,7 @@
 
 ---
 
-#### Thành viên 4 — QA & Docs Lead (10 giờ)
+#### Lê Thị Kiều Duyên — QA & Docs Lead (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -195,10 +195,10 @@
 
 ---
 
-### PHASE 5 — Ngày 5: Đóng gói Triển khai & Bàn giao
+### PHASE 5 — Ngày 28/09/2026: Đóng gói Triển khai & Bàn giao
 **Tổng thời gian:** 10 giờ | **Mục tiêu:** Deploy online ổn định, 100% submission checklist 18 tiêu chí xanh.
 
-#### Thành viên 1 & 2 — Code Quality & Documentation (10 giờ)
+#### Châu Quốc Lâm Phong & Đoàn Thị Quỳnh Nhi — Code Quality & Documentation (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -210,7 +210,7 @@
 
 ---
 
-#### Thành viên 3 — Fullstack & Deployment (10 giờ)
+#### Phạm Tấn Tài — Fullstack & Deployment (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
@@ -220,7 +220,7 @@
 
 ---
 
-#### Thành viên 4 — QA Final & Submission (10 giờ)
+#### Lê Thị Kiều Duyên — QA Final & Submission (10 giờ)
 
 | Giờ | Công việc | File / Thư mục | Tiêu chí hoàn thành |
 | :---: | :--- | :--- | :--- |
