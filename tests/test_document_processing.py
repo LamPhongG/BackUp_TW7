@@ -143,7 +143,10 @@ class TestSplitIntoChunks:
 
 class TestHardenedDocumentReaders:
     def test_raises_for_scanned_image_only_pdf(self, tmp_path):
-        import fitz
+        try:
+            import pymupdf as fitz
+        except ImportError:
+            import fitz
         from src.document_processing.pdf_reader import PDFReadError, read_pdf
 
         pdf_path = tmp_path / "scanned.pdf"
@@ -156,7 +159,10 @@ class TestHardenedDocumentReaders:
             read_pdf(pdf_path)
 
     def test_raises_for_encrypted_pdf(self, tmp_path):
-        import fitz
+        try:
+            import pymupdf as fitz
+        except ImportError:
+            import fitz
         from src.document_processing.pdf_reader import PDFReadError, read_pdf
 
         pdf_path = tmp_path / "encrypted.pdf"

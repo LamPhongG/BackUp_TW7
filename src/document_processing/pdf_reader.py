@@ -2,7 +2,11 @@ import hashlib
 from pathlib import Path
 import unicodedata
 
-import fitz  # PyMuPDF
+try:
+    import pymupdf as fitz
+except ImportError:
+    import fitz
+
 
 
 class PDFReadError(Exception):

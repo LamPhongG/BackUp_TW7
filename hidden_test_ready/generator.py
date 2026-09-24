@@ -1,7 +1,11 @@
 # Generates an unseen corporate policy PDF for automated Hidden Test verification.
 
 from pathlib import Path
-import fitz  # PyMuPDF
+try:
+    import pymupdf as fitz
+except ImportError:
+    import fitz
+
 
 
 def create_unseen_policy_pdf(output_path: Path) -> Path:

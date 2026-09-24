@@ -2,7 +2,11 @@ import json
 import os
 import time
 from dotenv import load_dotenv
-import google.generativeai as genai
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=FutureWarning)
+    import google.generativeai as genai
+
 from google.api_core.exceptions import (
     DeadlineExceeded,
     GoogleAPIError,
