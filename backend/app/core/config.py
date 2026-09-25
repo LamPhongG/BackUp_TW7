@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     max_upload_mb: int = 20
 
     gemini_api_key: str | None = None
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.5-flash-lite"
     gemini_timeout_s: int = 120
     # Modules are generated in parallel; keep this under the API key's requests-per-minute quota.
     generation_workers: int = 4

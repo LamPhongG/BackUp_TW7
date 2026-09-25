@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, CircleAlert, FileText } from "../../components/Icons";
+import { ArrowLeft, CircleAlert, CircleCheck, FileText } from "../../components/Icons";
 import { Card, Badge, EmptyState, Button } from "../../components/UI";
 import { PathStatusBadge, EngineBadge, CoverageScore } from "../../components/path/Badges";
 import PathContent from "../../components/path/PathContent";
@@ -75,11 +75,17 @@ export default function PathDetail({ basePath }) {
       {path.engine === "local-draft" && (
         <div className="notice notice--warning"><CircleAlert size={16} /><span>{t("engine_local_notice")}</span></div>
       )}
-      {path.status === "changes_requested" && role === "hr" && (
-        <div className="notice notice--danger"><CircleAlert size={16} /><span>{t("changes_requested_notice", { n: openComments })}</span></div>
+      {path.status === "published" && (path.approval?.reason?.includes("Tự động") || path.approval_reason?.includes("Tự động")) && (
+        <div className="notice notice--success"><CircleCheck size={16} /><span>{t("auto_publish_notice")}</span></div>
+      )}
+      {path.status === "in_review" && role === "hr" && (
+        <div className="notice notice--warning"><CircleAlert size={16} /><span>{t("hr_in_review_notice")}</span></div>
       )}
       {path.status === "in_review" && role === "reviewer" && (
         <div className="notice notice--warning"><CircleAlert size={16} /><span>{t("reviewer_can_edit_notice")}</span></div>
+      )}
+      {path.status === "changes_requested" && role === "hr" && (
+        <div className="notice notice--danger"><CircleAlert size={16} /><span>{t("changes_requested_notice", { n: openComments })}</span></div>
       )}
 
       <div className="run-grid" style={{ marginBottom: 18 }}>

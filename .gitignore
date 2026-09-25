@@ -33,3 +33,4 @@ pyrefly.toml
 .DS_Store
 node_modules/
 dist/
+scratch/

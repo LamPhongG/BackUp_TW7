@@ -448,6 +448,8 @@ export const vi = {
   tab_comments: "Trao đổi",
   tab_history: "Lịch sử",
   editable_hint: "Bạn có thể sửa, xoá hoặc chuyển mục sang giai đoạn khác. Mọi thay đổi được ghi nhật ký và kiểm định lại ngay.",
+  auto_publish_notice: "Hệ thống kiểm định kép tự động phê duyệt: Lộ trình đã đạt 100% chuẩn Ground Truth (Pipeline 2), không có lỗi/bẫy dữ liệu và đã được tự động phát hành ngay cho nhân viên học tập.",
+  hr_in_review_notice: "Chuyển vào Hàng đợi thẩm định: Pipeline 2 (Ground Truth) phát hiện cảnh báo hoặc bẫy dữ liệu cần Reviewer thẩm định trước khi phát hành.",
   changes_requested_notice: "Reviewer đã trả lộ trình về kèm {n} góp ý chưa xử lý. Sửa nội dung (hoặc sinh lại), đánh dấu góp ý đã xử lý rồi gửi duyệt lại.",
   reviewer_can_edit_notice: "Là Reviewer, bạn có thể sửa trực tiếp nội dung, hoặc trả về HR kèm góp ý.",
   modules_count: "{n} học phần",
