@@ -215,6 +215,38 @@ TechWiz7-FourAngryBirds-SkillSprint-AI/
 
 ---
 
+## 🌐 Web Application (HR · Reviewer · Employee)
+
+The pipeline above is also delivered as a full web application, built on the same verification rules:
+
+| Folder | Content |
+| :--- | :--- |
+| `frontend/` | React + Vite app for HR, Reviewer and Employee — upload documents, generate learning paths, review side-by-side with the source, publish, study ([frontend/README.md](frontend/README.md)) |
+| `backend/` | FastAPI API: JWT auth, SQLAlchemy + Alembic database, document ingestion, Gemini generation with per-quote grounding, server-side verification before publishing, audit log ([backend/README.md](backend/README.md)) |
+| `sample_documents/DOC-11…20` | Remaining catalog documents as PDF (onboarding SOP, job descriptions, FAQs, test fixtures for contradictions, prompt injection, expired rules) — see [README_PHASE2.md](sample_documents/README_PHASE2.md) |
+| `documentation/FRONTEND_FLOWS.md` | Screens, role flows and path lifecycle |
+
+```powershell
+# Backend  →  http://localhost:8000/api/docs
+cd backend
+python -m venv .venv; .venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env          # set JWT_SECRET (and GEMINI_API_KEY to use Gemini)
+alembic upgrade head; python -m app.db.seed
+uvicorn app.main:app --reload
+
+# Frontend  →  http://localhost:3000
+cd frontend
+npm install
+echo VITE_API_URL=http://localhost:8000/api > .env.local   # omit to run fully in the browser
+npm run dev
+```
+
+Demo accounts (password `Demo@123`): `hr@fourangrybirds.vn`, `reviewer@fourangrybirds.vn`, `alex.morgan@fourangrybirds.vn`.
+Tests: `cd backend; pytest` (114 tests) · `cd frontend; npm test` (79 tests).
+
+---
+
 ## 👥 Team & Work Breakdown (Four Angry Birds)
 
 | Member | Role | Primary Responsibility | Branch |

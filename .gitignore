@@ -28,4 +28,8 @@ pyrefly.toml
 *.sublime-project
 *.sublime-workspace
 
-
+# Frontend (React + Vite) and OS files
+*.pyc
+.DS_Store
+node_modules/
+dist/
