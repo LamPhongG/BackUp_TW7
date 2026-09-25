@@ -1,14 +1,18 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { newId, readJson, STORAGE_KEYS, writeJson } from "../services/localStore";
 import { sanitizeAuditLog, sanitizePaths } from "../services/sanitize";
 import { generateContent } from "../services/pipelineService";
 import { approvalRule, can, validReason } from "../utils/pathWorkflow";
 import { MIN_REASON_LENGTH } from "../utils/pathChecks";
+import { apiRequest, backendEnabled } from "../services/apiClient";
+import { mapAuditEntry, mapPath } from "../services/apiMappers";
+import { useLanguage } from "./LanguageContext";
 
-// Kho lộ trình + audit log. Mọi thao tác kiểm tra quyền theo vai trò và trạng thái (utils/pathWorkflow),
-// rồi ghi lộ trình và dòng audit trong cùng một lần lưu. Audit log chỉ thêm, không sửa, không xoá.
-// Khi có backend: thay localStorage bằng /paths và /audit-logs, giữ nguyên chữ ký hàm.
+// Kho lộ trình + audit log, cùng một bộ hàm cho hai chế độ:
+// - Trình duyệt: localStorage; mọi thao tác kiểm tra quyền theo vai trò và trạng thái (utils/pathWorkflow),
+//   rồi ghi lộ trình và dòng audit trong cùng một lần lưu. Audit log chỉ thêm, không sửa, không xoá.
+// - Backend (VITE_API_URL): /paths và /audit-logs; server sinh nội dung (Gemini), kiểm tra quyền và kiểm định.
 
 const PathsContext = createContext(null);
 
@@ -25,7 +29,19 @@ const TITLES = {
   promotion: ["Bồi dưỡng thăng chức", "Promotion upskilling"],
 };
 
+// Chế độ cố định lúc build, nên provider luôn gọi cùng một hook
+const usePathSource = backendEnabled() ? useBackendPaths : useBrowserPaths;
+
 export function PathsProvider({ children }) {
+  const source = usePathSource();
+  const value = useMemo(() => ({
+    ...source,
+    getPath: id => source.paths.find(p => p.id === id) || null,
+  }), [source]);
+  return <PathsContext.Provider value={value}>{children}</PathsContext.Provider>;
+}
+
+function useBrowserPaths() {
   const { user } = useAuth();
   const [paths, setPaths] = useState(() => sanitizePaths(readJson(STORAGE_KEYS.paths, [])));
   const [auditLog, setAuditLog] = useState(() => sanitizeAuditLog(readJson(STORAGE_KEYS.auditLog, [])));
@@ -183,14 +199,110 @@ export function PathsProvider({ children }) {
     commit(replace({ ...path, comments }), null);
   }, [actor, commit]);
 
-  const value = useMemo(() => ({
+  return useMemo(() => ({
     paths,
     auditLog,
-    getPath: id => paths.find(p => p.id === id) || null,
     createPath, regeneratePath, editPath, submitPath, requestChanges, approvePath, archivePath, deletePath, addComment, resolveComment,
   }), [paths, auditLog, createPath, regeneratePath, editPath, submitPath, requestChanges, approvePath, archivePath, deletePath, addComment, resolveComment]);
+}
 
-  return <PathsContext.Provider value={value}>{children}</PathsContext.Provider>;
+// Lỗi nghiệp vụ của backend mang khoá dịch (err_...) → PathError để trang hiển thị như lỗi ở chế độ trình duyệt
+function asPathError(e) {
+  return e?.code ? new PathError(e.code, e.vars) : e;
+}
+
+function useBackendPaths() {
+  const { user } = useAuth();
+  const { lang } = useLanguage();
+  const [paths, setPaths] = useState([]);
+  const [auditLog, setAuditLog] = useState([]);
+  const latest = useRef(paths);
+  latest.current = paths;
+  const canReadAudit = user?.userRole === "hr" || user?.userRole === "reviewer";
+
+  const reloadAudit = useCallback(async () => {
+    if (!canReadAudit) return;
+    const page = await apiRequest("/audit-logs", { query: { limit: 1000 } });
+    setAuditLog(page.items.map(mapAuditEntry));
+  }, [canReadAudit]);
+
+  useEffect(() => {
+    if (!user) {
+      setPaths([]);
+      setAuditLog([]);
+      return;
+    }
+    let cancelled = false;
+    // Lấy kèm nội dung: danh sách, tiến độ học và kiểm định đều cần stages
+    apiRequest("/paths", { query: { include_content: true } })
+      .then(list => { if (!cancelled) setPaths(list.map(mapPath)); })
+      .catch(() => { if (!cancelled) setPaths([]); });
+    reloadAudit().catch(() => {});
+    return () => { cancelled = true; };
+  }, [user, reloadAudit]);
+
+  /** Gọi API, thay bản lộ trình trả về vào danh sách, tải lại audit log */
+  const call = useCallback(async (path, options) => {
+    let result;
+    try {
+      result = await apiRequest(path, options);
+    } catch (e) {
+      throw asPathError(e);
+    }
+    const updated = result ? mapPath(result) : null;
+    if (updated) {
+      setPaths(prev => (prev.some(p => p.id === updated.id) ? prev.map(p => (p.id === updated.id ? updated : p)) : [updated, ...prev]));
+    }
+    reloadAudit().catch(() => {});
+    return updated;
+  }, [reloadAudit]);
+
+  const createPath = useCallback(({ role, level, purpose, sourceDocs, prompt }) => call("/paths", {
+    method: "POST",
+    body: { job_position_id: role.id, level, purpose, source_document_ids: sourceDocs.map(d => d.id), prompt, language: lang },
+  }), [call, lang]);
+
+  const regeneratePath = useCallback((id, { sourceDocs, prompt }) => call(`/paths/${id}/regenerate`, {
+    method: "POST",
+    body: { source_document_ids: sourceDocs.map(d => d.id), prompt, language: lang },
+  }), [call, lang]);
+
+  const editPath = useCallback((id, mutate, details) => {
+    const path = latest.current.find(p => p.id === id);
+    if (!path) return Promise.reject(new PathError("err_path_not_found"));
+    const detailStrings = details ? Object.fromEntries(Object.entries(details).map(([k, v]) => [k, String(v)])) : null;
+    return call(`/paths/${id}`, { method: "PATCH", body: { stages: mutate(path).stages, details: detailStrings } });
+  }, [call]);
+
+  const submitPath = useCallback((id, { note }) => call(`/paths/${id}/submit`, { method: "POST", body: { note } }), [call]);
+
+  const requestChanges = useCallback((id, { message }) =>
+    call(`/paths/${id}/request-changes`, { method: "POST", body: { message } }), [call]);
+
+  // Server tự chạy lại kiểm định trước khi phát hành; `checks` phía trình duyệt chỉ để hiển thị
+  const approvePath = useCallback((id, { departments, roles, reason }) =>
+    call(`/paths/${id}/approve`, { method: "POST", body: { departments, job_positions: roles, reason } }), [call]);
+
+  const archivePath = useCallback((id, reason) => call(`/paths/${id}/archive`, { method: "POST", body: { reason } }), [call]);
+
+  const deletePath = useCallback(async (id) => {
+    await call(`/paths/${id}`, { method: "DELETE" });
+    setPaths(prev => prev.filter(p => p.id !== id));
+  }, [call]);
+
+  const addComment = useCallback((id, { text, itemRef = null, replyTo = null }) => call(`/paths/${id}/comments`, {
+    method: "POST",
+    body: { text, item_ref: itemRef ? { id: itemRef.id, label: itemRef.label ?? null } : null, reply_to: replyTo },
+  }), [call]);
+
+  const resolveComment = useCallback((id, commentId, resolved = true) =>
+    call(`/paths/${id}/comments/${commentId}/resolve`, { method: "POST", body: { resolved } }), [call]);
+
+  return useMemo(() => ({
+    paths,
+    auditLog,
+    createPath, regeneratePath, editPath, submitPath, requestChanges, approvePath, archivePath, deletePath, addComment, resolveComment,
+  }), [paths, auditLog, createPath, regeneratePath, editPath, submitPath, requestChanges, approvePath, archivePath, deletePath, addComment, resolveComment]);
 }
 
 function newComment(actor, text, itemRef) {

@@ -8,7 +8,10 @@ export const MAX_CHUNK_CHARS = 1200;
 // Heading phổ biến trong tài liệu chính sách: "1.", "2.3 Title", "Section 4", "Điều 5", "Chương II", markdown "#"
 const HEADING_PATTERNS = [
   /^#{1,6}\s+\S/,
-  /^(\d+(\.\d+){0,3})[.)]?\s+\S.{0,100}$/,
+  // Tiêu đề đánh số: bắt đầu bằng chữ in hoa, không có dấu kết thúc câu ở giữa, tối đa 80 ký tự sau số.
+  // Dòng văn bản PDF bị ngắt như "5 days until 31 March…" hay "31 December. This rule has been replaced…"
+  // cũng bắt đầu bằng số nhưng không phải tiêu đề (tiêu đề dài nhất trong 20 tài liệu mẫu là 68 ký tự)
+  /^(\d+(\.\d+){0,3})[.)]?\s+(?!.*[.!?]\s)\p{Lu}.{0,79}$/u,
   /^(section|chapter|part|article|appendix)\s+[\dIVXLC]+\b/i,
   /^(điều|chương|mục|phần|phụ lục)\s+[\dIVXLC]+\b/i,
 ];

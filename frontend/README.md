@@ -55,7 +55,13 @@ npm run preview    # chạy thử bản build
 3. Reviewer mở **Hàng đợi duyệt**, xem tab **Kiểm định**, rồi bấm **Duyệt & phát hành** cho phòng Kỹ thuật.
 4. Nhân viên mở **Lộ trình của tôi** và học.
 
-**Nối backend:** copy `.env.example` thành `.env.local` và đặt `VITE_API_URL=http://localhost:8000`. Khi có biến này, frontend gọi `POST /upload` để xử lý tài liệu và `POST /paths/generate` để sinh lộ trình. Hợp đồng API ở mục 7 của tài liệu luồng.
+**Nối backend:** copy `.env.example` thành `.env.local` và đặt `VITE_API_URL=http://localhost:8000/api` (chạy backend theo `backend/README.md`). Khi có biến này:
+- Đăng nhập qua `POST /auth/login` (JWT).
+- Tài liệu, lộ trình và audit log đọc/ghi qua API (`contexts/DocumentsContext.jsx`, `contexts/PathsContext.jsx`).
+- Server sinh lộ trình (Gemini hoặc bản nháp) và tự kiểm tra quyền, kiểm định trước khi phát hành.
+- Tab **Sinh bằng AI** ở trang chi tiết lộ trình hiện báo cáo sinh nội dung.
+
+Bỏ trống biến này thì mọi thứ chạy trong trình duyệt như trước. Tiến độ học của nhân viên vẫn lưu trong trình duyệt ở cả hai chế độ.
 
 ---
 

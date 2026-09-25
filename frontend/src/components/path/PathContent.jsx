@@ -39,10 +39,11 @@ export default function PathContent({ path, editable = false, statusByItem = {},
   const [error, setError] = useState("");
   const template = STAGE_TEMPLATES[path.purpose] || STAGE_TEMPLATES.onboarding;
 
-  const apply = (mutate, details) => {
+  // await được cả thao tác đồng bộ (chế độ trình duyệt) lẫn lời gọi API (chế độ backend)
+  const apply = async (mutate, details) => {
     setError("");
     try {
-      editPath(path.id, mutate, details);
+      await editPath(path.id, mutate, details);
       return true;
     } catch (e) {
       setError(e instanceof PathError ? t(e.key, e.vars) : e.message);
@@ -61,8 +62,10 @@ export default function PathContent({ path, editable = false, statusByItem = {},
     apply(p => mapModule(p, module.id, m => ({ ...m, [KIND_FIELD[kind]]: m[KIND_FIELD[kind]].filter(x => x.id !== item.id) })), { op: "delete", kind, item: item.id });
   };
 
-  const save = (module, kind, item, patch) => {
-    if (apply(p => mapModule(p, module.id, m => ({ ...m, [KIND_FIELD[kind]]: m[KIND_FIELD[kind]].map(x => (x.id === item.id ? { ...x, ...patch } : x)) })), { op: "update", kind, item: item.id })) {
+  const save = async (module, kind, item, patch) => {
+    // Sửa tiêu đề thì bỏ bản tiếng Anh do AI sinh, để hai ngôn ngữ không lệch nhau
+    const change = kind !== "quiz" && "title" in patch ? { ...patch, titleEn: undefined } : patch;
+    if (await apply(p => mapModule(p, module.id, m => ({ ...m, [KIND_FIELD[kind]]: m[KIND_FIELD[kind]].map(x => (x.id === item.id ? { ...x, ...change } : x)) })), { op: "update", kind, item: item.id })) {
       setEditing(null);
     }
   };
@@ -124,12 +127,13 @@ export default function PathContent({ path, editable = false, statusByItem = {},
                   <div className="module-card__body">
                     {module.lessons.length > 0 && <h4><BookOpen size={14} /> {t("lessons")} ({module.lessons.length})</h4>}
                     {module.lessons.map((l, i) => {
-                      const label = `${mTitle} › ${l.title || t("part_n", { n: i + 1 })}`;
+                      const lTitle = pick(l, "title") || t("part_n", { n: i + 1 });
+                      const label = `${mTitle} › ${lTitle}`;
                       return (
                         <div key={l.id} className="content-item">
                           <div className="content-item__row">
                             <div>
-                              <strong>{l.title || t("part_n", { n: i + 1 })}</strong>
+                              <strong>{lTitle}</strong>
                               <span className="cell-sub"><Clock3 size={11} /> {t("min_n", { n: l.minutes })}</span>
                             </div>
                             {itemActions(module, "lesson", l, label)}
@@ -151,8 +155,8 @@ export default function PathContent({ path, editable = false, statusByItem = {},
                     {module.tasks.map(task => (
                       <div key={task.id} className="content-item">
                         <div className="content-item__row">
-                          <strong className="task-text">{task.title}</strong>
-                          {itemActions(module, "task", task, `${mTitle} › ${task.title.slice(0, 60)}`)}
+                          <strong className="task-text">{pick(task, "title")}</strong>
+                          {itemActions(module, "task", task, `${mTitle} › ${pick(task, "title").slice(0, 60)}`)}
                         </div>
                         {editing === task.id
                           ? <TaskForm task={task} onCancel={() => setEditing(null)} onSave={patch => save(module, "task", task, patch)} />
@@ -174,6 +178,7 @@ export default function PathContent({ path, editable = false, statusByItem = {},
                             <ol className="option-list" type="A">
                               {q.options.map((o, j) => <li key={j} className={j === q.answer ? "is-correct" : ""}>{o}</li>)}
                             </ol>
+                            {q.explanation && <p className="cell-sub">{t("quiz_explanation")}: {q.explanation}</p>}
                             <Citation reference={q.source_reference} compact verify={false} />
                           </>
                         )}

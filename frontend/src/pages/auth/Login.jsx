@@ -15,13 +15,19 @@ export default function Login() {
   const [note, setNote] = useState(null);
   const [error, setError] = useState("");
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (!email.trim() || !password) {
       setError(t("login_error_empty"));
       return;
     }
-    const role = login(email, password, { remember });
+    let role;
+    try {
+      role = await login(email, password, { remember });
+    } catch {
+      setError(t("err_network"));
+      return;
+    }
     if (!role) {
       setError(t("login_error_invalid"));
       return;

@@ -16,13 +16,14 @@ export default function PathComments({ path, canComment, itemRef, onClearItemRef
   const [replyTo, setReplyTo] = useState(null);
   const [error, setError] = useState("");
 
-  const run = (fn) => {
+  // await được cả thao tác đồng bộ (chế độ trình duyệt) lẫn lời gọi API (chế độ backend)
+  const run = async (fn) => {
     setError("");
-    try { fn(); return true; } catch (e) { setError(e instanceof PathError ? t(e.key, e.vars) : e.message); return false; }
+    try { await fn(); return true; } catch (e) { setError(e instanceof PathError ? t(e.key, e.vars) : e.message); return false; }
   };
 
-  const send = () => {
-    if (run(() => addComment(path.id, { text, itemRef, replyTo: replyTo?.id || null }))) {
+  const send = async () => {
+    if (await run(() => addComment(path.id, { text, itemRef, replyTo: replyTo?.id || null }))) {
       setText("");
       setReplyTo(null);
       onClearItemRef?.();

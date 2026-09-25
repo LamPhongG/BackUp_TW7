@@ -76,7 +76,7 @@ export default function ModuleView() {
               <Card key={l.id} className={`lesson-card ${read ? "is-read" : ""}`}>
                 <div className="card-title-row">
                   <div>
-                    <h3>{l.title || t("part_n", { n: i + 1 })}</h3>
+                    <h3>{pick(l, "title") || t("part_n", { n: i + 1 })}</h3>
                     <span className="cell-sub"><Clock3 size={11} /> {t("min_n", { n: l.minutes })}</span>
                   </div>
                   {read ? <Badge tone="green"><Check size={12} /> {t("lesson_read")}</Badge> : null}
@@ -104,7 +104,7 @@ export default function ModuleView() {
                 <div key={task.id} className="task-row">
                   <label className="checkbox">
                     <input type="checkbox" checked={done} onChange={() => toggleTask(path, task.id)} />
-                    <span style={{ textDecoration: done ? "line-through" : "none" }}>{task.title}</span>
+                    <span style={{ textDecoration: done ? "line-through" : "none" }}>{pick(task, "title")}</span>
                   </label>
                   <span className="cell-sub">{task.source_reference.doc} · {task.source_reference.section}</span>
                 </div>
@@ -151,6 +151,7 @@ function QuizBlock({ module, best, onSubmit }) {
                 {ok ? <CircleCheck size={12} /> : <CircleAlert size={12} />} {t("your_answer")}: {q.options[answers[q.id]]}
                 {!ok && <> · {t("correct_answer")}: <b>{q.options[q.answer]}</b></>}
               </span>
+              {q.explanation && <span className="cell-sub">{t("quiz_explanation")}: {q.explanation}</span>}
               {/* Trích nguyên văn chỉ hiện sau khi nộp bài để không lộ đáp án */}
               <Citation reference={q.source_reference} compact verify={false} />
             </div>

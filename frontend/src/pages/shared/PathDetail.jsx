@@ -8,6 +8,7 @@ import PathChecks, { ChecksSummary } from "../../components/path/PathChecks";
 import PathComments from "../../components/path/PathComments";
 import PathActions from "../../components/path/PathActions";
 import AuditTable from "../../components/path/AuditTable";
+import GenerationReport from "../../components/path/GenerationReport";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { usePaths } from "../../contexts/PathsContext";
 import { useDocuments } from "../../contexts/DocumentsContext";
@@ -51,6 +52,7 @@ export default function PathDetail({ basePath }) {
     ["content", t("tab_content")],
     ["checks", t("tab_checks"), checks.final_status !== "verified" ? "!" : null],
     ["comments", t("tab_comments"), openComments || null],
+    ...(path.generation ? [["generation", t("tab_generation")]] : []),
     ["history", t("tab_history")],
   ];
 
@@ -131,6 +133,7 @@ export default function PathDetail({ basePath }) {
           <PathComments path={path} canComment={canComment} itemRef={itemRef} onClearItemRef={() => setItemRef(null)} />
         </Card>
       )}
+      {tab === "generation" && <Card><GenerationReport generation={path.generation} /></Card>}
       {tab === "history" && (
         <Card>
           <AuditTable entries={auditLog.filter(e => e.path_id === path.id)} showPath={false} />

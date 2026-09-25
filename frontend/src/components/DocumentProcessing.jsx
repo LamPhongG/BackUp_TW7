@@ -7,7 +7,14 @@ import { useDocuments } from "../contexts/DocumentsContext";
 import { flaggedChunkIds } from "../utils/injectionScan";
 
 // Lỗi do documentProcessing ném ra bằng mã; lỗi khác hiện nguyên văn
-const ERROR_KEYS = { NO_TEXT_LAYER: "proc_err_no_text_layer", NO_TEXT: "proc_err_no_text" };
+const ERROR_KEYS = {
+  NO_TEXT_LAYER: "proc_err_no_text_layer",
+  NO_TEXT: "proc_err_no_text",
+  // Mã lỗi chỉ backend trả về
+  CORRUPT_FILE: "proc_err_corrupt_file",
+  ENCRYPTED: "proc_err_encrypted",
+  BAD_ENCODING: "proc_err_bad_encoding",
+};
 
 /**
  * Cột "Xử lý" của bảng tài liệu: tiến độ 0–100% khi đang chạy, số chunk và cờ injection khi xong.

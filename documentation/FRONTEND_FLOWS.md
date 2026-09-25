@@ -198,8 +198,11 @@ Nhóm Kiến thức, Luồng, An toàn chạy ở frontend bằng JavaScript thu
 
 ## 6. AI sinh lộ trình
 
-- **Có backend** (đặt `VITE_API_URL`): gọi `POST /paths/generate`. Pipeline 1 (Gemini) sinh nội dung, Pipeline 2 (Python) tính Coverage theo Role Requirement Matrix; trả về đúng cấu trúc ở mục 7.
-- **Chưa có backend** (hiện tại): `src/utils/pathGenerator.js` dựng **bản nháp từ cấu trúc tài liệu**. Giao diện gắn nhãn *Bản nháp tự động — chưa nối Gemini*. Cách dựng:
+- **Có backend** (đặt `VITE_API_URL`): `POST /paths` không kèm nội dung, **server sinh**.
+  - Có `GEMINI_API_KEY`: Gemini viết từng học phần, mỗi mục được đối chiếu với tài liệu gốc trước khi lưu.
+  - Không có key: dùng bản nháp tự động (bản chuyển sang Python của bộ sinh dưới đây, cho kết quả giống hệt).
+  - Chi tiết ở mục 8 của `backend/README.md`. Tab **Sinh bằng AI** ở trang chi tiết hiện báo cáo sinh nội dung.
+- **Chưa có backend:** `src/utils/pathGenerator.js` dựng **bản nháp từ cấu trúc tài liệu** ngay trong trình duyệt. Giao diện gắn nhãn *Bản nháp tự động — chưa nối Gemini*. Cách dựng:
   - **Học phần:** mỗi tài liệu nguồn một học phần.
   - **Thứ tự:**
     - Theo tầng: Sổ tay → Chính sách toàn công ty → Chính sách phòng ban / Mô tả công việc → SOP / Sổ tay quy trình → FAQ.
@@ -230,13 +233,13 @@ Vì mọi nội dung đều lấy từ câu có thật, bản nháp luôn qua đ
 
 ## 7. Dữ liệu và lưu trữ
 
-| Dữ liệu | Nơi lưu (hiện tại) | Khi có backend |
+| Dữ liệu | Không có backend | Có backend (`VITE_API_URL`) |
 | :--- | :--- | :--- |
-| Metadata + file tài liệu + chunk | IndexedDB `skillsprint-ai` (store `documents`, `files`, `chunks`) | `/documents`, `/upload` |
-| Lộ trình | `localStorage` `skillsprint.paths.v1` | bảng `plans` / `modules` / `tasks` / `quizzes` |
-| Nhật ký kiểm toán | `localStorage` `skillsprint.audit_log.v2` (chỉ thêm) | bảng `audit_logs` |
-| Tiến độ học | `localStorage` `skillsprint.enrollments.v1` (theo nhân viên) | bảng `quiz_answers` + tiến độ |
-| Phiên đăng nhập | `sessionStorage` (hoặc `localStorage` khi chọn *Ghi nhớ đăng nhập*) `skillsprint.session.v2` | xác thực thật |
+| Metadata + file tài liệu + chunk | IndexedDB `skillsprint-ai` (store `documents`, `files`, `chunks`) | `/documents` (bảng `documents`, `document_chunks`, `injection_flags`) |
+| Lộ trình | `localStorage` `skillsprint.paths.v1` | `/paths` (bảng `learning_paths`, nội dung ở cột JSON `stages`) |
+| Nhật ký kiểm toán | `localStorage` `skillsprint.audit_log.v2` (chỉ thêm) | `/audit-logs` (bảng `audit_logs`) |
+| Tiến độ học | `localStorage` `skillsprint.enrollments.v1` (theo nhân viên) | Vẫn ở `localStorage` (API `/enrollments` chưa làm) |
+| Phiên đăng nhập | `sessionStorage` (hoặc `localStorage` khi chọn *Ghi nhớ đăng nhập*) `skillsprint.session.v2` | JWT từ `/auth/login`, lưu cùng chỗ |
 
 **Cấu trúc một lộ trình** (cũng là hợp đồng với Pipeline 1):
 
@@ -264,14 +267,7 @@ Vì mọi nội dung đều lấy từ câu có thật, bản nháp luôn qua đ
 }
 ```
 
-**Hợp đồng API cần thống nhất với backend:**
-
-| Frontend gọi | Mô tả |
-| :--- | :--- |
-| `POST /upload` (multipart `file`, `doc_id`, `version`) | **Đã nối sẵn.** Trả `{ chunks: [...], injection_flags?: [...], page_count? }` |
-| `POST /paths/generate` `{ path_id, role_id, level, purpose, doc_ids, prompt, prompt_version }` | **Đã nối sẵn.** Trả `{ stages, excluded_chunks, coverage, model, prompt_version }`. `coverage` do Pipeline 2 tính theo Role Requirement Matrix (`role_matrix.csv` của nhóm QA) |
-| `/paths`, `/paths/{id}/submit`, `/request-changes`, `/approve`, `/archive`, `/comments` | Cần làm. Chữ ký hàm giữ như `PathsContext` |
-| `GET /audit-logs` | Cần làm. Các cột: `timestamp, actor_id, action, path_id, status_before, status_after, final_status, reason` |
+**API backend:** danh sách đầy đủ ở mục 4 của `backend/README.md` (Swagger: `/api/docs`). Frontend đổi dữ liệu API sang đúng cấu trúc ở trên tại `services/apiMappers.js`. Ví dụ `target.job_position_id` → `target.role_id`, `published_to.job_positions` → `published_to.roles`. Nhờ vậy các trang không phải biết dữ liệu đến từ trình duyệt hay từ server.
 
 ---
 
@@ -377,6 +373,16 @@ Role Requirement Matrix là dữ liệu của luồng kiểm định Pipeline 2 
 
 Kiểm tra: build; 77/77 unit test (có test cho coverage từ backend, thiếu coverage, coverage sai dạng); E2E toàn luồng đạt; quét lại không còn file/export/khoá dịch thừa.
 
+### 8.10 Nối backend (25/09/2026)
+
+Có `VITE_API_URL` thì `DocumentsContext`, `PathsContext` và `useAuth` gọi API thay cho IndexedDB / `localStorage`. Hai chế độ dùng chung một bộ hàm, nên các trang không phải sửa.
+- **Lỗi từ backend:** trả kèm khoá dịch `err_...` và được hiển thị như lỗi ở chế độ trình duyệt.
+- **Tab mới:** *Sinh bằng AI* ở trang chi tiết lộ trình.
+- **Giải thích đáp án:** câu hỏi do AI tạo có thêm phần giải thích.
+- **Mở tài liệu gốc:** file được tải kèm token rồi mới mở.
+
+Chi tiết backend xem `backend/README.md`.
+
 ### 8.9 Trang đăng nhập Glassmorphism (25/09/2026)
 
 Giữ bố cục 2 nửa, làm lại theo mẫu *Modern Glassmorphism Login*:
@@ -429,8 +435,9 @@ Kiểm tra trên Chrome: bỏ trống báo lỗi; sai mật khẩu báo lỗi v�
 
 ## 10. Giới hạn hiện tại và việc tiếp theo
 
-- **Chưa nối Gemini:** nội dung lộ trình là bản nháp dựng từ tài liệu, câu hỏi còn đơn giản (điền số, chọn phát biểu đúng). Cần backend `POST /paths/generate` của Phong.
-- **Dữ liệu chỉ nằm trong trình duyệt đang dùng:** lộ trình, góp ý, audit log, tiến độ lưu ở `localStorage`. Máy khác không thấy nên chưa phối hợp được giữa nhiều người thật. Cần API của Nhi.
-- **Đăng nhập là demo:** mỗi vai trò có 1 tài khoản, mật khẩu chung `Demo@123` nằm trong mã nguồn. Nhân viên đổi vị trí bằng ô demo ở trang Hồ sơ.
+- **Gemini chưa chạy thật:** pipeline đã có ở backend, nhưng repo chưa có API key. Không có key thì server dùng bản nháp tự động.
+- **Chế độ không có backend:** lộ trình, góp ý, audit log và tiến độ nằm trong trình duyệt đang dùng; máy khác không thấy. Có backend thì mọi thứ trừ tiến độ học nằm trên server.
+- **Tiến độ học vẫn ở trình duyệt** ở cả hai chế độ: API `/enrollments` chưa làm.
+- **Tài khoản demo:** mỗi vai trò có 1 tài khoản, mật khẩu `Demo@123`. Có backend thì mật khẩu được băm bcrypt trong DB. Ô *đổi vị trí* ở trang Hồ sơ chỉ hiện khi không có backend.
 - **Tài liệu:** chưa có OCR cho PDF scan. Thu hồi lộ trình là thao tác tay, chưa tự thu hồi khi tài liệu nguồn có phiên bản mới; hiện kiểm định chỉ báo *nguồn cũ* để HR biết mà sinh lại.
-- **Coverage theo Role Requirement Matrix chưa có:** chờ backend Python (Nhi) đọc `role_matrix.csv` của Duyên và trả `coverage` trong `POST /paths/generate`. Trước lúc đó, mọi lộ trình tối đa là *Verified with Warning*, và Reviewer phải ghi lý do khi duyệt.
+- **Coverage theo Role Requirement Matrix chưa có:** chờ Pipeline 2 (Nhi) đọc `role_matrix.csv` của Duyên và ghi `coverage` vào lộ trình. Trước lúc đó, mọi lộ trình tối đa là *Verified with Warning*, và Reviewer phải ghi lý do khi duyệt.
