@@ -62,7 +62,7 @@ def read_docx(file_path: Path) -> list[dict]:
         if not text:
             continue
 
-        style = para.style.name if para.style else ""
+        style = (para.style.name if para.style and para.style.name else "")
         if style.lower().startswith("heading"):
             cur_lines.append(text.upper())
         else:

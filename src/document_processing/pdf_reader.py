@@ -42,7 +42,7 @@ def read_pdf(file_path: Path) -> list[dict]:
             raise PDFReadError(f"File '{file_path.name}' has no pages.")
 
         for i in range(pdf.page_count):
-            raw = pdf[i].get_text("text").strip()
+            raw = str(pdf[i].get_text("text")).strip()
             if not raw:
                 continue
             # Normalize Unicode characters (e.g. Vietnamese NFD to NFC)

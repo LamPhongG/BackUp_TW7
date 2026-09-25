@@ -6,13 +6,11 @@ import pytest
 from pydantic import ValidationError
 
 from src.document_processing.chunker import DocumentChunk
-from src.genai_pipeline.gemini_client import GeminiAPIError, configure_client, generate_content_with_retry
+from src.genai_pipeline.gemini_client import GeminiAPIError, configure_client
 from src.genai_pipeline.plan_generator import generate_onboarding_plan
 from src.genai_pipeline.quiz_generator import generate_quiz
 from src.genai_pipeline.response_schemas import (
-    ModuleSchema,
     OnboardingPlanSchema,
-    QuizQuestionSchema,
     SourceCitation,
     TaskSchema,
 )

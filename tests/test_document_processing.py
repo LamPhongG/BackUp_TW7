@@ -1,6 +1,9 @@
 import pytest
 from docx import Document
-import fitz
+try:
+    import pymupdf as fitz
+except ImportError:
+    import fitz
 
 from src.document_processing.chunker import split_into_chunks
 from src.document_processing.docx_reader import DOCXReadError, read_docx
@@ -157,8 +160,8 @@ class TestHardenedDocumentReaders:
         pdf_path = tmp_path / "encrypted.pdf"
         doc = fitz.open()
         p = doc.new_page()
-        p.insert_text((50, 50), "Confidential data")
-        doc.save(str(pdf_path), encryption=fitz.PDF_ENCRYPT_AES_256, user_pw="secret123")
+        encryption_flag = getattr(fitz, "PDF_ENCRYPT_AES_256", 4)
+        doc.save(str(pdf_path), encryption=encryption_flag, user_pw="secret123")
         doc.close()
 
         with pytest.raises(PDFReadError, match="encrypted"):

@@ -1,7 +1,4 @@
-# Tests for automated Hidden Test readiness on unseen documents.
-
 from pathlib import Path
-import pytest
 
 from hidden_test_ready.run_hidden_test import run_pipeline_on_unseen_doc
 from src.schemas.comparison_contract import VerificationStatus

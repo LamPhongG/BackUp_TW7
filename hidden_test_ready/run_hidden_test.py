@@ -28,7 +28,6 @@ from src.genai_pipeline.response_schemas import (
     SourceCitation,
     TaskSchema,
 )
-from src.schemas.comparison_contract import VerificationStatus
 from hidden_test_ready.generator import create_unseen_policy_pdf
 
 

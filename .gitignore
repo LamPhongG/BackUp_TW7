@@ -25,6 +25,7 @@ sample_documents/
 .vscode/
 .idea/
 pyrightconfig.json
+pyrefly.toml
 *.sublime-project
 *.sublime-workspace
 

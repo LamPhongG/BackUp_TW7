@@ -1,7 +1,3 @@
-# Adversarial and Security Trap Tests for SkillSprint AI
-
-import pytest
-
 from src.comparison_engine.engine import ComparisonEngine
 from src.contradiction_checks.checker import check_contradictions
 from src.document_processing.chunker import DocumentChunk
