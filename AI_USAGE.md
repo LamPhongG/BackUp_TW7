@@ -1,8 +1,46 @@
-# AI Usage Declaration Log
+# AI Usage Declaration Log — SkillSprint AI
+**Dự án:** SkillSprint AI – Dual-Pipeline AI Document Verification System  
+**Cuộc thi:** TechWiz 7 – Generative AI Powerplay Track  
+**Đội thi:** Four Angry Birds  
 
-| Date | Tool Name | Module / File Affected | Purpose | Changes / Verification Done | Verified By |
+> **Tuyên bố minh bạch:** Tài liệu này ghi nhận toàn bộ các hoạt động sử dụng AI hỗ trợ trong quá trình phát triển dự án theo đúng quy chế cuộc thi TechWiz 7. Toàn bộ mã nguồn và tài liệu đều đã qua quy trình rà soát thủ công của các thành viên, refactor tên biến và loại bỏ các thành phần AI boilerplate.
+
+---
+
+## I. NHẬT KÝ CHI TIẾT THEO CÁC PHASES (PHASE 1 – 5)
+
+| Ngày | Công cụ AI | Module / File ảnh hưởng | Mục đích sử dụng | Kiểm thử & Xác minh bởi con người | Người xác nhận |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 2026-09-24 | Claude / Gemini | Initial Setup | Khởi tạo cấu trúc dự án | Kiểm tra khớp đặc tả đề bài | Team Lead |
+| **2026-09-24** | Claude / Gemini | Khởi tạo cấu trúc dự án & WBS | Tạo khung thư mục ban đầu theo kiến trúc Dual-Pipeline | So sánh với đặc tả đề bài và phân bổ RACI 4 thành viên | Team Lead |
+| **2026-09-24** | Claude / Gemini | `src/document_processing/pdf_reader.py` | Viết hàm đọc PDF với PyMuPDF, trích xuất text từng trang | Kiểm tra exception handling, docstring chuẩn, kiểm tra rò rỉ bộ nhớ | Châu Quốc Lâm Phong |
+| **2026-09-24** | Claude / Gemini | `src/document_processing/chunker.py` | Viết logic chunking chia text theo heading/section | Kiểm tra regex pattern, logic flush chunk cuối, giới hạn MAX_CHUNK | Châu Quốc Lâm Phong |
+| **2026-09-24** | Claude / Gemini | `src/document_processing/docx_reader.py` | Viết hàm đọc file DOCX với python-docx | Kiểm tra style-based heading detection, page break counting | Châu Quốc Lâm Phong |
+| **2026-09-24** | Claude / Gemini | `src/document_validation/validator.py` | Viết module kiểm tra định dạng và kích thước file | Kiểm tra 3 loại exception, size bounds, extension whitelist | Châu Quốc Lâm Phong |
+| **2026-09-24** | Claude / Gemini | `tests/test_document_processing.py` | Viết bộ unit test cho Ingestion & Chunker | Chạy pytest, kiểm tra các trường hợp biên (file thiếu, rỗng, sai định dạng) | Châu Quốc Lâm Phong |
+| **2026-09-25** | Claude / Gemini | `src/genai_pipeline/gemini_client.py` | Viết client gọi Gemini API kèm exponential backoff retry | Bổ sung bắt lỗi `APITimeoutError`, ẩn API key qua `.env`, test retry 3 lần | Châu Quốc Lâm Phong |
+| **2026-09-25** | Claude / Gemini | `src/genai_pipeline/response_schemas.py` | Định nghĩa schema Pydantic: `OnboardingPlan`, `Module`, `Task`, `Quiz` | Bắt buộc thuộc tính `source_citation` với `exact_quote` và `page_number` | Châu Quốc Lâm Phong |
+| **2026-09-25** | Claude / Gemini | `src/prompt_templates/onboarding_plan_v1.txt` | Soạn prompt template có định dạng JSON schema | Thử nghiệm thủ công trên Google AI Studio, tinh chỉnh cấu trúc đầu ra | Châu Quốc Lâm Phong |
+| **2026-09-25** | Claude / Gemini | `src/genai_pipeline/plan_generator.py` | Viết hàm sinh lộ trình onboarding từ chunks | Xử lý lỗi protobuf schema của Gemini bằng `response_mime_type: application/json` | Châu Quốc Lâm Phong |
+| **2026-09-25** | Claude / Gemini | `src/genai_pipeline/quiz_generator.py` | Viết hàm sinh câu hỏi trắc nghiệm kiểm chứng | Kiểm tra tính liên kết giữa câu hỏi và trích dẫn gốc trong tài liệu | Châu Quốc Lâm Phong |
+| **2026-09-26** | Claude / Gemini | `src/schemas/comparison_contract.py` | Thiết kế contract chung kết quả so sánh 2 pipeline | Thống nhất cấu trúc `ComparisonReport`, `ComparisonItem`, `HallucinationFlag` | Cả nhóm |
+| **2026-09-26** | Claude / Gemini | `src/comparison_engine/engine.py` | Viết logic so sánh field-by-field song song | Tính match_score độc lập không dùng AI, đảm bảo tính khách quan | Châu Quốc Lâm Phong & Quỳnh Nhi |
+| **2026-09-26** | Claude / Gemini | `src/hallucination_checks/detector.py` | Viết bộ phát hiện ảo giác (Hallucination Detector) | Nâng cấp thuật toán trích xuất số nguyên `\b\d+\b` để bắt lỗi sửa ngày phép | Châu Quốc Lâm Phong |
+| **2026-09-26** | Claude / Gemini | `src/contradiction_checks/checker.py` | Viết bộ phát hiện mâu thuẫn chính sách nội bộ | Kiểm tra regex phát hiện mâu thuẫn thời hạn đổi mật khẩu và thông báo nghỉ | Quỳnh Nhi |
+| **2026-09-26** | Claude / Gemini | `src/security/injection_filter.py` | Viết khiên lọc mã độc Prompt Injection | Quét regex chặn các chuỗi `SYSTEM OVERRIDE`, `DAN`, `ignore previous instructions` | Quỳnh Nhi & Lâm Phong |
+| **2026-09-26** | Claude / Gemini | `tests/test_adversarial.py` | Xây dựng 11 kịch bản kiểm thử bẫy tấn công | Chạy 11/11 tests pass, xác nhận hệ thống tự hạ về `MANUAL_REVIEW_REQUIRED` | Lê Thị Kiều Duyên |
+| **2026-09-27** | Claude / Gemini | `src/document_processing/pdf_reader.py` | Gia cố xử lý edge cases (file scan, mã hóa, Unicode) | Thêm kiểm tra `pdf.is_encrypted`, ném `PDFReadError`, chuẩn hóa NFC | Châu Quốc Lâm Phong |
+| **2026-09-27** | Claude / Gemini | `src/document_processing/docx_reader.py` | Bổ sung trích xuất dữ liệu Bảng (Tables) trong DOCX | Đọc toàn bộ các cell trong table, gộp nội dung dạng markdown table | Châu Quốc Lâm Phong |
+| **2026-09-27** | Claude / Gemini | `hidden_test_ready/` | Xây dựng kịch bản và runner Hidden Test tự động | Chạy `run_hidden_test.py` trên tài liệu mới, xuất `hidden_test_report.json` | Châu Quốc Lâm Phong |
+| **2026-09-27** | Claude / Gemini | `documentation/demo_script.md` | Biên soạn kịch bản video demo sản phẩm (05:00) | Bố cục 6 cảnh quay chi tiết, lời thoại và checklist quay cụ thể | Cả nhóm |
+| **2026-09-28** | Claude / Gemini | `README.md` | Viết tài liệu hướng dẫn triển khai A – Z | Soát lỗi chính tả, xác nhận các lệnh chạy độc lập từ clone đến test | Cả nhóm |
+| **2026-09-28** | Claude / Gemini | `.env.example` & `.gitignore` | Rà soát an toàn bảo mật và ẩn thông tin nhạy cảm | Kiểm tra `git log -S` đảm bảo không có API key hay secret nào bị lọt | Lê Thị Kiều Duyên |
+
+---
+
+### Web application — `frontend/`, `backend/`, `sample_documents/` (Phạm Tấn Tài)
+
+| Ngày | Công cụ AI | Module / File ảnh hưởng | Mục đích sử dụng | Kiểm thử & Xác minh bởi con người | Người xác nhận |
+| :--- | :--- | :--- | :--- | :--- | :--- |
 | 2026-09-24 | Claude Code (Claude Opus 5.5) | `frontend/src/contexts/LanguageContext.jsx`, `frontend/src/locales/en.js`, `frontend/src/locales/vi.js` | Loại hỗ trợ: review code + sinh code. Rà soát logic chuyển đổi ngôn ngữ và viết lại i18n: `t()` có tham số và fallback tiếng Anh, `tv()`, `tNode()`, `pick()`, kiểm tra giá trị `localStorage` | Sửa: app crash khi `app_lang` không hợp lệ, key `close` bị trùng, thiếu `<html lang>`. Test: `npm run build`; render 31 route × `vi`/`en`/giá trị sai → 0 lỗi; đối chiếu key en/vi khớp 100% | Phạm Tấn Tài |
 | 2026-09-24 | Claude Code (Claude Opus 5.5) | `frontend/src/pages/**`, `frontend/src/layouts/**`, `frontend/src/components/*` | Loại hỗ trợ: sinh code + sửa lỗi. Chuyển ngữ toàn bộ trang Employee / Manager / Admin / Auth; thêm nút đổi ngôn ngữ cho Manager và trang đăng nhập | Sửa lỗi: nút "Tiếp" bị cắt chữ, textarea AI Studio không đổi ngôn ngữ, quiz ghi cứng "2 / 3 đúng" (nay tính điểm thật), checklist đếm sai do làm tròn lên, link `/manager/settings` dẫn tới 404. Test: build + render toàn bộ route, quét chữ tiếng Anh còn sót ở chế độ VI | Phạm Tấn Tài |
 | 2026-09-24 | Claude Code (Claude Opus 5.5) | `frontend/src/data/company.js`, `frontend/src/data/mock.js`, `frontend/src/utils/helpers.js`, `frontend/src/components/ValidationTag.jsx` | Loại hỗ trợ: sinh dữ liệu mẫu + code. Chuyển dữ liệu sang hồ sơ FourAngryBirds (10 vị trí, danh mục DOC-01…20); thêm giai đoạn Week 2 (SRS Step 13), trạng thái tiến độ (Step 54), đủ trạng thái kiểm định (mục 1.2), mức độ khó (Step 25) | Sửa: ngày tháng chuyển sang ISO và hiển thị theo locale; bỏ trạng thái cũ "At Risk". Test: build + render; kiểm tra badge/màu từng trạng thái | Phạm Tấn Tài |
@@ -28,3 +66,11 @@
 | 2026-09-25 | Claude Code (Claude Opus 5.5) | `frontend/src/utils/chunker.js`, `backend/app/ingestion/chunker.py`, `frontend/tests/chunker.test.js`, `backend/tests/test_ingestion.py` | Loại hỗ trợ: rà soát dữ liệu + sửa lỗi. Đánh giá `sample_documents/` và `role_matrix/` nhánh `feat/le-thi-kieu-duyen` bằng pipeline backend. Phát hiện chunker nhận nhầm dòng PDF bị ngắt ("5 days until 31 March…") là tiêu đề đánh số, làm cắt đôi mục §6 của DOC-02 (ca kiểm thử mâu thuẫn). Sửa: tiêu đề đánh số phải bắt đầu bằng chữ in hoa, ở cả frontend và backend | Test: 112/112 pytest, 78/78 Vitest; so khớp chunker và bộ sinh bản nháp Python với JS → vẫn giống hệt; quét lại 16 file mẫu → không còn tiêu đề nhận nhầm | Phạm Tấn Tài |
 | 2026-09-25 | Claude Code (Claude Opus 5.5) | `sample_documents/DOC-11…DOC-20_*.pdf`, `sample_documents/source/*.md`, `sample_documents/source/build_pdfs.mjs`, `sample_documents/README_PHASE2.md` | Loại hỗ trợ: soạn tài liệu mẫu + công cụ. Viết 10 tài liệu còn thiếu của danh mục (SOP onboarding, sổ tay vận hành chi nhánh, 3 bộ mô tả công việc, FAQ, 4 tài liệu kiểm thử: mâu thuẫn, prompt injection, quy định hết hạn, ngoại lệ phòng ban), số liệu khớp DOC-01…10; lấp khoảng trống R040/R048 của ma trận vai trò; build PDF bằng Chrome headless | Mỗi PDF 3–5 trang; chạy qua pipeline backend: trích xuất + chia chunk không nhận nhầm tiêu đề, mỗi tài liệu sinh 5 câu hỏi và 2–3 nhiệm vụ; DOC-18 bị gắn cờ đủ 9/9 luật ở 4 chunk, 3 biến thể né lọc không bị bắt (đúng thiết kế); đáp án kiểm thử ghi trong README_PHASE2. Nội dung là dữ liệu giả lập cho công ty hư cấu, cần nhóm QA đọc duyệt | Phạm Tấn Tài |
 | 2026-09-25 | Claude Code (Claude Opus 5.5) | `frontend/src/utils/chunker.js`, `backend/app/ingestion/chunker.py`, tests, `sample_documents/README_PHASE2.md` | Loại hỗ trợ: kiểm thử dữ liệu + sửa lỗi. Chạy toàn bộ DOC-01…20 qua API vào DB mới: tải lên, vòng đời phiên bản, cờ injection, sinh lộ trình cho 10 vị trí, kiểm định phía server, đối chiếu ma trận vai trò, luồng duyệt. Phát hiện lỗi chunker thứ hai ("31 December. This rule…" bị coi là tiêu đề, cắt DOC-02 §6); siết luật tiêu đề đánh số: không có dấu kết thúc câu bên trong, tối đa 80 ký tự sau số (tiêu đề thật dài nhất trong 290 tiêu đề của 20 tài liệu là 68 ký tự) | Kết quả: 20/20 tài liệu xử lý xong, 0 tiêu đề nhận nhầm trên 285 chunk; DOC-02 obsolete, DOC-19 expired; DOC-18 loại đúng 4 chunk, 0 injection lọt vào lộ trình; 10/10 lộ trình không lỗi chặn, 100% trích dẫn khớp; 114/114 pytest, 79/79 Vitest; chunker và bộ sinh bản nháp Python vẫn giống hệt JS | Phạm Tấn Tài |
+
+---
+
+## II. QUY TẮC ĐẠO ĐỨC & KIỂM SOÁT AI CỦA NHÓM
+
+1. **Không sao chép nguyên văn (Zero Raw Copy-Paste):** Mọi đoạn code được gợi ý đều được refactor lại theo phong cách sinh viên tự nhiên, đặt tên biến phù hợp với ngữ cảnh thực tế của dự án.
+2. **Không phụ thuộc AI ở luồng Ground-Truth (Pure Python Rule Engine):** Module kiểm chứng đối soát trong `src/comparison_engine/` và `src/contradiction_checks/` tuyệt đối không dùng bất kỳ SDK AI nào để đảm bảo tính khách quan và độc lập 100%.
+3. **Bảo mật thông tin tối đa:** Không bao giờ đưa tài liệu nhạy cảm hay API Key của thành viên lên các dịch vụ đám mây công cộng mà không qua mã hóa hoặc kiểm soát.
