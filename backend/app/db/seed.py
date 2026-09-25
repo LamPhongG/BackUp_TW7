@@ -40,12 +40,33 @@ JOB_POSITIONS = [
 # Demo password is public in the frontend source, so these accounts are for local/demo databases only.
 DEMO_PASSWORD = "Demo@123"
 DEMO_USERS = [
+    # Staff accounts
     {"email": "hr@fourangrybirds.vn", "name": "Jordan Lee", "user_role": UserRole.HR,
      "job_title": "HR Executive", "department_code": "Human Resources", "job_position_id": None},
     {"email": "reviewer@fourangrybirds.vn", "name": "Sarah Chen", "user_role": UserRole.REVIEWER,
      "job_title": "Onboarding Reviewer", "department_code": "Human Resources", "job_position_id": None},
+
+    # 10 Employee accounts covering all 10 Job Roles (SRS Step 2 & 7)
+    {"email": "sales.emp@fourangrybirds.vn", "name": "David Nguyen", "user_role": UserRole.EMPLOYEE,
+     "job_title": "Sales Executive", "department_code": "Sales", "job_position_id": "sales-exec"},
+    {"email": "cs.emp@fourangrybirds.vn", "name": "Emily Tran", "user_role": UserRole.EMPLOYEE,
+     "job_title": "Customer Support Executive", "department_code": "Customer Support", "job_position_id": "cs-exec"},
+    {"email": "hr.emp@fourangrybirds.vn", "name": "Jessica Le", "user_role": UserRole.EMPLOYEE,
+     "job_title": "HR Specialist", "department_code": "Human Resources", "job_position_id": "hr-exec"},
+    {"email": "finance.emp@fourangrybirds.vn", "name": "Michael Pham", "user_role": UserRole.EMPLOYEE,
+     "job_title": "Finance Associate", "department_code": "Finance", "job_position_id": "finance-associate"},
+    {"email": "ops.emp@fourangrybirds.vn", "name": "Lucas Vo", "user_role": UserRole.EMPLOYEE,
+     "job_title": "Operations Coordinator", "department_code": "Operations", "job_position_id": "ops-coordinator"},
+    {"email": "marketing.emp@fourangrybirds.vn", "name": "Chloe Dang", "user_role": UserRole.EMPLOYEE,
+     "job_title": "Marketing Executive", "department_code": "Marketing", "job_position_id": "marketing-exec"},
     {"email": "alex.morgan@fourangrybirds.vn", "name": "Alex Morgan", "user_role": UserRole.EMPLOYEE,
-     "job_title": None, "department_code": "Engineering", "job_position_id": "support-engineer"},
+     "job_title": "Software Support Engineer", "department_code": "Engineering", "job_position_id": "support-engineer"},
+    {"email": "branch.mgr@fourangrybirds.vn", "name": "Daniel Hoang", "user_role": UserRole.EMPLOYEE,
+     "job_title": "Branch Manager", "department_code": "Branch Management", "job_position_id": "branch-manager"},
+    {"email": "data.analyst@fourangrybirds.vn", "name": "Sophia Vu", "user_role": UserRole.EMPLOYEE,
+     "job_title": "Data Analyst", "department_code": "Data", "job_position_id": "data-analyst"},
+    {"email": "team.lead@fourangrybirds.vn", "name": "Marcus Le", "user_role": UserRole.EMPLOYEE,
+     "job_title": "Team Leader / Tech Lead", "department_code": "Engineering", "job_position_id": "team-leader"},
 ]
 
 

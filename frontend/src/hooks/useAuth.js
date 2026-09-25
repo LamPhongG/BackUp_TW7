@@ -41,9 +41,18 @@ const DEMO_USERS = {
 // (mật khẩu băm bcrypt trong DB). Mật khẩu nằm trong mã nguồn nên chỉ dùng để trình diễn.
 export const DEMO_PASSWORD = "Demo@123";
 export const DEMO_ACCOUNTS = [
-  { email: "hr@fourangrybirds.vn", roleKey: ROLES.HR },
-  { email: "reviewer@fourangrybirds.vn", roleKey: ROLES.REVIEWER },
-  { email: "alex.morgan@fourangrybirds.vn", roleKey: ROLES.EMPLOYEE },
+  { email: "hr@fourangrybirds.vn", roleKey: ROLES.HR, label: "HR" },
+  { email: "reviewer@fourangrybirds.vn", roleKey: ROLES.REVIEWER, label: "Reviewer" },
+  { email: "sales.emp@fourangrybirds.vn", roleKey: ROLES.EMPLOYEE, roleId: "sales-exec", label: "Sales" },
+  { email: "cs.emp@fourangrybirds.vn", roleKey: ROLES.EMPLOYEE, roleId: "cs-exec", label: "CS" },
+  { email: "hr.emp@fourangrybirds.vn", roleKey: ROLES.EMPLOYEE, roleId: "hr-exec", label: "HR Staff" },
+  { email: "finance.emp@fourangrybirds.vn", roleKey: ROLES.EMPLOYEE, roleId: "finance-associate", label: "Finance" },
+  { email: "ops.emp@fourangrybirds.vn", roleKey: ROLES.EMPLOYEE, roleId: "ops-coordinator", label: "Ops" },
+  { email: "marketing.emp@fourangrybirds.vn", roleKey: ROLES.EMPLOYEE, roleId: "marketing-exec", label: "Marketing" },
+  { email: "alex.morgan@fourangrybirds.vn", roleKey: ROLES.EMPLOYEE, roleId: "support-engineer", label: "Support Eng" },
+  { email: "branch.mgr@fourangrybirds.vn", roleKey: ROLES.EMPLOYEE, roleId: "branch-manager", label: "Branch Mgr" },
+  { email: "data.analyst@fourangrybirds.vn", roleKey: ROLES.EMPLOYEE, roleId: "data-analyst", label: "Data Analyst" },
+  { email: "team.lead@fourangrybirds.vn", roleKey: ROLES.EMPLOYEE, roleId: "team-leader", label: "Tech Lead" },
 ];
 
 // Không ghi nhớ: phiên ở sessionStorage, đóng tab là hết. Ghi nhớ: ở localStorage, còn sau khi đóng trình duyệt.
