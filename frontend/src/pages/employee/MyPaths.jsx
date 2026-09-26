@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { RouteIcon, ArrowUpRight } from "../../components/Icons";
+import { RouteIcon, ArrowUpRight, Award } from "../../components/Icons";
 import { Card, Badge, ProgressBar, EmptyState, Button } from "../../components/UI";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useEnrollment } from "../../contexts/EnrollmentContext";
@@ -8,6 +9,7 @@ import { useMyPaths } from "../../hooks/useMyPaths";
 import { usePaths } from "../../contexts/PathsContext";
 import { pathProgress } from "../../utils/progress";
 import { formatDateTime, formatLocalDate } from "../../utils/helpers";
+import CertificateModal from "../../components/path/CertificateModal";
 
 export default function MyPaths() {
   const navigate = useNavigate();
@@ -16,6 +18,7 @@ export default function MyPaths() {
   const { enrollmentFor } = useEnrollment();
   const myPaths = useMyPaths();
   const { loaded } = usePaths();
+  const [certPath, setCertPath] = useState(null);
 
   return (
     <div>
@@ -52,13 +55,29 @@ export default function MyPaths() {
                   </p>
                 )}
                 <ProgressBar value={prog.percent} showValue />
-                <Button variant="secondary" onClick={() => navigate(`/employee/paths/${p.id}`)} style={{ marginTop: 12 }}>
-                  {t("open")} <ArrowUpRight size={14} />
-                </Button>
+                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                  <Button variant="secondary" onClick={() => navigate(`/employee/paths/${p.id}`)}>
+                    {t("open")} <ArrowUpRight size={14} />
+                  </Button>
+                  {prog.complete && (
+                    <Button variant="outline" onClick={() => setCertPath({ path: p, enrollment: e })}>
+                      <Award size={14} /> {t("certificate")}
+                    </Button>
+                  )}
+                </div>
               </Card>
             );
           })}
         </div>
+      )}
+      
+      {certPath && (
+        <CertificateModal
+          path={certPath.path}
+          employee={user}
+          enrollment={certPath.enrollment}
+          onClose={() => setCertPath(null)}
+        />
       )}
     </div>
   );

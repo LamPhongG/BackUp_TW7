@@ -196,6 +196,8 @@ export const vi = {
   uploaded_by_on: "Tải lên bởi {name} · {date}",
   action_view: "Xem",
   action_download: "Tải xuống",
+  certificate: "Chứng nhận",
+  download: "Tải xuống",
   action_delete: "Xóa",
   repo_empty_title: "Kho chưa có tài liệu",
   repo_empty_desc: "Tải lên các file PDF/DOCX của công ty để bắt đầu xây dựng kho tri thức.",
@@ -581,9 +583,11 @@ export const vi = {
   path_completed: "Đã hoàn thành lộ trình",
   my_paths_desc: "Các lộ trình được giao cho bạn, kèm hạn hoàn thành.",
   stages_modules: "{s} giai đoạn · {m} học phần",
-  published_on: "Phát hành {date}",
+  published_on: "Phát hành {date}",
+
   due_on: "Hạn hoàn thành: {date}",
-  due_overdue: "Quá hạn từ {date}",
+  due_overdue: "Quá hạn từ {date}",
+
   menu_explore: "Khám phá lộ trình",
   explore_desc: "Mọi lộ trình đã phát hành cho phòng {department}. Xem trước những gì bạn sẽ học, hoặc đăng ký tham gia lộ trình không bắt buộc.",
   explore_needs_backend: "Khám phá và đăng ký lộ trình cần backend (đặt VITE_API_URL).",
@@ -601,7 +605,8 @@ export const vi = {
   explore_enrolled: "Đã đăng ký. Lộ trình đã có trong Lộ trình của tôi.",
   explore_open: "Mở lộ trình",
   explore_close: "Đóng",
-  explore_loading: "Đang tải…",
+  explore_loading: "Đang tải…",
+
   explore_untitled_lesson: "Bài không có tiêu đề",
   explore_more: "Khám phá lộ trình",
   learning_now: "Lộ trình đang học",
@@ -726,7 +731,8 @@ export const vi = {
   matrix_no_mandatory: "Ma trận yêu cầu chưa có tài liệu bắt buộc nào cho vị trí {role}.",
   matrix_backend_only: "Chế độ trình duyệt không có Role Requirement Matrix nên tài liệu bắt buộc không được chọn tự động. Nối backend để bật.",
   matrix_load_failed: "Không tải được ma trận yêu cầu: {error}",
-  mandatory_unavailable_warning: "Tài liệu bắt buộc chưa chọn được: {list}. Lộ trình vẫn sinh được, nhưng Reviewer sẽ thấy cảnh báo thiếu nguồn. Hãy tải lên hoặc chờ xử lý xong rồi sinh lại.",
+  mandatory_unavailable_warning: "Tài liệu bắt buộc chưa chọn được: {list}. Lộ trình vẫn sinh được, nhưng Reviewer sẽ thấy cảnh báo thiếu nguồn. Hãy tải lên hoặc chờ xử lý xong rồi sinh lại.",
+
   mandatory_omitted_warning: "Bạn đã bỏ chọn tài liệu bắt buộc: {list}. Lộ trình sẽ không dạy các tài liệu này và Reviewer sẽ thấy cảnh báo.",
   mandatory_restore_all: "Chọn lại đủ tài liệu bắt buộc",
   regenerate_keeps_omitted: "Tài liệu bắt buộc đã bỏ ở lần sinh trước vẫn được giữ nguyên là bỏ: {list}.",
@@ -807,7 +813,8 @@ export const vi = {
   err_job_not_found: "Không tìm thấy lượt sinh này (máy chủ có thể đã khởi động lại). Hãy sinh lại.",
 
   // Invite & self-registration
-  menu_invites: "Mời nhân viên mới",
+  menu_invites: "Mời nhân viên mới",
+
   invites_title: "Mời nhân viên mới",
   invites_subtitle: "Tạo link đăng ký theo vị trí và gửi cho nhân viên mới.",
   invites_needs_backend: "Tính năng mời cần backend (đặt VITE_API_URL).",

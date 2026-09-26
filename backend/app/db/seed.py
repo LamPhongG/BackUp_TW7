@@ -66,6 +66,16 @@ DEMO_USERS = [
      "employee_code": "EMP-0158", "experience_level": PathLevel.BEGINNER, "location": "Ho Chi Minh City",
      "joining_date": date(2026, 9, 28), "competencies": ["Tier 1 response", "Escalation judgment"],
      "previous_experience": "1 year in retail customer service", "training_status": TrainingStatus.NOT_STARTED},
+
+    {"email": "sales.emp@fourangrybirds.vn", "name": "Sales Employee", "user_role": UserRole.EMPLOYEE, "job_title": None, "department_code": "Sales", "job_position_id": "sales-exec", "employee_code": "EMP-0201", "experience_level": PathLevel.BEGINNER, "location": "Hanoi", "joining_date": date(2026, 8, 1), "training_status": TrainingStatus.NOT_STARTED},
+    {"email": "cs.emp@fourangrybirds.vn", "name": "CS Employee", "user_role": UserRole.EMPLOYEE, "job_title": None, "department_code": "Customer Support", "job_position_id": "cs-exec", "employee_code": "EMP-0202", "experience_level": PathLevel.BEGINNER, "location": "Hanoi", "joining_date": date(2026, 8, 1), "training_status": TrainingStatus.NOT_STARTED},
+    {"email": "hr.emp@fourangrybirds.vn", "name": "HR Employee", "user_role": UserRole.EMPLOYEE, "job_title": None, "department_code": "Human Resources", "job_position_id": "hr-exec", "employee_code": "EMP-0203", "experience_level": PathLevel.BEGINNER, "location": "Hanoi", "joining_date": date(2026, 8, 1), "training_status": TrainingStatus.NOT_STARTED},
+    {"email": "finance.emp@fourangrybirds.vn", "name": "Finance Employee", "user_role": UserRole.EMPLOYEE, "job_title": None, "department_code": "Finance", "job_position_id": "finance-associate", "employee_code": "EMP-0204", "experience_level": PathLevel.BEGINNER, "location": "Hanoi", "joining_date": date(2026, 8, 1), "training_status": TrainingStatus.NOT_STARTED},
+    {"email": "ops.emp@fourangrybirds.vn", "name": "Ops Employee", "user_role": UserRole.EMPLOYEE, "job_title": None, "department_code": "Operations", "job_position_id": "ops-coordinator", "employee_code": "EMP-0205", "experience_level": PathLevel.BEGINNER, "location": "Hanoi", "joining_date": date(2026, 8, 1), "training_status": TrainingStatus.NOT_STARTED},
+    {"email": "marketing.emp@fourangrybirds.vn", "name": "Marketing Employee", "user_role": UserRole.EMPLOYEE, "job_title": None, "department_code": "Marketing", "job_position_id": "marketing-exec", "employee_code": "EMP-0206", "experience_level": PathLevel.BEGINNER, "location": "Hanoi", "joining_date": date(2026, 8, 1), "training_status": TrainingStatus.NOT_STARTED},
+    {"email": "branch.mgr@fourangrybirds.vn", "name": "Branch Manager", "user_role": UserRole.EMPLOYEE, "job_title": None, "department_code": "Branch Management", "job_position_id": "branch-manager", "employee_code": "EMP-0207", "experience_level": PathLevel.BEGINNER, "location": "Hanoi", "joining_date": date(2026, 8, 1), "training_status": TrainingStatus.NOT_STARTED},
+    {"email": "data.analyst@fourangrybirds.vn", "name": "Data Analyst", "user_role": UserRole.EMPLOYEE, "job_title": None, "department_code": "Data", "job_position_id": "data-analyst", "employee_code": "EMP-0208", "experience_level": PathLevel.BEGINNER, "location": "Hanoi", "joining_date": date(2026, 8, 1), "training_status": TrainingStatus.NOT_STARTED},
+    {"email": "team.lead@fourangrybirds.vn", "name": "Tech Lead", "user_role": UserRole.EMPLOYEE, "job_title": None, "department_code": "Engineering", "job_position_id": "team-leader", "employee_code": "EMP-0209", "experience_level": PathLevel.ADVANCED, "location": "Hanoi", "joining_date": date(2026, 8, 1), "training_status": TrainingStatus.NOT_STARTED},
 ]
 
 ROLE_MATRIX_CSV = BACKEND_DIR.parent / "role_matrix" / "role_matrix.csv"
@@ -98,6 +108,38 @@ def seed_demo_users(db: Session) -> None:
         user.is_active = True
 
 
+def seed_demo_certificate(db: Session) -> None:
+    from app.models import LearningPath, Enrollment, EnrollmentStatus, EnrollmentSource
+    from datetime import datetime, timezone
+    
+    # Check if a path exists, if not create one
+    path = db.scalar(select(LearningPath).limit(1))
+    admin_id = db.scalar(select(User.id).where(User.user_role == UserRole.ADMIN))
+    if not path:
+        path = LearningPath(
+            id="demo-path-999", title="Generative AI For Business", purpose="onboarding",
+            target_roles=[], status="published", is_company_wide=True, mandatory_document_ids=[],
+            stages=[], created_by_id=admin_id or "admin-1", created_at=datetime.now(timezone.utc)
+        )
+        db.add(path)
+        db.flush()
+
+    sales_id = db.scalar(select(User.id).where(User.email == "sales.emp@fourangrybirds.vn"))
+    if sales_id:
+        enr = db.scalar(select(Enrollment).where(Enrollment.user_id == sales_id, Enrollment.path_id == path.id))
+        now = datetime.now(timezone.utc)
+        if not enr:
+            enr = Enrollment(
+                user_id=sales_id, path_id=path.id, status=EnrollmentStatus.COMPLETED,
+                source=EnrollmentSource.SELF, assigned_at=now, started_at=now, completed_at=now,
+                lessons_read=[], tasks_done=[]
+            )
+            db.add(enr)
+        else:
+            enr.status = EnrollmentStatus.COMPLETED
+            enr.completed_at = now
+        db.flush()
+
 def seed_role_matrix(db: Session) -> ImportReport | None:
     """Load the team's Role Requirement Matrix; rows already in the DB are updated, not duplicated."""
     if not ROLE_MATRIX_CSV.is_file():
@@ -108,6 +150,7 @@ def seed_role_matrix(db: Session) -> ImportReport | None:
 def run(db: Session) -> ImportReport | None:
     seed_reference_data(db)
     seed_demo_users(db)
+    seed_demo_certificate(db)
     report = seed_role_matrix(db)
     db.commit()
     return report

@@ -382,3 +382,6 @@
 .explore-module ul{margin:6px 0 0;padding-left:18px;font-size:13.5px;color:#505a6d}
 .learning-due{font-size:13px;color:var(--muted)}
 .learning-due.is-overdue{color:#c43d55;font-weight:600}
+
+.glass-float input:-webkit-autofill, .glass-float input:-webkit-autofill:hover, .glass-float input:-webkit-autofill:focus, .glass-float input:-webkit-autofill:active { transition: background-color 5000s ease-in-out 0s; -webkit-text-fill-color: #fff !important; text-shadow: none !important; caret-color: #fff; }
+

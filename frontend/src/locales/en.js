@@ -196,6 +196,8 @@ export const en = {
   uploaded_by_on: "Uploaded by {name} · {date}",
   action_view: "View",
   action_download: "Download",
+  certificate: "Certificate",
+  download: "Download",
   action_delete: "Delete",
   repo_empty_title: "No documents yet",
   repo_empty_desc: "Upload the company's PDF/DOCX files to start building the knowledge repository.",
