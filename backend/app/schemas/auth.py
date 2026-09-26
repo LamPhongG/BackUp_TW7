@@ -20,6 +20,8 @@ class UserOut(BaseModel):
     title: str | None
     department_code: str | None
     job_position_id: str | None
+    is_active: bool = True
+    created_at: str | None = None
 
     @classmethod
     def from_user(cls, user: User) -> "UserOut":
@@ -32,6 +34,8 @@ class UserOut(BaseModel):
             title=title,
             department_code=user.department_code,
             job_position_id=user.job_position_id,
+            is_active=user.is_active,
+            created_at=user.created_at.isoformat() if user.created_at else None,
         )
 
 

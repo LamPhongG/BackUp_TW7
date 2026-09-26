@@ -41,6 +41,8 @@ JOB_POSITIONS = [
 DEMO_PASSWORD = "Demo@123"
 DEMO_USERS = [
     # Staff accounts
+    {"email": "admin@fourangrybirds.vn", "name": "Alexandre Admin", "user_role": UserRole.ADMIN,
+     "job_title": "System Administrator", "department_code": "Company-wide", "job_position_id": None},
     {"email": "hr@fourangrybirds.vn", "name": "Jordan Lee", "user_role": UserRole.HR,
      "job_title": "HR Executive", "department_code": "Human Resources", "job_position_id": None},
     {"email": "reviewer@fourangrybirds.vn", "name": "Sarah Chen", "user_role": UserRole.REVIEWER,

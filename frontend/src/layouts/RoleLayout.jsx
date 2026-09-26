@@ -10,6 +10,7 @@ import { usePaths } from "../contexts/PathsContext";
 import ErrorBoundary from "../components/ErrorBoundary";
 
 const ROLE_STYLE = {
+  admin: { dot: "#8b5cf6", avatar: ["#ede9fe", "#7c3aed"] },
   employee: { dot: "#57d99e", avatar: ["#eae7ff", "#5a50c9"] },
   reviewer: { dot: "#f59e0b", avatar: ["#fef3c7", "#d97706"] },
   hr: { dot: "#f43f5e", avatar: ["#ffe4e6", "#e11d48"] },
@@ -17,6 +18,13 @@ const ROLE_STYLE = {
 
 // [locale key, đường dẫn, icon, hàm đếm số việc cần làm]
 function navFor(role, paths) {
+  if (role === "admin") {
+    return [
+      ["menu_dashboard", "/admin/dashboard", LayoutDashboard],
+      ["menu_users", "/admin/users", UserRound],
+      ["menu_audit_log", "/admin/audit-log", History],
+    ];
+  }
   if (role === "hr") {
     return [
       ["menu_dashboard", "/hr/dashboard", LayoutDashboard],
