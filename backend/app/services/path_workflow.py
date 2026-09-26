@@ -14,9 +14,9 @@ _S = PathStatus
 ACTIONS: dict[UserRole, dict[str, tuple[PathStatus, ...]]] = {
     UserRole.HR: {
         "edit": (_S.DRAFT, _S.CHANGES_REQUESTED),
-        "regenerate": (_S.DRAFT, _S.CHANGES_REQUESTED, _S.IN_REVIEW),
+        "regenerate": (_S.DRAFT, _S.CHANGES_REQUESTED),
         "submit": (_S.DRAFT, _S.CHANGES_REQUESTED),
-        "delete": (_S.DRAFT, _S.IN_REVIEW),
+        "delete": (_S.DRAFT,),
         "archive": (_S.PUBLISHED,),
         "comment": (_S.DRAFT, _S.IN_REVIEW, _S.CHANGES_REQUESTED, _S.PUBLISHED),
     },
