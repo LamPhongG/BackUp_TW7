@@ -9,7 +9,7 @@ import re
 from dataclasses import dataclass
 
 from app.genai_pipeline.text import split_sentences, stable_hash
-from app.genai_pipeline.types import QUIZ_PER_MODULE, STAGE_TEMPLATES, TASKS_PER_MODULE, GenerationRequest, SourceDoc, doc_tier
+from app.genai_pipeline.types import QUIZ_PER_MODULE, TASKS_PER_MODULE, GenerationRequest, SourceDoc, doc_tier, stage_template
 
 LESSON_MAX_CHARS = 2500
 DAY30_MAX_MODULES = 3
@@ -219,6 +219,13 @@ def _quiz(m: _Module, level: str, all_sentences: list[tuple[str, str]]) -> list[
     return quiz
 
 
+def completion_criteria(code: str, section: str) -> tuple[str, str]:
+    """Criteria for a task built from a quoted obligation. The rules cannot know the evidence a policy expects,
+    so the criterion points back at the quoted rule instead of inventing a deliverable."""
+    return (f"Đã thực hiện đúng yêu cầu trong câu trích ({code} · {section}) ít nhất một lần trong công việc thực tế.",
+            f"Carried out the quoted requirement ({code} · {section}) correctly at least once in real work.")
+
+
 def _tasks(m: _Module, level: str) -> list[dict]:
     target = TASKS_PER_MODULE.get(level, 2)
     tasks: list[dict] = []
@@ -227,8 +234,24 @@ def _tasks(m: _Module, level: str) -> list[dict]:
             if len(tasks) >= target:
                 break
             if _OBLIGATION.search(s) and not any(t["title"] == s for t in tasks):
-                tasks.append({"id": f"{m.id}-T{len(tasks) + 1}", "title": s, "source_reference": _ref(lesson, s)})
+                criteria, criteria_en = completion_criteria(m.doc.code, lesson["source_reference"]["section"])
+                tasks.append({"id": f"{m.id}-T{len(tasks) + 1}", "title": s, "completion_criteria": criteria,
+                              "completion_criteriaEn": criteria_en, "source_reference": _ref(lesson, s)})
     return tasks
+
+
+def plan_stages(req: GenerationRequest, modules: list[dict]) -> dict[str, str]:
+    """Module id → stage key. Milestones past the chosen duration fold into its last stage, so a one-week path
+    still teaches every source, just earlier."""
+    template = stage_template(req.purpose, req.duration_days)
+    plan: dict[str, str] = {}
+    day30 = 0
+    for m in modules:
+        key = assign_stage(req.purpose, m["tier"], day30)
+        if key == "day30":
+            day30 += 1
+        plan[m["id"]] = key if key in template else template[-1]
+    return plan
 
 
 def arrange_stages(req: GenerationRequest, modules: list[dict]) -> list[dict]:
@@ -236,14 +259,11 @@ def arrange_stages(req: GenerationRequest, modules: list[dict]) -> list[dict]:
 
     The assessment takes the first question of every module, so it covers each source once.
     """
-    template = STAGE_TEMPLATES.get(req.purpose, STAGE_TEMPLATES["onboarding"])
+    template = stage_template(req.purpose, req.duration_days)
     stage_map: dict[str, list[dict]] = {k: [] for k in template}
-    day30 = 0
+    plan = plan_stages(req, modules)
     for m in modules:
-        key = assign_stage(req.purpose, m["tier"], day30)
-        if key == "day30":
-            day30 += 1
-        stage_map[key].append(m)
+        stage_map[plan[m["id"]]].append(m)
 
     final_quiz = [m["quiz"][0] | {"id": f"{req.path_id}-FA-Q{i}"}
                   for i, m in enumerate((m for m in modules if m["quiz"]), start=1)]

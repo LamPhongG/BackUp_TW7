@@ -26,6 +26,11 @@ class LearningPath(Base):
     level: Mapped[PathLevel] = mapped_column(str_enum(PathLevel, "level"))
     target_job_position_id: Mapped[str] = mapped_column(ForeignKey("job_positions.id"))
     target_department_code: Mapped[str] = mapped_column(ForeignKey("departments.code"))
+    # Set for a personal plan built from one employee's profile (SRS Step 12); null for a role-wide plan.
+    employee_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
+    # Onboarding length chosen by HR (7, 30 or 90 days; SRS Step 13); it limits the stages the path may use.
+    # Null for promotion paths, which are phase-based.
+    duration_days: Mapped[int | None]
 
     prompt: Mapped[str | None] = mapped_column(Text)
     prompt_version: Mapped[str] = mapped_column(String(16))
@@ -80,12 +85,12 @@ class PathSource(Base):
 
 
 class PathAssignment(Base):
-    """Publish target: a published path is visible to a whole department and/or one job position."""
+    """Publish target: a published path is visible to a department, a job position or one employee."""
 
     __tablename__ = "path_assignments"
     __table_args__ = (
         CheckConstraint(
-            "department_code IS NOT NULL OR job_position_id IS NOT NULL", name="has_target"
+            "department_code IS NOT NULL OR job_position_id IS NOT NULL OR user_id IS NOT NULL", name="has_target"
         ),
     )
 
@@ -93,6 +98,7 @@ class PathAssignment(Base):
     path_id: Mapped[str] = mapped_column(ForeignKey("learning_paths.id", ondelete="CASCADE"), index=True)
     department_code: Mapped[str | None] = mapped_column(ForeignKey("departments.code"), index=True)
     job_position_id: Mapped[str | None] = mapped_column(ForeignKey("job_positions.id"), index=True)
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
 
 
 class PathComment(Base):

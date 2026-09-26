@@ -2,7 +2,7 @@
 import pytest
 
 from app.services import paths as path_service
-from tests.factories import make_pdf, upload, upload_ready_pdf
+from tests.factories import make_pdf, mandatory_source_ids, upload, upload_ready_pdf
 from tests.fake_llm import FakeLLM
 
 POLICY_PAGES = [
@@ -31,7 +31,7 @@ def fake_gemini(monkeypatch):
 def _generate(client, headers, doc_ids, **extra):
     return client.post("/api/paths", headers=headers, json={
         "job_position_id": "finance-associate", "level": "Beginner", "purpose": "onboarding",
-        "source_document_ids": doc_ids} | extra)
+        "source_document_ids": [*doc_ids, *mandatory_source_ids(client, headers, "finance-associate")]} | extra)
 
 
 def test_without_key_server_builds_rule_based_draft(client, hr_headers, expense_doc):
@@ -71,7 +71,8 @@ def test_regenerate_uses_the_pipeline_too(client, hr_headers, fake_gemini, expen
     draft = _generate(client, hr_headers, [expense_doc["id"]]).json()
 
     res = client.post(f"/api/paths/{draft['id']}/regenerate", headers=hr_headers,
-                      json={"source_document_ids": [expense_doc["id"]]})
+                      json={"source_document_ids": [expense_doc["id"],
+                                                    *mandatory_source_ids(client, hr_headers, "finance-associate")]})
 
     assert res.status_code == 200
     assert res.json()["engine"] == "gemini"
@@ -175,7 +176,8 @@ def test_regenerate_uses_new_sources(client, hr_headers, fake_gemini, expense_do
     draft = _generate(client, hr_headers, [expense_doc["id"]]).json()
 
     res = client.post(f"/api/paths/{draft['id']}/regenerate", headers=hr_headers,
-                      json={"source_document_ids": [expense_doc["id"], other["id"]]})
+                      json={"source_document_ids": [expense_doc["id"], other["id"],
+                                                    *mandatory_source_ids(client, hr_headers, "finance-associate")]})
 
-    assert {s["code"] for s in res.json()["sources"]} == {expense_doc["code"], other["code"]}
+    assert {s["code"] for s in res.json()["sources"]} >= {expense_doc["code"], other["code"]}
     assert res.json()["module_count"] == 3

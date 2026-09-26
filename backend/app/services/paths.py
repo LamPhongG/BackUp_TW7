@@ -8,9 +8,11 @@ from app.core.errors import AppError
 from app.core.injection_filter import scan_chunks
 from app.db.base import new_id, utcnow
 from app.genai_pipeline.client import get_llm_client
-from app.genai_pipeline.generator import generate_content
+from app.genai_pipeline.generator import Progress, _silent, generate_content
 from app.genai_pipeline.local_draft import NoContentError
-from app.genai_pipeline.types import GenerationRequest, SourceDoc
+from app.genai_pipeline.types import DEFAULT_ONBOARDING_DAYS, GenerationRequest, RoleScope, SourceDoc
+from app.ingestion.chunker import outline
+from app.ingestion.extract import ExtractionError, extract
 from app.models import (
     Department,
     Document,
@@ -49,7 +51,7 @@ from app.schemas.paths import (
     Stage,
     Target,
 )
-from app.services import audit
+from app.services import audit, documents, role_matrix
 from app.services.path_checks import check_path
 from app.services.path_workflow import allowed_actions, check_stage_keys, ensure_allowed
 from app.services.visibility import path_filter
@@ -83,17 +85,25 @@ def list_visible(db: Session, user: User, status: PathStatus | None, purpose: Pa
     return list(db.scalars(stmt))
 
 
-def create(db: Session, actor: User, body: PathCreate) -> LearningPath:
-    """Create a draft. Without ody.content the server generates it from the sources (Pipeline 1)."""
+def create(db: Session, actor: User, body: PathCreate, progress: Progress | None = None) -> LearningPath:
+    """Create a draft. Without body.content the server generates it from the sources (Pipeline 1).
+
+    `progress` follows the run step by step (sources → … → saving), for `services.generation_jobs`.
+    """
+    emit = progress or _silent
     ensure_hr(actor)
     position = db.get(JobPosition, body.job_position_id)
     if position is None:
         raise AppError(422, "err_job_position", "Unknown job position")
     prompt = _checked_prompt(body.prompt)
     docs = _ready_sources(db, body.source_document_ids)
+    unavailable = _check_mandatory_sources(db, position.id, docs)
+    emit("sources", count=len(docs), codes=[d.code for d in docs], mandatory_unavailable=unavailable)
+    duration = (body.duration_days or DEFAULT_ONBOARDING_DAYS) if body.purpose is PathPurpose.ONBOARDING else None
     path_id = new_id("LP")
-    content = body.content or _generate(db, path_id, body.purpose, body.level, position, docs, prompt, body.language)
-    check_stage_keys(body.purpose, [s.key for s in content.stages])
+    content = body.content or _generate(db, path_id, body.purpose, body.level, position, docs, prompt, body.language,
+                                        duration, emit)
+    check_stage_keys(body.purpose, [s.key for s in content.stages], duration)
 
     vi, en = TITLES[body.purpose]
     path = LearningPath(
@@ -104,40 +114,47 @@ def create(db: Session, actor: User, body: PathCreate) -> LearningPath:
         level=body.level,
         target_job_position_id=position.id,
         target_department_code=position.department_code,
+        duration_days=duration,
         prompt=prompt,
         status=PathStatus.DRAFT,
         revision=1,
         created_by_id=actor.id,
     )
-    _apply_content(path, content)
+    _apply_content(path, content, unavailable)
     path.sources = _source_rows(docs)
     db.add(path)
     audit.record(db, actor, "generate", path, status_before=None, status_after=PathStatus.DRAFT,
-                 details={"engine": path.engine, "sources": ", ".join(d.code for d in docs)})
+                 details=_generation_details(path, docs, unavailable))
+    emit("saving")
     db.commit()
     return path
 
 
-def regenerate(db: Session, actor: User, path: LearningPath, body: PathRegenerate) -> LearningPath:
+def regenerate(db: Session, actor: User, path: LearningPath, body: PathRegenerate,
+               progress: Progress | None = None) -> LearningPath:
     """Replace content from (possibly newer) sources. Comments and history are kept."""
+    emit = progress or _silent
     ensure_allowed(actor, "regenerate", path)
     if body.prompt is not None:
         path.prompt = _checked_prompt(body.prompt)
     docs = _ready_sources(db, body.source_document_ids)
+    unavailable = _check_mandatory_sources(db, path.target_job_position_id, docs)
+    emit("sources", count=len(docs), codes=[d.code for d in docs], mandatory_unavailable=unavailable)
     content = body.content or _generate(db, path.id, path.purpose, path.level, db.get(JobPosition, path.target_job_position_id),
-                                        docs, path.prompt, body.language)
-    check_stage_keys(path.purpose, [s.key for s in content.stages])
-    _apply_content(path, content)
+                                        docs, path.prompt, body.language, path.duration_days, emit)
+    check_stage_keys(path.purpose, [s.key for s in content.stages], path.duration_days)
+    _apply_content(path, content, unavailable)
     path.sources = _source_rows(docs)
     audit.record(db, actor, "regenerate", path, status_before=path.status, status_after=path.status,
-                 details={"engine": path.engine})
+                 details=_generation_details(path, docs, unavailable))
+    emit("saving")
     db.commit()
     return path
 
 
 def edit(db: Session, actor: User, path: LearningPath, body: PathEdit) -> LearningPath:
     ensure_allowed(actor, "edit", path)
-    check_stage_keys(path.purpose, [s.key for s in body.stages])
+    check_stage_keys(path.purpose, [s.key for s in body.stages], path.duration_days)
     path.stages = _dump_stages(body.stages)
     audit.record(db, actor, "edit", path, status_before=path.status, status_after=path.status, details=body.details)
     db.commit()
@@ -275,8 +292,31 @@ def _checked_prompt(text: str | None) -> str | None:
     return prompt
 
 
+def _check_mandatory_sources(db: Session, position_id: str, docs: list[Document]) -> list[str]:
+    """Refuse sources that leave out a mandatory document of the Role Requirement Matrix (SRS Step 10, 28).
+
+    Returns the mandatory codes that could not be selected (not uploaded, still processing, or only an outdated
+    version on file): generation goes ahead, and the gap is recorded for the Reviewer.
+    """
+    omitted, unavailable = role_matrix.missing_mandatory_sources(db, position_id, {d.id for d in docs})
+    if omitted:
+        raise AppError(422, "err_mandatory_sources", "Mandatory documents of the Role Requirement Matrix are missing",
+                       codes=", ".join(omitted))
+    return unavailable
+
+
+def _generation_details(path: LearningPath, docs: list[Document], unavailable: list[str]) -> dict[str, str]:
+    details = {"engine": path.engine, "sources": ", ".join(d.code for d in docs)}
+    if path.duration_days:
+        details["duration_days"] = str(path.duration_days)
+    if unavailable:
+        details["mandatory_unavailable"] = ", ".join(unavailable)
+    return details
+
+
 def _generate(db: Session, path_id: str, purpose: PathPurpose, level: PathLevel, position: JobPosition,
-              docs: list[Document], prompt: str | None, language: str) -> PathContent:
+              docs: list[Document], prompt: str | None, language: str, duration_days: int | None,
+              progress: Progress | None = None) -> PathContent:
     chunk_rows = db.scalars(select(DocumentChunk).where(DocumentChunk.document_id.in_([d.id for d in docs]))
                             .order_by(DocumentChunk.document_id, DocumentChunk.position))
     flag_rows = db.scalars(select(InjectionFlag).where(InjectionFlag.document_id.in_([d.id for d in docs])))
@@ -289,13 +329,18 @@ def _generate(db: Session, path_id: str, purpose: PathPurpose, level: PathLevel,
         flags.setdefault(f.document_id, []).append({"chunk_id": f.chunk_id, "rule_id": f.rule_id})
 
     sources = [SourceDoc(id=d.id, code=d.code, version=d.version, title=d.title, title_en=d.title_en, category=d.category,
-                         department=d.department_code, chunks=chunks.get(d.id, []), flags=flags.get(d.id, []))
+                         department=d.department_code, chunks=chunks.get(d.id, []), flags=flags.get(d.id, []),
+                         outline=_outline(d))
                for d in docs]
     req = GenerationRequest(path_id=path_id, purpose=purpose.value, level=level.value, role_name=position.name,
                             role_name_en=position.name_en, department=position.department_code,
-                            prompt_version=get_settings().prompt_version, language=language, hr_prompt=prompt)
+                            prompt_version=get_settings().prompt_version, language=language, hr_prompt=prompt,
+                            duration_days=duration_days,
+                            requirements=[role_matrix.as_generation_dict(r)
+                                          for r in role_matrix.requirements_for(db, position.id)],
+                            scope=_role_scope(db, position))
     try:
-        result = generate_content(req, sources, get_llm_client())
+        result = generate_content(req, sources, get_llm_client(), progress)
     except NoContentError:
         raise AppError(422, "err_no_content", "None of the selected documents has usable text") from None
     return PathContent(stages=result.stages, excluded_chunks=result.excluded_chunks, coverage=None,
@@ -303,11 +348,30 @@ def _generate(db: Session, path_id: str, purpose: PathPurpose, level: PathLevel,
                        generation=result.report)
 
 
+def _role_scope(db: Session, position: JobPosition) -> RoleScope:
+    positions = db.scalars(select(JobPosition)).all()
+    departments = db.scalars(select(Department.code)).all()
+    return RoleScope(role=position.name_en, department=position.department_code,
+                     other_roles=[p.name_en for p in positions if p.id != position.id],
+                     other_departments=[d for d in departments if d not in (position.department_code, "Company-wide")])
+
+
+def _outline(doc: Document) -> list[str]:
+    """All headings of the stored file, parents included. Chunks keep only their nearest heading, so the role filter
+    needs this to see which job a subsection belongs to. A missing or unreadable file only disables that filtering."""
+    if doc.ext == "csv":
+        return []
+    try:
+        return outline(extract(documents.file_location(doc).read_bytes(), doc.ext).blocks)
+    except (AppError, ExtractionError, OSError):
+        return []
+
+
 def _dump_stages(stages: list[Stage]) -> list[dict]:
     return [s.model_dump(mode="json") for s in stages]
 
 
-def _apply_content(path: LearningPath, content: PathContent) -> None:
+def _apply_content(path: LearningPath, content: PathContent, mandatory_unavailable: list[str]) -> None:
     path.stages = _dump_stages(content.stages)
     path.excluded_chunks = [c.model_dump(mode="json") for c in content.excluded_chunks]
     path.coverage = content.coverage
@@ -315,6 +379,8 @@ def _apply_content(path: LearningPath, content: PathContent) -> None:
     path.model = content.model
     path.prompt_version = content.prompt_version
     path.generation = content.generation
+    if path.generation is not None and mandatory_unavailable:
+        path.generation = {**path.generation, "mandatory_unavailable": mandatory_unavailable}
 
 
 def _ready_sources(db: Session, doc_ids: list[str]) -> list[Document]:
@@ -371,6 +437,7 @@ def _summary_fields(p: LearningPath, user: User, look: _Lookups) -> dict:
         "title_en": p.title_en,
         "purpose": p.purpose,
         "level": p.level,
+        "duration_days": p.duration_days,
         "target": Target(job_position_id=p.target_job_position_id, department_code=p.target_department_code),
         "status": p.status,
         "revision": p.revision,

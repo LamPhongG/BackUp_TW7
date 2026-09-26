@@ -1,7 +1,9 @@
 """Login request/response and the current-user profile."""
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from datetime import date
 
-from app.models import User, UserRole
+from pydantic import BaseModel, EmailStr, Field
+
+from app.models import PathLevel, TrainingStatus, User, UserRole
 
 
 class LoginRequest(BaseModel):
@@ -10,8 +12,6 @@ class LoginRequest(BaseModel):
 
 
 class UserOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     id: str
     email: str
     name: str
@@ -20,6 +20,17 @@ class UserOut(BaseModel):
     title: str | None
     department_code: str | None
     job_position_id: str | None
+    # Employee profile (SRS Step 9); empty for HR / Reviewer accounts.
+    employee_code: str | None = None
+    experience_level: PathLevel | None = None
+    location: str | None = None
+    joining_date: date | None = None
+    manager_id: str | None = None
+    manager_name: str | None = None
+    competencies: list[str] = []
+    previous_experience: str | None = None
+    training_status: TrainingStatus | None = None
+    is_active: bool = True
 
     @classmethod
     def from_user(cls, user: User) -> "UserOut":
@@ -32,6 +43,16 @@ class UserOut(BaseModel):
             title=title,
             department_code=user.department_code,
             job_position_id=user.job_position_id,
+            employee_code=user.employee_code,
+            experience_level=user.experience_level,
+            location=user.location,
+            joining_date=user.joining_date,
+            manager_id=user.manager_id,
+            manager_name=user.manager.name if user.manager else None,
+            competencies=list(user.competencies or []),
+            previous_experience=user.previous_experience,
+            training_status=user.training_status,
+            is_active=user.is_active,
         )
 
 
@@ -40,3 +61,4 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int
     user: UserOut
+

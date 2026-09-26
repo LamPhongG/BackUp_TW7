@@ -2,12 +2,13 @@ from logging.config import fileConfig
 
 from alembic import context
 from alembic.operations import ops
-from sqlalchemy import CheckConstraint, Column, Enum
+from sqlalchemy import CheckConstraint, Column, Enum, event
+from sqlalchemy.engine import Engine
 from sqlalchemy.sql.elements import conv
 
 import app.models  # noqa: F401  registers every table on Base.metadata for autogenerate
 from app.core.config import get_settings
-from app.db.base import Base
+from app.db.base import Base, UTCDateTime
 from app.db.session import build_engine
 
 config = context.config
@@ -45,6 +46,13 @@ def _drop_duplicate_enum_checks(_context, _revision, directives) -> None:
             ]
 
 
+def _render_item(type_, obj, _autogen_context):
+    # UTCDateTime only adds Python-side conversion; the column is a plain timezone-aware DATETIME.
+    if type_ == "type" and isinstance(obj, UTCDateTime):
+        return "sa.DateTime(timezone=True)"
+    return False
+
+
 def run_migrations_offline() -> None:
     context.configure(
         url=database_url,
@@ -57,8 +65,34 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def run_migrations_online() -> None:
+def _migration_engine() -> Engine:
     engine = build_engine(database_url)
+    if is_sqlite:
+        # Registered after build_engine's listener, so it runs last and wins.
+        @event.listens_for(engine, "connect")
+        def _connect(dbapi_connection, _record):
+            # Batch mode rebuilds a table by copy, drop and rename; with foreign keys enforced, dropping a table that
+            # other rows reference fails. Integrity is checked once at the end instead (_check_foreign_keys).
+            dbapi_connection.execute("PRAGMA foreign_keys=OFF")
+            # pysqlite manages transactions itself and leaves DDL outside them, so a failed migration used to leave
+            # half-built tables behind. Taking over BEGIN makes each run all-or-nothing.
+            dbapi_connection.isolation_level = None
+
+        @event.listens_for(engine, "begin")
+        def _begin(connection):
+            connection.exec_driver_sql("BEGIN")
+    return engine
+
+
+def _check_foreign_keys(connection) -> None:
+    violations = connection.exec_driver_sql("PRAGMA foreign_key_check").fetchall()
+    if violations:
+        # Raising inside the transaction rolls the whole migration back.
+        raise RuntimeError(f"Migration left rows with broken foreign keys: {violations[:5]}")
+
+
+def run_migrations_online() -> None:
+    engine = _migration_engine()
     with engine.connect() as connection:
         context.configure(
             connection=connection,
@@ -67,9 +101,12 @@ def run_migrations_online() -> None:
             render_as_batch=is_sqlite,
             compare_type=True,
             process_revision_directives=_drop_duplicate_enum_checks,
+            render_item=_render_item,
         )
         with context.begin_transaction():
             context.run_migrations()
+            if is_sqlite:
+                _check_foreign_keys(connection)
     engine.dispose()
 
 

@@ -40,3 +40,15 @@ class FinalStatus(StrEnum):
     VERIFIED = "verified"
     VERIFIED_WARNING = "verified_warning"
     MANUAL_REVIEW = "manual_review"
+
+
+class TrainingStatus(StrEnum):
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+
+
+class Priority(StrEnum):
+    HIGH = "High"
+    MEDIUM = "Medium"
+    LOW = "Low"

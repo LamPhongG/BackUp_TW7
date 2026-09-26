@@ -2,6 +2,9 @@
 import re
 
 ALLOWED_EXTENSIONS = ("pdf", "docx", "txt", "md", "csv")
+# Other spellings of an allowed format. They are stored under the canonical extension so extraction,
+# preview and citations handle one name per format.
+EXTENSION_ALIASES = {"markdown": "md"}
 CODE_PATTERN = re.compile(r"^DOC-\d{2,}$")
 VERSION_PATTERN = re.compile(r"^\d+(\.\d+){0,2}$")
 
@@ -20,7 +23,9 @@ class FileRejected(ValueError):
 
 
 def file_extension(file_name: str) -> str:
-    return file_name.rsplit(".", 1)[-1].lower() if "." in file_name else ""
+    """Lowercase extension without the dot, with aliases mapped to their canonical name (.markdown → md)."""
+    ext = file_name.rsplit(".", 1)[-1].lower() if "." in file_name else ""
+    return EXTENSION_ALIASES.get(ext, ext)
 
 
 def check_file(content: bytes, ext: str, max_bytes: int) -> None:
@@ -30,7 +35,8 @@ def check_file(content: bytes, ext: str, max_bytes: int) -> None:
         FileRejected: with code err_file_type, err_file_too_large, err_file_empty or err_file_corrupt.
     """
     if ext not in ALLOWED_EXTENSIONS:
-        raise FileRejected("err_file_type", ext=ext or "?", list=", ".join(f".{e}" for e in ALLOWED_EXTENSIONS))
+        raise FileRejected("err_file_type", ext=ext or "?",
+                           list=", ".join(f".{e}" for e in (*ALLOWED_EXTENSIONS, *EXTENSION_ALIASES)))
     if len(content) > max_bytes:
         raise FileRejected("err_file_too_large", max=max_bytes // (1024 * 1024))
     if not content or (ext in ("txt", "md", "csv") and not content.strip()):

@@ -1,12 +1,15 @@
+import time
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
 
 from app.api.deps import CurrentUser, DbSession, require_roles
+from app.core.errors import AppError
 from app.models import PathPurpose, PathStatus, User, UserRole
 from app.schemas.paths import (
     CommentCreate,
     CommentResolve,
+    GenerationJobOut,
     PathApprove,
     PathChecksOut,
     PathCreate,
@@ -18,8 +21,10 @@ from app.schemas.paths import (
     ReasonBody,
     RequestChanges,
 )
+from app.services import generation_jobs as jobs
 from app.services import paths as service
 from app.services.path_checks import check_path
+from app.services.path_workflow import ensure_allowed
 
 router = APIRouter(prefix="/paths", tags=["learning paths"])
 
@@ -49,6 +54,34 @@ def list_paths(
 def create_path(body: PathCreate, db: DbSession, user: HrUser):
     """Save a generated draft. Until Pipeline 1 is wired in, `content` comes from the frontend generator."""
     return service.to_detail(db, user, service.create(db, user, body))
+
+
+@router.post("/jobs", response_model=GenerationJobOut, status_code=status.HTTP_202_ACCEPTED)
+def start_create_job(body: PathCreate, user: HrUser):
+    """Same as `POST /paths`, but returns at once; poll `GET /paths/jobs/{id}` to follow the run step by step."""
+    return _job_out(jobs.start("create", user, lambda db, actor, progress: service.create(db, actor, body, progress)))
+
+
+@router.get("/jobs/{job_id}", response_model=GenerationJobOut)
+def get_job(job_id: str, user: HrUser):
+    job = jobs.get(job_id, user)
+    if job is None:
+        raise AppError(404, "err_job_not_found", "Generation job not found")
+    return _job_out(job)
+
+
+@router.post("/{path_id}/regenerate/jobs", response_model=GenerationJobOut, status_code=status.HTTP_202_ACCEPTED)
+def start_regenerate_job(path_id: str, body: PathRegenerate, db: DbSession, user: HrUser):
+    # Check visibility and workflow now, so a wrong request fails at once instead of inside the job.
+    ensure_allowed(user, "regenerate", service.get_visible(db, user, path_id))
+    return _job_out(jobs.start("regenerate", user, lambda db, actor, progress: service.regenerate(
+        db, actor, service.get_visible(db, actor, path_id), body, progress)))
+
+
+def _job_out(job: jobs.Job) -> GenerationJobOut:
+    end = job.updated if job.status != "running" else time.time()
+    return GenerationJobOut(id=job.id, kind=job.kind, status=job.status, state=job.state, path_id=job.path_id,
+                            error=job.error, elapsed_ms=round((end - job.started) * 1000))
 
 
 @router.get("/{path_id}", response_model=PathOut)

@@ -8,6 +8,7 @@ HR edits content in draft / changes_requested; Reviewers edit directly while in_
 Published content is read-only: to change it, archive and create a new path.
 """
 from app.core.errors import AppError
+from app.genai_pipeline.types import stage_template
 from app.models import LearningPath, PathPurpose, PathStatus, User, UserRole
 
 _S = PathStatus
@@ -29,12 +30,6 @@ ACTIONS: dict[UserRole, dict[str, tuple[PathStatus, ...]]] = {
     },
 }
 
-STAGE_KEYS: dict[PathPurpose, tuple[str, ...]] = {
-    PathPurpose.ONBOARDING: ("day1", "week1", "week2", "day30", "day60", "day90"),
-    PathPurpose.PROMOTION: ("foundation", "deep", "practice", "assessment"),
-}
-
-
 def allowed_actions(user: User, path: LearningPath) -> list[str]:
     return [action for action, statuses in ACTIONS.get(user.user_role, {}).items() if path.status in statuses]
 
@@ -49,9 +44,10 @@ def ensure_allowed(user: User, action: str, path: LearningPath) -> None:
                        action=action, status=path.status.value)
 
 
-def check_stage_keys(purpose: PathPurpose, stage_keys: list[str]) -> None:
-    allowed = STAGE_KEYS[purpose]
+def check_stage_keys(purpose: PathPurpose, stage_keys: list[str], duration_days: int | None = None) -> None:
+    """Stages must belong to the purpose's template, cut to the onboarding length HR chose."""
+    allowed = stage_template(purpose.value, duration_days)
     unknown = [k for k in stage_keys if k not in allowed]
     if unknown:
-        raise AppError(422, "err_stage_key", f"Unknown stage for {purpose.value}: {', '.join(unknown)}",
+        raise AppError(422, "err_stage_key", f"Stage not allowed for this path: {', '.join(unknown)}",
                        allowed=", ".join(allowed))

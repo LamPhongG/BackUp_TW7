@@ -14,6 +14,7 @@ from app.core.injection_filter import scan_chunks
 from app.genai_pipeline.text import normalize_for_match
 from app.genai_pipeline.types import STAGE_TEMPLATES
 from app.models import Document, DocumentChunk, FinalStatus, LearningPath
+from app.services import role_matrix
 from app.services.documents import compute_lifecycle
 
 COVERAGE_MANUAL_BELOW = 0.6
@@ -38,6 +39,7 @@ class CheckResult:
     final_status: FinalStatus
     blocking: bool
     reasons: list[dict] = field(default_factory=list)
+    mandatory_missing: list[str] = field(default_factory=list)
 
     def summary(self) -> dict:
         counts: dict[str, int] = {}
@@ -52,6 +54,7 @@ class CheckResult:
             "flow_warnings": sum(1 for f in self.flow if f["severity"] == "warning"),
             "injection": len(self.injection),
             "coverage_score": self.coverage_score,
+            "mandatory_missing": self.mandatory_missing,
         }
 
 
@@ -127,7 +130,10 @@ def check_flow(purpose: str, stages: list[dict]) -> list[dict]:
         issues.append({"severity": "error", "key": "flow_no_modules"})
 
     seen_docs: set[str] = set()
+    # Teach before you test: what the learner has been taught so far, in study order.
+    taught: set[str] = set()
     for m, _si in modules:
+        taught |= _taught_chunks(m)
         title = m.get("titleEn") or m.get("title")
         assessment = m.get("kind") == "assessment"
         if not assessment and not m.get("lessons"):
@@ -138,6 +144,17 @@ def check_flow(purpose: str, stages: list[dict]) -> list[dict]:
             opts, ans = q.get("options"), q.get("answer")
             if not isinstance(opts, list) or len(opts) < 2 or not isinstance(ans, int) or not 0 <= ans < len(opts):
                 issues.append({"severity": "error", "key": "flow_quiz_invalid", "vars": {"module": title}, "module_id": m["id"]})
+        # Without completion criteria nobody can tell whether the task was done; a missing source is caught by
+        # the knowledge check (source_missing).
+        for t in m.get("tasks", []):
+            if not str(t.get("completion_criteria") or "").strip():
+                issues.append({"severity": "error", "key": "flow_task_no_criteria",
+                               "vars": {"module": title, "task": t.get("id")}, "module_id": m["id"]})
+        for item in [*m.get("tasks", []), *m.get("quiz", [])]:
+            chunk_id = (item.get("source_reference") or {}).get("chunk_id")
+            if chunk_id and chunk_id not in taught:
+                issues.append({"severity": "error", "key": "flow_untaught_item",
+                               "vars": {"module": title, "item": item.get("id")}, "module_id": m["id"]})
         code = m.get("doc_code")
         if code:
             if code in seen_docs:
@@ -160,6 +177,11 @@ def check_flow(purpose: str, stages: list[dict]) -> list[dict]:
     return issues
 
 
+def _taught_chunks(module: dict) -> set[str]:
+    return {cid for lesson in module.get("lessons", [])
+            for cid in [*(lesson.get("source_chunks") or []), (lesson.get("source_reference") or {}).get("chunk_id")] if cid}
+
+
 def check_injection(stages: list[dict]) -> list[dict]:
     pseudo = []
     for e in _items(stages):
@@ -167,7 +189,7 @@ def check_injection(stages: list[dict]) -> list[dict]:
         if e["kind"] == "lesson":
             text = f"{item.get('title', '')}\n{item.get('content', '')}"
         elif e["kind"] == "task":
-            text = item.get("title", "")
+            text = f"{item.get('title', '')}\n{item.get('completion_criteria') or ''}"
         else:
             text = "\n".join([item.get("question", ""), *(item.get("options") or [])])
         pseudo.append({"chunk_id": e["id"], "page": (e["source_reference"] or {}).get("page"), "content": text})
@@ -179,7 +201,9 @@ def _coverage_score(coverage: dict | None) -> float | None:
     return float(score) if isinstance(score, (int, float)) and 0 <= score <= 1 else None
 
 
-def run_checks(path: LearningPath, docs: list[_Doc], chunks_by_doc: dict[str, list[dict]]) -> CheckResult:
+def run_checks(path: LearningPath, docs: list[_Doc], chunks_by_doc: dict[str, list[dict]],
+               mandatory_missing: list[str] | None = None) -> CheckResult:
+    """`mandatory_missing`: mandatory matrix documents that are not among the path's sources."""
     knowledge = check_knowledge(path.stages, docs, chunks_by_doc)
     flow = check_flow(path.purpose.value, path.stages)
     injection = check_injection(path.stages)
@@ -210,6 +234,9 @@ def run_checks(path: LearningPath, docs: list[_Doc], chunks_by_doc: dict[str, li
         warnings.append({"key": "reason_flow_warnings", "vars": {"n": flow_warnings}})
     if path.excluded_chunks:
         warnings.append({"key": "reason_excluded_chunks", "vars": {"n": len(path.excluded_chunks)}})
+    if mandatory_missing:
+        # Not blocking: the document may not exist yet. The Reviewer decides, and must give a reason to publish.
+        warnings.append({"key": "reason_mandatory_sources_missing", "vars": {"codes": ", ".join(mandatory_missing)}})
 
     if blocking or manual:
         final, reasons = FinalStatus.MANUAL_REVIEW, [*blocking, *manual, *warnings]
@@ -217,7 +244,7 @@ def run_checks(path: LearningPath, docs: list[_Doc], chunks_by_doc: dict[str, li
         final, reasons = FinalStatus.VERIFIED_WARNING, warnings
     else:
         final, reasons = FinalStatus.VERIFIED, [{"key": "reason_all_verified"}]
-    return CheckResult(knowledge, flow, injection, score, final, bool(blocking), reasons)
+    return CheckResult(knowledge, flow, injection, score, final, bool(blocking), reasons, list(mandatory_missing or []))
 
 
 def check_path(db: Session, path: LearningPath) -> CheckResult:
@@ -233,4 +260,6 @@ def check_path(db: Session, path: LearningPath) -> CheckResult:
     chunks_by_doc: dict[str, list[dict]] = {}
     for c in db.scalars(select(DocumentChunk).where(DocumentChunk.document_id.in_([d.id for d in rows]))):
         chunks_by_doc.setdefault(c.document_id, []).append({"page": c.page, "norm": normalize_for_match(c.content)})
-    return run_checks(path, docs, chunks_by_doc)
+    omitted, unavailable = role_matrix.missing_mandatory_sources(db, path.target_job_position_id,
+                                                                  {s.document_id for s in path.sources})
+    return run_checks(path, docs, chunks_by_doc, sorted({*omitted, *unavailable}))

@@ -31,10 +31,22 @@ class Settings(BaseSettings):
 
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-2.5-flash"
+    # Tried in order when the model above is retired (404) or out of quota (429; quotas are per model). Google's
+    # "-latest" aliases follow the current generation, so this list does not go stale when versions are retired.
+    gemini_fallback_models: str = "gemini-flash-lite-latest,gemini-flash-latest"
     gemini_timeout_s: int = 120
     # Modules are generated in parallel; keep this under the API key's requests-per-minute quota.
     generation_workers: int = 4
-    prompt_version: str = "v1.0"
+    prompt_version: str = "v1.1"
+
+    # Invitation emails; without SMTP the invite is still created and HR copies the link.
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    smtp_from_name: str = "SkillSprint AI"
+    # Base of the links in invitation emails, without a trailing slash.
+    frontend_url: str = "http://localhost:3000"
 
     @field_validator("cors_origins", mode="before")
     @classmethod

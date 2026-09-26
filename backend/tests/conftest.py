@@ -9,6 +9,11 @@ TEST_DB_URL = f"sqlite:///{(_TMP_DIR / 'test.db').as_posix()}"
 os.environ["DATABASE_URL"] = TEST_DB_URL
 os.environ["JWT_SECRET"] = "test-secret-" + "x" * 32
 os.environ["UPLOAD_DIR"] = str(_TMP_DIR / "uploads")
+# A developer's backend/.env may hold a real key: tests must never call Gemini (cost, quota, flaky results).
+# Tests that exercise Pipeline 1 swap in tests/fake_llm.py instead.
+os.environ["GEMINI_API_KEY"] = ""
+# Same for SMTP: invitation tests replace smtplib.SMTP with a fake.
+os.environ["SMTP_HOST"] = ""
 
 import pytest  # noqa: E402
 from alembic import command  # noqa: E402

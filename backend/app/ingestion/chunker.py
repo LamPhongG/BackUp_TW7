@@ -54,6 +54,19 @@ class _Section:
     parts: list[_Part]
 
 
+def outline(blocks: list[Block]) -> list[str]:
+    """Every heading in document order, including parents with no text of their own ("3. Sales Executive" before
+    "3.1 Mission"), which never become chunks. Same detection as `chunk_blocks`."""
+    headings = []
+    for block in blocks:
+        if block.heading:
+            headings.append(block.heading.strip())
+            continue
+        headings.extend(_clean_heading(line.rstrip()) for line in re.split(r"\r?\n", block.text or "")
+                        if is_heading_line(line.rstrip()))
+    return headings
+
+
 def chunk_blocks(doc_id: str, blocks: list[Block], max_chars: int = MAX_CHUNK_CHARS) -> list[dict]:
     sections: list[_Section] = []
 

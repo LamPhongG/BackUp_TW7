@@ -1,14 +1,16 @@
 """Schema-level guarantees: migrations match the models, constraints hold, seeding is repeatable."""
 import pytest
+from alembic import command
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
-from sqlalchemy import func, select
-from sqlalchemy.exc import IntegrityError, StatementError
+from sqlalchemy import func, select, text
+from sqlalchemy.exc import IntegrityError, OperationalError, StatementError
 
 from app.db import seed
 from app.db.base import Base, new_id
-from app.db.session import engine
+from app.db.session import build_engine, engine
 from app.models import AuditLog, Department, JobPosition, LearningPath, PathAssignment, PathStatus, User
+from tests.conftest import alembic_config
 
 
 def test_migrations_match_models():
@@ -109,3 +111,55 @@ def test_audit_log_survives_path_deletion(db):
     db.commit()
 
     assert db.get(AuditLog, log.id).path_id == path.id
+
+
+def test_upgrade_keeps_rows_that_reference_rebuilt_tables(tmp_path):
+    """SQLite batch mode rebuilds `users` (copy, drop, rename). Existing rows pointing at users must survive it."""
+    url = f"sqlite:///{(tmp_path / 'existing.db').as_posix()}"
+    cfg = alembic_config(url)
+    command.upgrade(cfg, "56977cdd23d0")
+    old = build_engine(url)
+    with old.begin() as conn:
+        conn.execute(text("INSERT INTO departments (code, name, name_en) VALUES ('HR', 'Nhân sự', 'HR')"))
+        conn.execute(text("INSERT INTO users (id, email, password_hash, name, user_role, department_code, is_active, "
+                          "created_at) VALUES ('U1', 'a@b.vn', 'x', 'A', 'hr', 'HR', 1, '2026-09-01 00:00:00')"))
+        conn.execute(text("INSERT INTO audit_logs (id, created_at, actor_id, actor_name, actor_role, action) "
+                          "VALUES ('LOG-1', '2026-09-01 00:00:00', 'U1', 'A', 'hr', 'upload')"))
+    old.dispose()
+
+    command.upgrade(cfg, "head")
+
+    new = build_engine(url)
+    with new.connect() as conn:
+        assert conn.execute(text("SELECT actor_id FROM audit_logs")).scalar_one() == "U1"
+        assert conn.execute(text("SELECT competencies FROM users WHERE id = 'U1'")).scalar_one() == "[]"
+        assert conn.execute(text("PRAGMA foreign_key_check")).fetchall() == []
+        assert conn.execute(text("SELECT name FROM sqlite_master WHERE name LIKE '_alembic_tmp%'")).fetchall() == []
+    new.dispose()
+
+
+def test_failed_sqlite_migration_leaves_nothing_behind(tmp_path):
+    """A migration that fails midway rolls back completely instead of leaving half-built tables."""
+    url = f"sqlite:///{(tmp_path / 'broken.db').as_posix()}"
+    cfg = alembic_config(url)
+    command.upgrade(cfg, "56977cdd23d0")
+    old = build_engine(url)
+    with old.begin() as conn:
+        # Batch mode needs this name to rebuild `users`, so the next revision fails after its earlier steps have run.
+        conn.execute(text("CREATE TABLE _alembic_tmp_users (id INTEGER)"))
+    tables_before = _table_names(old)
+    old.dispose()
+
+    with pytest.raises(OperationalError):
+        command.upgrade(cfg, "head")
+
+    check = build_engine(url)
+    assert _table_names(check) == tables_before
+    with check.connect() as conn:
+        assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "56977cdd23d0"
+    check.dispose()
+
+
+def _table_names(eng) -> set[str]:
+    with eng.connect() as conn:
+        return {row[0] for row in conn.execute(text("SELECT name FROM sqlite_master WHERE type = 'table'"))}

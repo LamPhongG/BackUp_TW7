@@ -21,6 +21,9 @@ class FakeLLM:
     fail_docs: set[str] = field(default_factory=set)            # raise GenerationError for these codes
     hallucinate_docs: set[str] = field(default_factory=set)     # quotes that are not in the document
     bad_quiz_docs: set[str] = field(default_factory=set)        # correct option missing from the quote
+    no_criteria_docs: set[str] = field(default_factory=set)     # tasks without completion criteria
+    invented_deadline_docs: set[str] = field(default_factory=set)  # criteria with a deadline the chunk never states
+    untaught_docs: set[str] = field(default_factory=set)        # no lesson on the last chunk, but tasks/quiz on it
     calls: list[dict] = field(default_factory=list)
     _lock: threading.Lock = field(default_factory=threading.Lock)
 
@@ -36,21 +39,31 @@ class FakeLLM:
 
     def _module(self, code, chunks) -> ModuleDraft:
         lessons, tasks = [], []
-        for c in chunks:
+        for i, c in enumerate(chunks):
             sentences = split_sentences(c["text"]) or [c["text"]]
             quote = "This rule was invented by the model." if code in self.hallucinate_docs else sentences[0]
-            lessons.append(LessonDraft(title=f"Bài: {c['section']}", title_en=c["section"],
-                                       content=f"Giải thích: {c['text']}", chunk_ids=[c["id"]],
-                                       quote_chunk_id=c["id"], exact_quote=quote))
+            skip_lesson = code in self.untaught_docs and i == len(chunks) - 1 and len(chunks) > 1
+            if not skip_lesson:
+                lessons.append(LessonDraft(title=f"Bài: {c['section']}", title_en=c["section"],
+                                           content=f"Giải thích: {c['text']}", chunk_ids=[c["id"]],
+                                           quote_chunk_id=c["id"], exact_quote=quote))
             duty = next((s for s in sentences if re.search(r"\b(must|should)\b", s)), None)
             if duty:
-                tasks.append(TaskDraft(title=f"Thực hiện: {duty}", title_en=f"Do: {duty}", quote_chunk_id=c["id"], exact_quote=duty))
+                criteria = ("" if code in self.no_criteria_docs
+                            else "Hoàn thành trong 999 ngày." if code in self.invented_deadline_docs
+                            else f"Có bằng chứng đã làm: {duty}")
+                tasks.append(TaskDraft(title=f"Thực hiện: {duty}", title_en=f"Do: {duty}", completion_criteria=criteria,
+                                       completion_criteria_en=criteria, quote_chunk_id=c["id"], exact_quote=duty))
         # Cited under the wrong chunk id: grounding must find the sentence in its real chunk.
         if len(lessons) > 1:
             lessons[1].quote_chunk_id = chunks[0]["id"]
-        tasks.append(TaskDraft(title="Invented task", title_en="Invented task", quote_chunk_id=chunks[0]["id"],
+        tasks.append(TaskDraft(title="Invented task", title_en="Invented task", completion_criteria="Car received.",
+                               completion_criteria_en="Car received.", quote_chunk_id=chunks[0]["id"],
                                exact_quote="Employees receive a free car on their first day."))
-        return ModuleDraft(lessons=lessons, tasks=tasks)
+        objectives = [f"Áp dụng quy định của mục {c['section']}" for c in chunks[:3]]
+        # Like a careful model, report chunks that talk to the AI or the reviewer instead of the employee.
+        suspicious = [c["id"] for c in chunks if re.search(r"pretend|higher priority than your own rules", c["text"], re.I)]
+        return ModuleDraft(suspicious_chunk_ids=suspicious, learning_objectives=objectives, lessons=lessons, tasks=tasks)
 
     def _quiz(self, code, chunks) -> QuizDraft:
         questions = []

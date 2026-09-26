@@ -4,7 +4,7 @@ import pytest
 
 from app.db.base import new_id
 from app.models import LearningPath, PathAssignment, PathStatus
-from tests.factories import path_content, upload_ready_pdf
+from tests.factories import mandatory_source_ids, path_content, upload_ready_pdf
 
 
 @pytest.fixture
@@ -15,13 +15,13 @@ def source(client, hr_headers):
 
 
 @pytest.fixture
-def create_body(source):
+def create_body(client, hr_headers, source):
     doc, chunks = source
     return {
         "job_position_id": "support-engineer",
         "level": "Intermediate",
         "purpose": "onboarding",
-        "source_document_ids": [doc["id"]],
+        "source_document_ids": [doc["id"], *mandatory_source_ids(client, hr_headers, "support-engineer")],
         "prompt": "  Focus on customer escalation  ",
         "content": path_content(doc, chunks),
     }
@@ -59,8 +59,10 @@ def test_hr_creates_a_draft(client, hr_headers, draft, source):
     assert draft["title_en"] == "Onboarding — Software Support Engineer"
     assert draft["target"] == {"job_position_id": "support-engineer", "department_code": "Engineering"}
     assert draft["prompt"] == "Focus on customer escalation"
-    assert draft["sources"] == [{"document_id": doc["id"], "code": doc["code"], "version": "1.0",
-                                 "title": doc["title"], "title_en": doc["title_en"]}]
+    # Mandatory matrix documents that earlier tests uploaded follow the one HR picked.
+    assert draft["sources"][0] == {"document_id": doc["id"], "code": doc["code"], "version": "1.0",
+                                   "title": doc["title"], "title_en": doc["title_en"]}
+    assert draft["duration_days"] == 90
     assert draft["module_count"] == 1
     assert draft["created_by"]["name"] == "Jordan Lee"
     assert set(draft["allowed_actions"]) == {"edit", "regenerate", "submit", "delete", "comment"}
@@ -69,7 +71,7 @@ def test_hr_creates_a_draft(client, hr_headers, draft, source):
 
     log = _audit(client, hr_headers, draft["id"])
     assert [(e["action"], e["status_after"]) for e in log] == [("generate", "draft")]
-    assert log[0]["details"]["sources"] == doc["code"]
+    assert log[0]["details"]["sources"].split(", ")[0] == doc["code"]
 
 
 @pytest.mark.parametrize(
@@ -139,12 +141,14 @@ def test_regenerate_replaces_content_and_sources(client, hr_headers, draft):
     chunks = client.get(f"/api/documents/{new_doc['id']}/chunks", headers=hr_headers).json()["chunks"]
 
     res = client.post(f"/api/paths/{draft['id']}/regenerate", headers=hr_headers, json={
-        "source_document_ids": [new_doc["id"]], "content": path_content(new_doc, chunks, prefix="LP-R2") | {"engine": "gemini"},
+        "source_document_ids": [new_doc["id"], *mandatory_source_ids(client, hr_headers, "support-engineer")],
+        "content": path_content(new_doc, chunks, prefix="LP-R2") | {"engine": "gemini"},
     })
 
     assert res.status_code == 200
     body = res.json()
-    assert [s["code"] for s in body["sources"]] == [new_doc["code"]]
+    assert body["sources"][0]["code"] == new_doc["code"]
+    assert draft["sources"][0]["code"] not in {s["code"] for s in body["sources"]}
     assert body["engine"] == "gemini"
     assert body["prompt"] == "Focus on customer escalation"
     assert body["stages"][0]["modules"][0]["id"] == "LP-R2-M1"

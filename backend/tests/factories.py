@@ -68,6 +68,15 @@ def upload(client, headers, content: bytes, file_name: str, **meta):
     return client.post("/api/documents", headers=headers, data=fields, files={"file": (file_name, content)})
 
 
+def mandatory_source_ids(client, headers, position_id: str) -> list[str]:
+    """Ready mandatory documents of the matrix for a position: a client must send them as sources, as the UI does.
+
+    Other tests upload catalog documents (DOC-10…) into the shared test database, which makes them mandatory."""
+    res = client.get(f"/api/job-positions/{position_id}/required-sources", headers=headers)
+    assert res.status_code == 200, res.text
+    return [s["document"]["id"] for s in res.json() if s["mandatory"] and s["status"] == "ready"]
+
+
 def upload_ready_pdf(client, headers, **meta) -> dict:
     res = upload(client, headers, make_pdf(policy_text()), "policy.pdf", **meta)
     assert res.status_code == 201, res.text
@@ -92,7 +101,8 @@ def path_content(doc: dict, chunks: list[dict], prefix: str = "LP-TEST", stage: 
                 "doc_id": doc["id"], "doc_code": doc["code"], "tier": 1,
                 "lessons": [{"id": f"{module_id}-L1", "title": chunk["heading"], "content": chunk["content"],
                              "minutes": 1, "source_reference": ref}],
-                "tasks": [{"id": f"{module_id}-T1", "title": "Request leave 5 days ahead", "source_reference": ref}],
+                "tasks": [{"id": f"{module_id}-T1", "title": "Request leave 5 days ahead",
+                           "completion_criteria": "Leave request submitted in the HR portal 5 days ahead", "source_reference": ref}],
                 "quiz": [{"id": f"{module_id}-Q1", "kind": "statement", "question": "Which is correct?",
                           "questionEn": "Which is correct?", "options": ["Zebra", correct, "Quokka"], "answer": 1,
                           "source_reference": ref}],

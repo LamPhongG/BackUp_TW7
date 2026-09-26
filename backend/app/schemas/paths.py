@@ -37,6 +37,8 @@ class Lesson(_Item):
 class Task(_Item):
     id: str = Field(min_length=1, max_length=64)
     title: str
+    # Required for publishing (path_checks flags a task without it); optional here so a draft can be saved.
+    completion_criteria: str | None = None
     source_reference: SourceReference | None = None
 
 
@@ -117,6 +119,8 @@ class PathCreate(BaseModel):
     prompt: str | None = Field(default=None, max_length=4000)
     # Language of learner-facing text written by the model.
     language: Literal["vi", "en"] = "vi"
+    # Onboarding length; omitted means the full 90-day path. Ignored for promotion paths.
+    duration_days: Literal[7, 30, 90] | None = None
     # Omit to let the server generate (Gemini, or the rule-based draft without an API key).
     content: PathContent | None = None
 
@@ -247,6 +251,7 @@ class PathSummary(BaseModel):
     title_en: str
     purpose: PathPurpose
     level: PathLevel
+    duration_days: int | None = None
     target: Target
     status: PathStatus
     revision: int
@@ -301,6 +306,20 @@ class AuditLogPage(BaseModel):
     total: int
 
 
+class GenerationJobOut(BaseModel):
+    """A background generation run. `state.steps` maps sources / analysis / plan / modules / coverage / saving to
+    pending | active | done | skipped | failed; `state.modules` follows each module through waiting → lessons → quiz
+    → done (or fallback)."""
+
+    id: str
+    kind: Literal["create", "regenerate"]
+    status: Literal["running", "done", "failed"]
+    state: dict
+    path_id: str | None
+    error: dict | None
+    elapsed_ms: int
+
+
 class PathChecksOut(BaseModel):
     final_status: FinalStatus
     blocking: bool
@@ -310,5 +329,6 @@ class PathChecksOut(BaseModel):
     flow_warnings: int
     injection: int
     coverage_score: float | None
+    mandatory_missing: list[str] = []
     items: list[dict]
     flow: list[dict]

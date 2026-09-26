@@ -30,7 +30,7 @@ SOP.flags = SOP_FLAGS
 
 def _req(**overrides) -> GenerationRequest:
     values = dict(path_id="LP-T1", purpose="onboarding", level="Intermediate", role_name="Nhân viên CSKH",
-                  role_name_en="Customer Support Executive", department="Customer Support", prompt_version="v1.0")
+                  role_name_en="Customer Support Executive", department="Customer Support", prompt_version="v1.1")
     return GenerationRequest(**(values | overrides))
 
 
@@ -106,7 +106,10 @@ def test_failed_module_falls_back_to_rule_based_draft():
     result = generate_content(_req(), [SOP, HANDBOOK], FakeLLM(fail_docs={"DOC-07"}))
 
     by_doc = {r["doc"]: r for r in result.report["modules"]}
-    assert by_doc["DOC-07"] == {"module_id": "LP-T1-M2", "doc": "DOC-07", "engine": "local-draft", "error": "UPSTREAM_UNAVAILABLE"}
+    sop = next(m for s in result.stages for m in s["modules"] if m["doc_code"] == "DOC-07")
+    # The report counts what the fallback module really holds, so the Reviewer sees its size too.
+    assert by_doc["DOC-07"] == {"module_id": "LP-T1-M2", "doc": "DOC-07", "engine": "local-draft", "error": "UPSTREAM_UNAVAILABLE",
+                                "lessons": len(sop["lessons"]), "tasks": len(sop["tasks"]), "questions": len(sop["quiz"])}
     assert by_doc["DOC-01"]["engine"] == "gemini"
     assert result.engine == "gemini"
     sop_module = next(m for s in result.stages for m in s["modules"] if m["doc_code"] == "DOC-07")

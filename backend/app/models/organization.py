@@ -1,11 +1,11 @@
-"""Company structure and accounts: departments, job positions, users."""
-from datetime import datetime
+"""Company structure and accounts: departments, job positions, users and their employee profile."""
+from datetime import date, datetime
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, str_enum, utcnow
-from app.models.enums import UserRole
+from app.models.enums import PathLevel, Priority, TrainingStatus, UserRole
 
 
 class Department(Base):
@@ -29,6 +29,8 @@ class JobPosition(Base):
 
 
 class User(Base):
+    """Login account. Employees also carry the onboarding profile of SRS Step 9 (no sensitive personal data)."""
+
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True)
@@ -43,4 +45,42 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
 
+    employee_code: Mapped[str | None] = mapped_column(String(32), unique=True)
+    experience_level: Mapped[PathLevel | None] = mapped_column(str_enum(PathLevel, "experience_level"))
+    location: Mapped[str | None] = mapped_column(String(64))
+    joining_date: Mapped[date | None]
+    manager_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    # Competencies the employee must build in this role, e.g. ["Escalation judgment"].
+    competencies: Mapped[list] = mapped_column(default=list)
+    previous_experience: Mapped[str | None] = mapped_column(Text)
+    training_status: Mapped[TrainingStatus | None] = mapped_column(str_enum(TrainingStatus, "training_status"))
+
     job_position: Mapped[JobPosition | None] = relationship()
+    manager: Mapped["User | None"] = relationship(remote_side=[id])
+
+
+class RoleRequirement(Base):
+    """One row of the Role Requirement Matrix (SRS Step 10): the ground truth Pipeline 2 checks plans against.
+
+    `id` keeps the matrix's own Requirement ID (R001…) so GenAI output and Python results can be compared
+    field by field, as in SRS Table 1.
+    """
+
+    __tablename__ = "role_requirements"
+
+    id: Mapped[str] = mapped_column(String(16), primary_key=True)
+    job_position_id: Mapped[str] = mapped_column(ForeignKey("job_positions.id", ondelete="CASCADE"), index=True)
+    policy_requirement: Mapped[str | None] = mapped_column(Text)
+    process_requirement: Mapped[str | None] = mapped_column(Text)
+    competency: Mapped[str | None] = mapped_column(String(255))
+    mandatory: Mapped[bool]
+    priority: Mapped[Priority] = mapped_column(str_enum(Priority, "priority"))
+    # Document code (DOC-07) and section number (4.2).
+    source_doc_code: Mapped[str | None] = mapped_column(String(32), index=True)
+    source_section: Mapped[str | None] = mapped_column(String(32))
+    # Version the requirement was written against; once a newer version is in force the row must be re-checked.
+    source_version: Mapped[str | None] = mapped_column(String(16))
+    # False: a company-wide rule restated for this role; True: applies to this role or a named group of roles only.
+    role_specific: Mapped[bool] = mapped_column(default=False)
+    assessment_requirement: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)

@@ -22,6 +22,18 @@ def test_hr_uploads_pdf_and_gets_chunks(client, hr_headers, reviewer_headers):
     assert chunks["injection_flags"] == []
 
 
+def test_markdown_extension_is_stored_as_md(client, hr_headers):
+    text = f"# Leave\nRequest leave 5 days ahead ({unique_code()}).\n\n# Carry-over\nUp to 5 days until 31 March."
+
+    res = upload(client, hr_headers, text.encode(), "leave-policy.markdown")
+
+    assert res.status_code == 201
+    doc = res.json()
+    assert (doc["ext"], doc["file_name"], doc["processing_status"]) == ("md", "leave-policy.markdown", "ready")
+    assert doc["chunk_count"] == 2
+    assert (get_settings().upload_dir / f"{doc['id']}.md").is_file()
+
+
 def test_catalog_code_gets_vietnamese_title_and_family(client, hr_headers):
     res = upload(client, hr_headers, make_docx([("Deploy", [f"Ship on Tuesdays {unique_code()}."])]), "d.docx",
                  code="DOC-10", title_en="SOP – Software Deployment Workflow", category="SOP", department_code="Engineering")

@@ -18,6 +18,8 @@ from app.genai_pipeline.types import SourceDoc
 
 MIN_QUOTE_CHARS = 15
 MAX_QUOTE_CHARS = 300
+MAX_OBJECTIVES = 4
+_NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
 
 
 @dataclass
@@ -100,8 +102,49 @@ def build_lesson(draft: LessonDraft, index: ChunkIndex, lesson_id: str, stats: G
     }
 
 
-def build_task(draft: TaskDraft, index: ChunkIndex, task_id: str, stats: GroundingStats) -> dict | None:
+def _numbers(text: str) -> set[str]:
+    # "5,000,000" and "5.000.000" are the same amount, and "17:00" yields 17 and 00 on both sides.
+    return {re.sub(r"[.,]", "", n) for n in _NUMBER.findall(text)}
+
+
+def taught_chunks(lessons: list[dict]) -> set[str]:
+    """Chunks the module's lessons teach: a task or question may only be about these (teach before you test)."""
+    return {cid for lesson in lessons
+            for cid in [*(lesson.get("source_chunks") or []), (lesson.get("source_reference") or {}).get("chunk_id")] if cid}
+
+
+def retarget_to_taught(question: dict, index: ChunkIndex, taught: set[str]) -> dict | None:
+    """A rule-based question kept only when its quote lies in a chunk the module's lessons teach, cited there."""
+    ref = question.get("source_reference") or {}
+    chunk = index.locate(ref.get("exact_quote") or "", ref.get("chunk_id"))
+    if chunk is None or chunk["chunk_id"] not in taught:
+        return None
+    return question | {"source_reference": source_reference(index.doc, chunk, ref["exact_quote"], ref.get("section"))}
+
+
+def build_objectives(objectives: list[str], stats: GroundingStats) -> list[str]:
+    kept = []
+    for text in objectives:
+        text = re.sub(r"\s+", " ", text).strip()
+        if not text:
+            continue
+        # Objectives are shown to employees like any other generated text.
+        if _has_injection(text):
+            stats.drop("objective_injection")
+            continue
+        if text not in kept:
+            kept.append(text)
+    return kept[:MAX_OBJECTIVES]
+
+
+def build_task(draft: TaskDraft, index: ChunkIndex, task_id: str, stats: GroundingStats,
+               taught: set[str] | None = None) -> dict | None:
+    """A task needs a quoted source and completion criteria; Python validation rejects a task without either.
+
+    `taught`: chunk ids the module's lessons cover; a task on any other chunk would test untaught content.
+    """
     title = draft.title.strip()
+    criteria = draft.completion_criteria.strip()
     chunk = index.locate(draft.exact_quote, draft.quote_chunk_id)
     if not title:
         stats.drop("task_empty")
@@ -109,15 +152,27 @@ def build_task(draft: TaskDraft, index: ChunkIndex, task_id: str, stats: Groundi
     if chunk is None:
         stats.drop("task_quote_not_found")
         return None
-    if _has_injection(title):
+    if taught is not None and chunk["chunk_id"] not in taught:
+        stats.drop("task_untaught")
+        return None
+    if not criteria:
+        stats.drop("task_no_criteria")
+        return None
+    # A deadline or amount the chunk never states is the most harmful thing a criterion can invent.
+    if not _numbers(criteria) <= _numbers(chunk["content"]):
+        stats.drop("task_criteria_unsupported")
+        return None
+    if _has_injection(title, criteria, draft.completion_criteria_en):
         stats.drop("task_injection")
         return None
     stats.tasks += 1
     return {"id": task_id, "title": title, "titleEn": draft.title_en.strip() or None,
+            "completion_criteria": criteria, "completion_criteriaEn": draft.completion_criteria_en.strip() or None,
             "source_reference": source_reference(index.doc, chunk, draft.exact_quote.strip())}
 
 
-def build_question(draft: QuestionDraft, index: ChunkIndex, question_id: str, stats: GroundingStats) -> dict | None:
+def build_question(draft: QuestionDraft, index: ChunkIndex, question_id: str, stats: GroundingStats,
+                   taught: set[str] | None = None) -> dict | None:
     options = [re.sub(r"\s+", " ", o).strip() for o in draft.options]
     if not draft.question.strip() or len(options) < 3 or not all(options):
         stats.drop("quiz_malformed")
@@ -131,6 +186,9 @@ def build_question(draft: QuestionDraft, index: ChunkIndex, question_id: str, st
     chunk = index.locate(draft.exact_quote, draft.quote_chunk_id)
     if chunk is None:
         stats.drop("quiz_quote_not_found")
+        return None
+    if taught is not None and chunk["chunk_id"] not in taught:
+        stats.drop("quiz_untaught")
         return None
     quote_norm = normalize_for_match(draft.exact_quote)
     correct = options[draft.answer_index]
