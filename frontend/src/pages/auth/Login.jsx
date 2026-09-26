@@ -86,12 +86,14 @@ export default function Login() {
 
       <div className="glass-demo">
         <span>{t("login_demo_accounts")}</span>
-        <div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "8px" }}>
           {DEMO_ACCOUNTS.map(a => (
-            <button key={a.email} type="button" className="glass-chip" onClick={() => fillDemo(a)}>{t(`role_${a.roleKey}`)}</button>
+            <button key={a.email} type="button" className="glass-chip" onClick={() => fillDemo(a)} title={a.email}>
+              {a.label || t(`role_${a.roleKey}`)}
+            </button>
           ))}
         </div>
-        <small>{t("login_demo_note", { password: DEMO_PASSWORD })}</small>
+        <small style={{ display: "block", marginTop: "8px" }}>{t("login_demo_note", { password: DEMO_PASSWORD })}</small>
       </div>
     </form>
   );
