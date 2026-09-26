@@ -75,11 +75,11 @@ export default function PathDetail({ basePath }) {
       {path.engine === "local-draft" && (
         <div className="notice notice--warning"><CircleAlert size={16} /><span>{t("engine_local_notice")}</span></div>
       )}
-      {path.status === "changes_requested" && role === "hr" && (
-        <div className="notice notice--danger"><CircleAlert size={16} /><span>{t("changes_requested_notice", { n: openComments })}</span></div>
-      )}
       {path.status === "in_review" && role === "reviewer" && (
         <div className="notice notice--warning"><CircleAlert size={16} /><span>{t("reviewer_can_edit_notice")}</span></div>
+      )}
+      {path.status === "changes_requested" && role === "hr" && (
+        <div className="notice notice--danger"><CircleAlert size={16} /><span>{t("changes_requested_notice", { n: openComments })}</span></div>
       )}
 
       <div className="run-grid" style={{ marginBottom: 18 }}>

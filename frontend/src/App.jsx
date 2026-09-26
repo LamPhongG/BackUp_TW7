@@ -11,6 +11,9 @@ import RoleLayout from "./layouts/RoleLayout";
 import Login from "./pages/auth/Login";
 import SelfRegister from "./pages/auth/SelfRegister";
 
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminUsers from "./pages/admin/Users";
+
 import HrDashboard from "./pages/hr/Dashboard";
 import HrDocuments from "./pages/hr/Documents";
 import HrInvites from "./pages/hr/Invites";
@@ -84,6 +87,13 @@ export default function App() {
                     <Route path="/register/:token" element={<SelfRegister />} />
                   </Route>
 
+                  <Route path="/admin" element={<RoleLayout role="admin" />}>
+                    <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                    <Route path="dashboard" element={<AdminDashboard />} />
+                    <Route path="users" element={<AdminUsers />} />
+                    <Route path="audit-log" element={<AuditLog pathBasePath="/admin/paths" />} />
+                  </Route>
+
                   <Route path="/hr" element={<RoleLayout role="hr" />}>
                     <Route index element={<Navigate to="/hr/dashboard" replace />} />
                     <Route path="dashboard" element={<HrDashboard />} />
@@ -116,7 +126,6 @@ export default function App() {
                   </Route>
 
                   {/* Đường dẫn cũ trước khi đổi tên vai trò */}
-                  <Route path="/admin/*" element={<Navigate to="/hr/dashboard" replace />} />
                   <Route path="/manager/*" element={<Navigate to="/reviewer/dashboard" replace />} />
                   <Route index element={<Navigate to={auth.user ? HOME_PATH[auth.user.userRole] : "/login"} replace />} />
                   <Route path="*" element={<NotFound user={auth.user} />} />
