@@ -2,7 +2,7 @@
 
 Giao diện web của SkillSprint AI cho công ty giả lập **FourAngryBirds EdTech & HR Solutions**.
 
-Công cụ này **không** dùng để quản lý nhân sự. Nó biến tài liệu nội bộ (PDF, DOCX, TXT, MD, CSV) thành **lộ trình học** cho nhân viên mới hoặc nhân viên thăng chức. Luồng chính như sau:
+Công cụ này **không** dùng để quản lý nhân sự. Nó biến tài liệu nội bộ (PDF, DOCX, TXT, MD/MARKDOWN, CSV) thành **lộ trình học** cho nhân viên mới hoặc nhân viên thăng chức. Luồng chính như sau:
 
 1. **HR** tải tài liệu lên, rồi cho AI soạn lộ trình.
 2. **Reviewer** kiểm tra lộ trình: đúng kiến thức, đúng luồng, đúng chức năng của vị trí. Sau đó phát hành cho phòng ban, hoặc trả về HR kèm góp ý.

@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dấu hiệu văn AI</title>
+<meta name="description" content="Bộ dấu hiệu nhận biết văn bản do AI viết, tóm tắt từ Wikipedia:Signs of AI writing, dùng làm căn cứ cho Rules mục 6 của dự án SkillSprint AI.">
+<style>
+:root {
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --text: #1d1d1b;
+  --muted: #5f5e58;
+  --border: #dcdad2;
+  --accent: #1f5f8b;
+  --chip: #eeece5;
+  --quote: #f2f0ea;
+  --mark: #fde8a8;
+  --strong: #a3261c;
+  --mid: #9a5b00;
+  --weak: #4b6b33;
+  --info: #1f5f8b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171714;
+    --surface: #211f1c;
+    --text: #ebe9e2;
+    --muted: #a9a69c;
+    --border: #3a3833;
+    --accent: #79b4dc;
+    --chip: #2e2c28;
+    --quote: #2a2824;
+    --mark: #5c4a12;
+    --strong: #f08a7e;
+    --mid: #e5b25c;
+    --weak: #9cc47e;
+    --info: #79b4dc;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #171714;
+  --surface: #211f1c;
+  --text: #ebe9e2;
+  --muted: #a9a69c;
+  --border: #3a3833;
+  --accent: #79b4dc;
+  --chip: #2e2c28;
+  --quote: #2a2824;
+  --mark: #5c4a12;
+  --strong: #f08a7e;
+  --mid: #e5b25c;
+  --weak: #9cc47e;
+  --info: #79b4dc;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 72px; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+a { color: var(--accent); }
+code, .w {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.88em;
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+header.top { padding: 40px 0 24px; border-bottom: 1px solid var(--border); }
+header.top h1 { margin: 0 0 8px; font-size: 2rem; line-height: 1.2; }
+header.top p { margin: 6px 0; color: var(--muted); max-width: 72ch; }
+.layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 32px; padding: 24px 0 64px; }
+nav.toc { position: sticky; top: 72px; align-self: start; font-size: 0.92rem; max-height: calc(100vh - 90px); overflow: auto; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; }
+nav.toc li { margin: 2px 0; }
+nav.toc a { color: var(--muted); text-decoration: none; display: block; padding: 3px 8px; border-radius: 6px; }
+nav.toc a:hover { background: var(--chip); color: var(--text); }
+.bar {
+  position: sticky; top: 0; z-index: 5;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+}
+.bar .wrap { display: flex; gap: 12px; align-items: center; padding-top: 10px; padding-bottom: 10px; flex-wrap: wrap; }
+.bar input {
+  flex: 1 1 260px; min-width: 0;
+  padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text); font: inherit;
+}
+.bar .count { color: var(--muted); font-size: 0.9rem; white-space: nowrap; }
+.bar button {
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  border-radius: 8px; padding: 7px 12px; font: inherit; font-size: 0.9rem; cursor: pointer;
+}
+section.group { margin-bottom: 40px; }
+section.group > h2 { font-size: 1.4rem; margin: 8px 0 4px; }
+section.group > p.lead { color: var(--muted); margin: 0 0 16px; max-width: 75ch; }
+.sign {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px 18px; margin: 0 0 14px;
+}
+.sign h3 { margin: 0; font-size: 1.08rem; }
+.sign::before { content: attr(id); text-transform: uppercase; display: block; font-size: 0.75rem; font-weight: 700; color: var(--muted); letter-spacing: 0.04em; margin-bottom: 2px; }
+.sign .en { display: block; color: var(--muted); font-size: 0.85rem; font-style: italic; margin-top: 2px; }
+.sign .head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.sign p { margin: 10px 0 0; }
+.lvl { flex: none; font-size: 0.75rem; font-weight: 600; border: 1px solid currentColor; border-radius: 999px; padding: 1px 9px; white-space: nowrap; }
+.lvl.s { color: var(--strong); }
+.lvl.m { color: var(--mid); }
+.lvl.l { color: var(--weak); }
+.lvl.i { color: var(--info); }
+.words { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.w { background: var(--chip); border-radius: 6px; padding: 1px 7px; }
+main { min-width: 0; }
+blockquote code, .w, td code { overflow-wrap: anywhere; }
+blockquote {
+  margin: 10px 0 0; padding: 8px 12px; background: var(--quote);
+  border-left: 3px solid var(--border); border-radius: 0 6px 6px 0; font-size: 0.93rem;
+}
+blockquote cite { display: block; color: var(--muted); font-size: 0.8rem; font-style: normal; margin-top: 4px; }
+mark { background: var(--mark); color: inherit; padding: 0 2px; border-radius: 3px; }
+.fix { border-top: 1px dashed var(--border); padding-top: 8px; }
+.fix b { color: var(--accent); }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; margin-top: 10px; }
+th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+th { background: var(--chip); }
+.tablewrap { overflow-x: auto; }
+.note {
+  background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent);
+  border-radius: 8px; padding: 12px 16px; margin: 0 0 20px;
+}
+.note p { margin: 6px 0; }
+ul.plain { margin: 8px 0 0; padding-left: 20px; }
+ul.plain li { margin: 4px 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.88rem; color: var(--muted); margin-top: 8px; }
+.hidden { display: none !important; }
+footer { border-top: 1px solid var(--border); padding: 24px 0 48px; color: var(--muted); font-size: 0.88rem; }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  nav.toc { position: static; max-height: none; border: 1px solid var(--border); border-radius: 10px; padding: 8px; background: var(--surface); }
+  header.top h1 { font-size: 1.6rem; }
+}
+@media print {
+  .bar, nav.toc { display: none; }
+  .layout { display: block; }
+  .sign { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <h1>Dấu hiệu văn bản do AI viết</h1>
+    <p>Tài liệu tham chiếu cho nhóm FourAngryBirds, dự án SkillSprint AI. Nội dung tóm tắt và dịch từ trang <a href="https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing">Wikipedia:Signs of AI writing</a> (WikiProject AI Cleanup), bản đọc ngày 26/09/2026. Các ví dụ tiếng Anh giữ nguyên văn để đối chiếu.</p>
+    <p>Luật áp dụng cho dự án nằm ở <code>Rules/Rules</code>, mục 6. Trang này là phần giải thích và ví dụ cho luật đó.</p>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="wrap">
+    <input id="q" type="search" placeholder="Lọc dấu hiệu, ví dụ: pivotal, gạch dài, commit…" aria-label="Lọc dấu hiệu">
+    <span class="count" id="count"></span>
+    <button type="button" id="theme" aria-label="Đổi giao diện sáng/tối">Sáng / tối</button>
+  </div>
+</div>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Mục lục">
+    <ol>
+      <li><a href="#cach-dung">Cách dùng tài liệu</a></li>
+      <li><a href="#noi-dung">A. Nội dung</a></li>
+      <li><a href="#ngon-ngu">B. Ngôn ngữ và ngữ pháp</a></li>
+      <li><a href="#trinh-bay">C. Trình bày</a></li>
+      <li><a href="#loi-thoai">D. Lời nói với người dùng</a></li>
+      <li><a href="#markup">E. Markup và rác của chatbot</a></li>
+      <li><a href="#trich-dan">F. Trích dẫn và liên kết</a></li>
+      <li><a href="#tom-tat">G. Bình luận và tóm tắt chỉnh sửa</a></li>
+      <li><a href="#khac">H. Dấu hiệu khác</a></li>
+      <li><a href="#cu">I. Dấu hiệu của model cũ</a></li>
+      <li><a href="#khong-phai">J. Không phải dấu hiệu</a></li>
+      <li><a href="#tieng-viet">K. Mở rộng cho tiếng Việt</a></li>
+      <li><a href="#checklist">Checklist trước khi commit</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section class="group" id="cach-dung">
+      <h2>Cách dùng tài liệu</h2>
+      <div class="note">
+        <p><b>Vì sao AI để lại dấu vết.</b> LLM đoán từ tiếp theo theo xác suất, nên kết quả kéo về mức trung bình: chi tiết cụ thể, hiếm gặp bị thay bằng câu chung chung, tích cực, dùng được cho mọi chủ đề. Wikipedia lấy ví dụ "người phát minh thiết bị nối toa tàu đầu tiên" bị viết thành "một người khổng lồ mang tính cách mạng của ngành công nghiệp". Văn càng chung chung thì càng dễ nhận ra.</p>
+        <p><b>Trang gốc mô tả, không ra luật.</b> Wikipedia ghi rõ danh sách này là quan sát, không phải quy định. Nhóm chuyển nó thành luật cho văn bản <em>của chính mình</em>: README, <code>documentation/</code>, <code>AI_USAGE.md</code>, commit, mô tả PR, comment trong code, chuỗi giao diện ở <code>locales/</code>, prompt và nội dung Gemini sinh cho nhân viên.</p>
+        <p><b>Dấu hiệu không phải bằng chứng.</b> Một từ như <span class="w">crucial</span> xuất hiện một lần không nói lên gì. Cần nhiều dấu hiệu cùng lúc. Không dùng trang này để kết tội ai dùng AI.</p>
+      </div>
+      <p><b>Công cụ phát hiện AI không đáng tin.</b> Trang gốc nêu: công cụ tự động có tỉ lệ sai đáng kể và dễ bị qua mặt bằng cách diễn đạt lại. Nghiên cứu năm 2025 cho thấy người không dùng LLM thường xuyên đoán đúng không hơn tung đồng xu; người dùng LLM nhiều đoán đúng khoảng 90%. Văn người viết cũng đang bị ảnh hưởng bởi LLM, và có người cố tình đổi cách viết để tránh bị nghi.</p>
+      <div class="legend">
+        <span><span class="lvl s">Mạnh</span> gần như chắc chắn là văn chatbot chưa sửa</span>
+        <span><span class="lvl m">Vừa</span> đáng ngờ khi đi cùng dấu hiệu khác</span>
+        <span><span class="lvl l">Yếu</span> người viết cũng hay dùng</span>
+      </div>
+      <p style="color:var(--muted);font-size:.88rem;margin-top:6px">Mức độ là đánh giá của nhóm dựa trên ghi chú của trang gốc, trang gốc không xếp hạng.</p>
+    </section>
+
+    <section class="group" id="noi-dung">
+      <h2>A. Nội dung</h2>
+      <p class="lead">Những kiểu nói thay cho thông tin thật: thổi phồng, quảng cáo, phân tích rỗng, trích nguồn mơ hồ.</p>
+
+      <article class="sign" id="a1">
+        <div class="head"><div><h3>Thổi phồng tầm quan trọng, di sản, xu hướng lớn</h3><span class="en">Undue emphasis on significance, legacy, and broader trends</span></div><span class="lvl m">Vừa</span></div>
+        <p>Gắn một chi tiết bình thường vào "bước ngoặt", "xu hướng rộng hơn", "di sản lâu dài". Bản mới hơn hay đặt chủ đề vào "các cuộc tranh luận" hoặc nói nó "gợi ra những câu hỏi triết học".</p>
+        <div class="words"><span class="w">stands/serves as</span><span class="w">is a testament/reminder</span><span class="w">a crucial/pivotal/vital/significant/key role/moment</span><span class="w">underscores/highlights its importance</span><span class="w">reflects broader</span><span class="w">symbolizing its ongoing/enduring/lasting</span><span class="w">contributing to the</span><span class="w">setting the stage for</span><span class="w">marking/shaping the</span><span class="w">represents/marks a shift</span><span class="w">key turning point</span><span class="w">evolving landscape</span><span class="w">focal point</span><span class="w">indelible mark</span><span class="w">deeply rooted</span></div>
+        <blockquote>The Statistical Institute of Catalonia was officially established in 1989, <mark>marking a pivotal moment</mark> in the evolution of regional statistics in Spain.<cite>Ví dụ trên Wikipedia</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> nói việc gì xảy ra và số liệu đo được. "Chunker đạt 0 tiêu đề nhận nhầm trên 285 chunk" thay cho "đánh dấu bước tiến quan trọng về chất lượng".</p>
+      </article>
+
+      <article class="sign" id="a2">
+        <div class="head"><div><h3>Liệt kê độ phủ truyền thông thay cho nội dung</h3><span class="en">Canned emphasis on notability, attribution, and media coverage</span></div><span class="lvl m">Vừa</span></div>
+        <p>Chứng minh tầm quan trọng bằng cách kể tên báo đã nhắc tới, phân loại nguồn (báo khu vực, tạp chí ngành), hoặc "có sự hiện diện mạnh trên mạng xã hội", nhưng không nói các nguồn đó viết gì.</p>
+        <div class="words"><span class="w">independent coverage</span><span class="w">local/regional/national media outlets</span><span class="w">trade publications</span><span class="w">cited/featured/profiled in</span><span class="w">written by a leading expert</span><span class="w">active social media presence</span><span class="w">was identified by</span></div>
+        <blockquote>Her insights have also been <mark>featured in</mark> Wired, Refinery29, and <mark>other prominent media outlets</mark>.<cite>Ví dụ trên Wikipedia</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> khi dẫn tài liệu, ghi nội dung được dẫn (mã DOC, mục, câu trích) thay vì ghi "đã được nhiều tài liệu đề cập".</p>
+      </article>
+
+      <article class="sign" id="a3">
+        <div class="head"><div><h3>Phân tích hời hợt gắn đuôi "-ing"</h3><span class="en">Superficial analyses</span></div><span class="lvl m">Vừa</span></div>
+        <p>Nêu một sự kiện rồi nối thêm cụm phân từ nhận xét về ý nghĩa, không có nguồn và không thêm thông tin.</p>
+        <div class="words"><span class="w">highlighting/underscoring/emphasizing …</span><span class="w">ensuring …</span><span class="w">reflecting/symbolizing …</span><span class="w">contributing to …</span><span class="w">cultivating/fostering …</span><span class="w">encompassing …</span><span class="w">enhancing …</span><span class="w">valuable insights</span><span class="w">align/resonate with</span></div>
+        <blockquote>As of the April 2008 census, the population of Douera stood at approximately 56,998 inhabitants, <mark>creating a lively community within its borders.</mark><cite>Ví dụ trên Wikipedia</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> cắt bỏ đuôi nhận xét. Nếu ý nghĩa đó quan trọng thì viết thành câu riêng có căn cứ.</p>
+      </article>
+
+      <article class="sign" id="a4">
+        <div class="head"><div><h3>Giọng quảng cáo, cẩm nang du lịch</h3><span class="en">Promotional and advertisement-like language</span></div><span class="lvl m">Vừa</span></div>
+        <p>LLM khó giữ giọng trung lập. Viết về người hay công ty thì giống thông cáo báo chí, viết về địa danh thì giống sách du lịch. Có trường hợp tóm tắt chỉnh sửa ghi "đã bỏ giọng quảng cáo" trong khi bản sửa lại thêm giọng quảng cáo. Model mới khen khéo hơn, ít dùng "tốt nhất" nhưng vẫn dùng cùng một bộ từ.</p>
+        <div class="words"><span class="w">boasts a</span><span class="w">vibrant</span><span class="w">rich</span><span class="w">profound</span><span class="w">enhancing</span><span class="w">showcasing</span><span class="w">exemplifies</span><span class="w">commitment to</span><span class="w">natural beauty</span><span class="w">nestled</span><span class="w">in the heart of</span><span class="w">groundbreaking</span><span class="w">renowned</span><span class="w">featuring</span><span class="w">diverse array</span></div>
+        <blockquote><mark>Nestled</mark> within the <mark>breathtaking</mark> region of Gonder in Ethiopia, Alamata Raya Kobo <mark>stands as a vibrant town with a rich cultural heritage</mark>…<cite>Bản sửa tháng 6/2023, bài Alamata (woreda)</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> README và nội dung bài học mô tả chức năng, không quảng bá. Tránh "giải pháp đột phá", "trải nghiệm liền mạch", "mạnh mẽ".</p>
+      </article>
+
+      <article class="sign" id="a5">
+        <div class="head"><div><h3>Quy ý kiến cho nguồn mơ hồ</h3><span class="en">Vague attributions and overgeneralization of opinions</span></div><span class="lvl m">Vừa</span></div>
+        <p>"Các chuyên gia cho rằng", "giới quan sát nhận định". Hay phóng đại số nguồn: nói "nhiều nhà phê bình" nhưng chỉ dẫn một người, hoặc dùng "such as" trước một danh sách thực ra đã đủ.</p>
+        <div class="words"><span class="w">Industry reports</span><span class="w">Observers have cited</span><span class="w">Experts argue</span><span class="w">Some critics argue</span><span class="w">several sources/publications</span><span class="w">such as (trước danh sách đầy đủ)</span></div>
+        <blockquote>Due to its unique characteristics, the Haolai River is of interest to <mark>researchers and conservationists</mark>.<cite>Ví dụ trên Wikipedia</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> nêu đích danh: "theo DOC-02 §6", "góp ý review ngày 26/09", "SRS Step 13".</p>
+      </article>
+
+      <article class="sign" id="a6">
+        <div class="head"><div><h3>Kết luận khuôn mẫu "Dù vậy vẫn còn thách thức"</h3><span class="en">Outline-like conclusions about challenges and future prospects</span></div><span class="lvl m">Vừa</span></div>
+        <p>Đoạn hoặc mục "Thách thức" mở bằng "Despite its [lời khen], X faces challenges…" rồi kết bằng lạc quan mơ hồ hoặc đoán tương lai. Dấu hiệu nằm ở công thức cứng, không phải ở việc nhắc tới khó khăn.</p>
+        <div class="words"><span class="w">Despite its … faces several challenges</span><span class="w">Despite these challenges</span><span class="w">Challenges and Legacy</span><span class="w">Future Outlook</span></div>
+        <blockquote><mark>Despite its industrial and residential prosperity, Korattur faces challenges</mark> typical of urban areas […] Korattur <mark>continues to thrive</mark> as an integral part of the Ambattur industrial zone.<cite>Ví dụ trên Wikipedia</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> mục "Giới hạn" trong README liệt kê cụ thể việc chưa làm và lý do (ví dụ "chưa chạy với Gemini thật vì hết quota"), không kết bằng câu lạc quan.</p>
+      </article>
+
+      <article class="sign" id="a7">
+        <div class="head"><div><h3>Coi tiêu đề chung là danh từ riêng</h3><span class="en">Leads treating lists or broad titles as proper nouns</span></div><span class="lvl l">Yếu</span></div>
+        <p>Câu mở đầu định nghĩa chính tiêu đề bài như một thực thể: "X refers to…", "The 'List of…' is a curated compilation".</p>
+        <blockquote><mark>The "List of songs about Mexico" is a curated compilation</mark> of musical works…<cite>Ví dụ trên Wikipedia</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> tài liệu bắt đầu bằng việc nó giúp người đọc làm gì, không định nghĩa lại tên file.</p>
+      </article>
+
+      <article class="sign" id="a8">
+        <div class="head"><div><h3>Mục "X và Y", đặc biệt "Awards and recognition"</h3><span class="en">"Awards and recognition" section</span></div><span class="lvl l">Yếu</span></div>
+        <p>Tiêu đề mục dạng "X và Y" rất phổ biến trong bài AI viết. Mục "Giải thưởng và ghi nhận" thường chỉ kể việc được báo nhắc tới.</p>
+      </article>
+    </section>
+
+    <section class="group" id="ngon-ngu">
+      <h2>B. Ngôn ngữ và ngữ pháp</h2>
+      <p class="lead">Những từ và cấu trúc câu LLM dùng nhiều hơn người viết.</p>
+
+      <article class="sign" id="b1">
+        <div class="head"><div><h3>Mật độ cao "từ vựng AI"</h3><span class="en">High density of "AI vocabulary" words</span></div><span class="lvl m">Vừa</span></div>
+        <p>Nhiều nghiên cứu cho thấy các từ này tăng mạnh sau 2022 và thường đi thành cụm: có một từ thì hay có thêm vài từ khác. Một hai từ có thể là trùng hợp; nhiều từ trong cùng một đoạn là dấu hiệu rõ.</p>
+        <div class="words"><span class="w">Additionally (đầu câu)</span><span class="w">align with</span><span class="w">boasts (= has)</span><span class="w">bolstered</span><span class="w">crucial</span><span class="w">deep dive</span><span class="w">delve</span><span class="w">emphasizing</span><span class="w">enduring</span><span class="w">enhance</span><span class="w">fostering</span><span class="w">garner</span><span class="w">highlight (động từ)</span><span class="w">interplay</span><span class="w">intricate/intricacies</span><span class="w">key (tính từ)</span><span class="w">landscape (nghĩa trừu tượng)</span><span class="w">meticulous/meticulously</span><span class="w">pivotal</span><span class="w">robust</span><span class="w">showcase</span><span class="w">tapestry (nghĩa trừu tượng)</span><span class="w">testament</span><span class="w">underscore (động từ)</span><span class="w">valuable</span><span class="w">vibrant</span></div>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Giai đoạn (model)</th><th>Từ hay gặp cùng nhau</th></tr></thead>
+          <tbody>
+            <tr><td>2023 đến giữa 2024 (GPT-4)</td><td>Additionally, boasts, bolstered, crucial, delve, emphasizing, enduring, garner, intricate, interplay, key, landscape, meticulous, pivotal, underscore, tapestry, testament, valuable, vibrant</td></tr>
+            <tr><td>Giữa 2024 đến giữa 2025 (GPT-4o)</td><td>align with, bolstered, crucial, emphasizing, enhance, enduring, fostering, highlighting, pivotal, showcasing, underscore, vibrant</td></tr>
+            <tr><td>Từ giữa 2025 (GPT-5)</td><td>emphasizing, enhance, highlighting, showcasing, cộng với nhóm từ ở mục A2</td></tr>
+            <tr><td>Grok</td><td>causal, empirical, correlate, vẫn dùng underscore (2026)</td></tr>
+          </tbody>
+        </table></div>
+        <p>Hiểu đúng nghĩa đen: từ bị lạm dụng không có nghĩa từ đồng nghĩa của nó cũng bị lạm dụng. "Underscore" nghĩa là dấu gạch dưới thì không tính.</p>
+        <p class="fix"><b>Trong dự án:</b> dùng từ thường: "has", "is", "shows", "important" khi thật sự cần. Không thay bằng từ đồng nghĩa khác cho có (xem I5).</p>
+      </article>
+
+      <article class="sign" id="b2">
+        <div class="head"><div><h3>Né động từ "là" (is/are)</h3><span class="en">Avoidance of basic copulatives</span></div><span class="lvl m">Vừa</span></div>
+        <p>Thay "X is Y" bằng "X serves as / stands as / functions as / represents Y", thay "has" bằng "boasts / features / maintains / offers". Một nghiên cứu ghi nhận "is" và "are" trong văn học thuật giảm hơn 10% trong năm 2023. Bản copyedit bằng AI hay "sửa" câu theo hướng này.</p>
+        <div class="words"><span class="w">serves as</span><span class="w">stands as</span><span class="w">marks</span><span class="w">functions as</span><span class="w">operates as</span><span class="w">represents</span><span class="w">boasts</span><span class="w">features</span><span class="w">maintains</span><span class="w">offers</span><span class="w">refers to</span></div>
+        <p class="fix"><b>Trong dự án:</b> "The comparator is the module that…" thay cho "The comparator serves as the module that…". Tiếng Việt: "là" thay cho "đóng vai trò là", "đóng vai trò như".</p>
+      </article>
+
+      <article class="sign" id="b3">
+        <div class="head"><div><h3>Nói quan hệ một cách mơ hồ</h3><span class="en">Vague expression of connection or association</span></div><span class="lvl m">Vừa</span></div>
+        <p>Thay vì "năm 2017 A là CEO của B", LLM viết "các nguồn xác định A có liên quan tới vai trò lãnh đạo ở B".</p>
+        <div class="words"><span class="w">in connection with/to</span><span class="w">connected with/to</span><span class="w">in association with</span><span class="w">associated with</span><span class="w">particularly/widely associated</span></div>
+        <blockquote>The system <mark>has been associated with</mark> residential water management applications including swimming-pool backwash and sump-pump discharge.<cite>Ví dụ trên Wikipedia</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> nói quan hệ cụ thể: "bảng <code>chunks</code> có khoá ngoại tới <code>documents</code>" thay cho "chunk gắn liền với tài liệu".</p>
+      </article>
+
+      <article class="sign" id="b4">
+        <div class="head"><div><h3>Song hành phủ định</h3><span class="en">Negative parallelisms</span></div><span class="lvl m">Vừa</span></div>
+        <p>Câu viết như đang sửa một hiểu lầm mà người đọc chưa hề có. Ba dạng:</p>
+        <ul class="plain">
+          <li><b>Not just X, but also Y:</b> "not only … but …", "It is not just …, it's …".</li>
+          <li><b>Not X, but Y:</b> "It's not …, it's …", "no …, no …, just …". Phủ nhận hẳn vế đầu.</li>
+          <li><b>Y rather than X:</b> dạng đảo, hay gặp ở Grok.</li>
+        </ul>
+        <blockquote>The issue here <mark>isn't just sourcing—it's framing</mark>.<cite>Bình luận tháng 8/2025 trên Wikipedia</cite></blockquote>
+        <blockquote>Kusama's self-portrait is <mark>not a mirror but a portal: not a representation of self, but a mechanism</mark> for its constant reinvention.<cite>Bản sửa tháng 5/2025</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> nói thẳng điều khẳng định. Tiếng Việt: tránh "không chỉ … mà còn …", "không phải … mà là …" khi không có ai hiểu sai điều đó.</p>
+      </article>
+
+      <article class="sign" id="b5">
+        <div class="head"><div><h3>Luật số ba</h3><span class="en">Rule of three</span></div><span class="lvl l">Yếu</span></div>
+        <p>Liệt kê theo nhóm ba ("tính từ, tính từ, tính từ" hoặc "cụm, cụm, và cụm") để phân tích hời hợt trông đầy đủ hơn. Dấu hiệu mạnh hơn ở nơi người viết thường không trau chuốt, ví dụ tóm tắt chỉnh sửa hay commit message.</p>
+        <blockquote>…Nezha's <mark>mythological image, magical weapons, and spirit of resistance</mark> while reshaping them through <mark>contemporary values, modern aesthetics, and digital animation technology</mark>.<cite>Bản sửa tháng 6/2026</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> liệt kê đúng số mục có thật. Có hai thì ghi hai.</p>
+      </article>
+    </section>
+
+    <section class="group" id="trinh-bay">
+      <h2>C. Trình bày</h2>
+      <p class="lead">Thói quen định dạng của chatbot, phần lớn thừa hưởng từ Markdown, README, slide và bài listicle.</p>
+
+      <article class="sign" id="c1">
+        <div class="head"><div><h3>Heading lặp lại tiêu đề</h3><span class="en">Title heading</span></div><span class="lvl l">Yếu</span></div>
+        <p>Đặt một heading mang tên bài ở đầu nội dung, dù trang đã có tiêu đề.</p>
+      </article>
+
+      <article class="sign" id="c2">
+        <div class="head"><div><h3>Viết hoa mọi từ trong heading</h3><span class="en">Title case</span></div><span class="lvl l">Yếu</span></div>
+        <p>Chatbot có xu hướng mạnh viết hoa mọi từ chính trong tiêu đề mục: "Impact of Technology and Digitalization".</p>
+        <p class="fix"><b>Trong dự án:</b> heading viết hoa kiểu câu (chỉ chữ đầu và tên riêng). Tiếng Việt: "Luồng duyệt lộ trình", không phải "Luồng Duyệt Lộ Trình".</p>
+      </article>
+
+      <article class="sign" id="c3">
+        <div class="head"><div><h3>Heading chỉ chứa heading con</h3><span class="en">Headings only containing other headings</span></div><span class="lvl l">Yếu</span></div>
+        <p>Mục cha không có câu nào, chỉ có các mục con.</p>
+      </article>
+
+      <article class="sign" id="c4">
+        <div class="head"><div><h3>In đậm dàn trải</h3><span class="en">Overuse of boldface</span></div><span class="lvl m">Vừa</span></div>
+        <p>In đậm máy móc nhiều cụm trong mỗi đoạn, kiểu "key takeaways", thừa hưởng từ README, how-to, slide.</p>
+        <blockquote>A <mark><b>leveraged buyout (LBO)</b></mark> is characterized by the extensive use of <mark><b>debt financing</b></mark> to acquire a company. This financing structure enables <mark><b>private equity firms</b></mark> and <mark><b>financial sponsors</b></mark>…<cite>Bản sửa tháng 2/2025</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> in đậm tối đa một cụm mỗi đoạn, chỉ cho cảnh báo hoặc thuật ngữ được định nghĩa lần đầu.</p>
+      </article>
+
+      <article class="sign" id="c5">
+        <div class="head"><div><h3>Danh sách dọc có tiêu đề in đậm đầu dòng</h3><span class="en">Inline-header vertical lists</span></div><span class="lvl m">Vừa</span></div>
+        <p>Mỗi gạch đầu dòng mở bằng một cụm in đậm, dấu hai chấm, rồi mô tả: <code>- **Tiêu đề:** mô tả…</code>. Ký hiệu đầu dòng có thể là •, -, –, #, emoji hoặc số "1." gõ tay.</p>
+        <blockquote><mark>Conflict of Interest (COI)/Autobiography:</mark> While I understand the concern regarding my username […]<br><mark>Notability (GNG and NPOLITICIAN):</mark> I have revised the article to focus on factual details […]<cite>Bình luận tháng 10/2024</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> nội dung đọc liền mạch được thì viết thành đoạn. Danh sách dùng cho các mục thật sự song song (bước cài đặt, file bị ảnh hưởng).</p>
+      </article>
+
+      <article class="sign" id="c6">
+        <div class="head"><div><h3>Lạm dụng gạch dài (—)</h3><span class="en">Overuse of em dashes</span></div><span class="lvl l">Yếu</span></div>
+        <p>LLM dùng em dash nhiều hơn người viết không chuyên cùng thể loại, ở chỗ người ta thường dùng dấu phẩy, ngoặc đơn, hai chấm. Hay có dấu cách hai bên và dùng để "nhấn" kiểu văn bán hàng. Trang gốc lưu ý: một nghiên cứu tháng 7/2026 cho thấy trong các model hiện tại chỉ Claude dùng em dash nhiều hơn người viết chuyên nghiệp, còn ChatGPT đã giảm. Dấu hiệu này chỉ có giá trị khi đi cùng dấu hiệu khác.</p>
+        <blockquote>…they were my own <mark>—</mark> not mistakes caused by the AI. […] one of the admins blocked me <mark>—</mark> not because of the AI usage itself <mark>—</mark> but because I didn't respond…<cite>Đơn xin gỡ chặn tháng 4/2025</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> mặc định dùng dấu phẩy, ngoặc đơn, hai chấm. Không dùng gạch dài để nhấn mạnh.</p>
+      </article>
+
+      <article class="sign" id="c7">
+        <div class="head"><div><h3>Emoji làm định dạng</h3><span class="en">Emoji as formatting</span></div><span class="lvl m">Vừa</span></div>
+        <p>Emoji đặt trước heading hoặc gạch đầu dòng (🌍 Goals, 🚀, ✅). Nay hiếm hơn nhưng vẫn gặp trong bình luận và tóm tắt chỉnh sửa.</p>
+        <p class="fix"><b>Trong dự án:</b> không emoji trong heading, danh sách, commit, chuỗi giao diện. Icon trong UI dùng bộ icon của frontend.</p>
+      </article>
+
+      <article class="sign" id="c8">
+        <div class="head"><div><h3>Bảng không cần thiết</h3><span class="en">Unusual use of tables</span></div><span class="lvl l">Yếu</span></div>
+        <p>Bảng nhỏ, ít định dạng, cho nội dung nên viết thành câu hoặc hộp thông tin.</p>
+        <p class="fix"><b>Trong dự án:</b> bảng dùng khi có từ ba dòng và hai cột so sánh được trở lên.</p>
+      </article>
+
+      <article class="sign" id="c9">
+        <div class="head"><div><h3>Dấu nháy cong</h3><span class="en">Curly quotation marks and apostrophes</span></div><span class="lvl l">Yếu</span></div>
+        <p>ChatGPT và DeepSeek dùng “…”, ‘…’ và ’ thay cho " và ', đôi khi lẫn lộn trong cùng một câu trả lời. Không phải bằng chứng: Word, macOS, iOS tự đổi sang nháy cong. Gemini và Claude thường không dùng nháy cong.</p>
+        <p class="fix"><b>Trong dự án:</b> trong code, JSON, file nguồn Markdown, prompt: dùng nháy thẳng. Không trộn hai loại trong một file.</p>
+      </article>
+
+      <article class="sign" id="c10">
+        <div class="head"><div><h3>Nhảy cấp heading, lạm dụng heading cấp 1, kẻ ngang giữa các mục</h3><span class="en">Skipping heading levels · Overuse of level 1 headings · Thematic breaks between sections</span></div><span class="lvl l">Yếu</span></div>
+        <p>Bắt đầu mục từ cấp 3 bỏ qua cấp 2; dùng nhiều heading cấp 1 (hệ quả của việc chuyển Markdown sang định dạng khác); chèn <code>---</code> giữa mọi mục.</p>
+        <p class="fix"><b>Trong dự án:</b> mỗi file Markdown một <code>#</code>, sau đó <code>##</code>, <code>###</code> theo thứ tự. Không kẻ ngang giữa các mục.</p>
+      </article>
+    </section>
+
+    <section class="group" id="loi-thoai">
+      <h2>D. Lời nói với người dùng</h2>
+      <p class="lead">Câu chatbot viết cho người đang chat, bị dán nguyên vào sản phẩm.</p>
+
+      <article class="sign" id="d1">
+        <div class="head"><div><h3>Lời trò chuyện, phục vụ</h3><span class="en">Collaborative communication</span></div><span class="lvl s">Mạnh</span></div>
+        <p>Văn bản vốn là thư từ, lời khuyên hay bản nháp của chatbot. Có khi nói thẳng "văn bản này dành cho Wikipedia" hoặc dặn người dùng tuân thủ quy định (thường dặn sai).</p>
+        <div class="words"><span class="w">I hope this helps</span><span class="w">Of course!</span><span class="w">Certainly!</span><span class="w">You're absolutely right!</span><span class="w">Would you like…</span><span class="w">is there anything else</span><span class="w">let me know</span><span class="w">more detailed breakdown</span><span class="w">here is a</span></div>
+        <blockquote><mark>In this section, we will discuss</mark> the background information related to the topic of the report…<cite>Bản sửa tháng 8/2023, bài Metaphysics</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> không để lại "Dưới đây là…", "Hy vọng hữu ích", "Bạn có muốn…" trong tài liệu, comment, chuỗi giao diện hay bài học.</p>
+      </article>
+
+      <article class="sign" id="d2">
+        <div class="head"><div><h3>Nhắc giới hạn kiến thức, đoán phần thiếu</h3><span class="en">Knowledge-cutoff disclaimers and speculation about gaps in sources</span></div><span class="lvl s">Mạnh</span></div>
+        <p>Model cũ nhắc mốc huấn luyện. Chatbot có tìm kiếm thì nói "thông tin không được công bố rộng rãi" rồi đoán thông tin đó "có lẽ" là gì. Phần đoán là bịa, kể cả câu "không có tài liệu".</p>
+        <div class="words"><span class="w">as of my last knowledge update</span><span class="w">up to my last training update</span><span class="w">While specific details are limited/scarce</span><span class="w">not widely available/documented/disclosed</span><span class="w">in the provided/available sources</span><span class="w">based on available information</span></div>
+        <blockquote><mark>As of my last knowledge update in January 2022</mark>, I don't have specific information about the current status…<cite>Bản sửa tháng 11/2023</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> với Gemini, grounding loại mọi mục không trích được nguyên văn từ chunk. Câu kiểu "tài liệu không nêu rõ, nhưng có thể…" trong bài học là lỗi.</p>
+      </article>
+
+      <article class="sign" id="d3">
+        <div class="head"><div><h3>Mẫu điền chỗ trống bị bỏ quên</h3><span class="en">Phrasal templates and placeholder text</span></div><span class="lvl s">Mạnh</span></div>
+        <p>Chatbot trả về mẫu có ô trống để người dùng điền, người dùng quên điền.</p>
+        <blockquote>Best regards, <mark>[Your Name]</mark> and Chloe<cite>Ví dụ trên Wikipedia</cite></blockquote>
+        <blockquote>Official YouTube Channel: <mark>(Add your channel URL here)</mark><cite>Ví dụ trên Wikipedia</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> Rules mục 1 đã cấm placeholder trong code. Mục 6 mở rộng cho tài liệu: không còn <code>[Insert …]</code>, <code>[Mô tả …]</code>, <code>(Add … here)</code>, <code>&lt;tên&gt;</code> chưa thay.</p>
+      </article>
+    </section>
+
+    <section class="group" id="markup">
+      <h2>E. Markup và rác của chatbot</h2>
+      <p class="lead">Mã định dạng nội bộ lọt ra ngoài. Đây là dấu hiệu chắc chắn nhất.</p>
+
+      <article class="sign" id="e1">
+        <div class="head"><div><h3>Sai ngôn ngữ đánh dấu</h3><span class="en">Use of Markdown · Broken wikitext</span></div><span class="lvl s">Mạnh</span></div>
+        <p>Chatbot mặc định xuất Markdown (<code>**</code>, <code>#</code>, <code>[text](url)</code>, <code>---</code>). Dán vào nơi dùng định dạng khác (wikitext của Wikipedia) thì ký hiệu hiện nguyên. Có khi còn kèm câu hỏi "Bạn có muốn chuyển sang wikitext không?".</p>
+        <p class="fix"><b>Trong dự án:</b> không để <code>**</code> hay <code>#</code> thô trong chuỗi giao diện ở <code>locales/</code>, trong nội dung bài học hiển thị dạng text, trong commit message. Output Gemini phải là JSON thuần: client đã bóc khối <code>```json</code>, nhưng prompt vẫn phải yêu cầu không bọc.</p>
+      </article>
+
+      <article class="sign" id="e2">
+        <div class="head"><div><h3>Mã trích dẫn nội bộ của từng chatbot</h3><span class="en">Internal formatting and reference markup bugs</span></div><span class="lvl s">Mạnh</span></div>
+        <p>Chuỗi dưới đây xuất hiện trong văn bản là bằng chứng không cần bàn.</p>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Chatbot</th><th>Chuỗi cần tìm</th></tr></thead>
+          <tbody>
+            <tr><td>ChatGPT</td><td><code>:contentReference[oaicite:0]{index=0}</code>, <code>oai_citation</code>, <code>Example+1</code>, <code>turn0search0</code>, <code>attributableIndex</code>, tên miền dính liền cuối câu (<code>medway.gov.ukmedway.gov.uk</code>)</td></tr>
+            <tr><td>Gemini</td><td><code>[cite: 1]</code>, <code>[span_1](start_span)</code></td></tr>
+            <tr><td>Grok</td><td><code>grok_card</code>, <code>grok_render_citation_card_json</code></td></tr>
+            <tr><td>DeepSeek</td><td>ngoặc thấu kính và dấu dao: <code>【29†L582-L589】</code></td></tr>
+            <tr><td>Perplexity</td><td><code>[attached_file:1]</code>, <code>[web:1]</code>, URL chứa <code>ppl-ai-file-upload</code></td></tr>
+            <tr><td>Chưa rõ nguồn</td><td><code>:::writing</code></td></tr>
+          </tbody>
+        </table></div>
+        <p class="fix"><b>Trong dự án:</b> grep các chuỗi này trước khi commit (lệnh ở phần Checklist). Pipeline Gemini: nếu output chứa <code>[cite:</code> thì coi là lỗi định dạng.</p>
+      </article>
+
+      <article class="sign" id="e3">
+        <div class="head"><div><h3>Tham chiếu tới thứ không tồn tại</h3><span class="en">Non-existent or out-of-place categories · Non-existent templates</span></div><span class="lvl s">Mạnh</span></div>
+        <p>Trên Wikipedia là danh mục và template không có thật. Trong repo tương đương là tên file, hàm, endpoint, biến môi trường, lệnh CLI được nhắc tới nhưng không tồn tại.</p>
+        <p class="fix"><b>Trong dự án:</b> mọi đường dẫn, tên hàm, endpoint, số test ghi trong tài liệu và <code>AI_USAGE.md</code> phải kiểm tra được trong repo tại thời điểm commit.</p>
+      </article>
+    </section>
+
+    <section class="group" id="trich-dan">
+      <h2>F. Trích dẫn và liên kết</h2>
+      <p class="lead">Trích dẫn trông hợp lệ nhưng không dẫn tới nguồn thật.</p>
+
+      <article class="sign" id="f1">
+        <div class="head"><div><h3>Liên kết chết, DOI/ISBN sai, DOI trỏ sang bài khác</h3><span class="en">Broken external links · Invalid DOI and ISBNs · DOIs that lead to unrelated articles</span></div><span class="lvl s">Mạnh</span></div>
+        <p>Nhiều liên kết 404 trong một bài mới, không có trong Internet Archive, là dấu hiệu mạnh. ISBN có checksum sai. DOI đúng định dạng nhưng dẫn tới bài khác; có ví dụ tác giả được trích đã mất hơn 30 năm vào thời điểm "viết bài".</p>
+        <p>Cần loại trừ: link cần đăng nhập thư viện, link bị bot sửa hỏng, link bị cắt đầu/cuối khi copy (lỗi người).</p>
+      </article>
+
+      <article class="sign" id="f2">
+        <div class="head"><div><h3>Trích sách không số trang, trích dẫn đặt sai chỗ</h3><span class="en">Book citations without page numbers or URLs · Incorrect or unconventional use of references</span></div><span class="lvl m">Vừa</span></div>
+        <p>LLM hay trích sách không có số trang, hoặc đặt tham chiếu ở vị trí không khớp với câu nó hỗ trợ.</p>
+        <p class="fix"><b>Trong dự án:</b> đây chính là luật của pipeline: mỗi mục có <code>source_reference</code> với <code>page</code> và <code>exact_quote</code> (Rules mục 4). Áp dụng cả cho tài liệu người viết: dẫn DOC thì ghi mục hoặc trang.</p>
+      </article>
+
+      <article class="sign" id="f3">
+        <div class="head"><div><h3>Tham số <code>utm_source=</code> trong URL</h3><span class="en">utm_source=</span></div><span class="lvl m">Vừa</span></div>
+        <p>ChatGPT gắn <code>utm_source=chatgpt.com</code> (hoặc tương tự) vào link nó tìm được.</p>
+        <p class="fix"><b>Trong dự án:</b> bỏ mọi tham số theo dõi khỏi URL trong tài liệu.</p>
+      </article>
+
+      <article class="sign" id="f4">
+        <div class="head"><div><h3>Tham chiếu khai báo nhưng không dùng</h3><span class="en">Named references declared in references section but unused in article body</span></div><span class="lvl m">Vừa</span></div>
+        <p>Danh sách nguồn có mục không được dẫn ở đâu trong bài.</p>
+        <p class="fix"><b>Trong dự án:</b> tương tự với file import thừa, khoá dịch không dùng, mục "xem thêm" trỏ tới tài liệu đã xoá.</p>
+      </article>
+    </section>
+
+    <section class="group" id="tom-tat">
+      <h2>G. Bình luận và tóm tắt chỉnh sửa</h2>
+      <p class="lead">Trên Wikipedia là edit summary và bình luận thảo luận. Trong dự án tương ứng với commit message, mô tả PR, dòng <code>AI_USAGE.md</code> và góp ý review.</p>
+
+      <article class="sign" id="g1">
+        <div class="head"><div><h3>Cam kết tuân thủ chung chung</h3><span class="en">Canned assurance of adherence to policies and guidelines</span></div><span class="lvl s">Mạnh</span></div>
+        <p>Tóm tắt trấn an người đọc rằng thay đổi đã "đảm bảo trung lập, rõ ràng, đúng chuẩn". Người thật thường ghi ngắn và chỉ đích danh quy định: "bỏ link thừa theo MOS:OVERLINK".</p>
+        <div class="words"><span class="w">ensured that … adheres to</span><span class="w">refined</span><span class="w">enhanced</span><span class="w">enriched</span><span class="w">streamlined</span><span class="w">improved</span><span class="w">in compliance with</span><span class="w">clarity</span><span class="w">flow</span><span class="w">neutral tone</span></div>
+        <blockquote><mark>I revised the content to provide a neutral and informative description</mark> […] <mark>in a way that adheres to Wikipedia's guidelines</mark>. The tone was adjusted to be more encyclopedic…<cite>Tóm tắt chỉnh sửa có tiền tố "ChatGPT"</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> commit ghi việc đã làm và căn cứ cụ thể ("theo Rules mục 5"), không ghi "cải thiện chất lượng code, tuân thủ best practices".</p>
+      </article>
+
+      <article class="sign" id="g2">
+        <div class="head"><div><h3>Kể những gì đã giữ nguyên, đã tránh</h3><span class="en">Specific mentions of "preserved" or "retained" information, "avoided" mistakes</span></div><span class="lvl s">Mạnh</span></div>
+        <p>Người sửa hiếm khi ghi thứ họ không đụng tới. AI được dặn "sửa X nhưng giữ Y" nên hay báo lại "while preserving…".</p>
+        <div class="words"><span class="w">preserved/preserving</span><span class="w">retained/retaining</span><span class="w">avoided/avoiding</span><span class="w">ensured/ensuring</span><span class="w">aimed/aiming to</span></div>
+        <blockquote>Removed promotional language and revised the passage to use a more neutral, balanced tone <mark>while preserving the original meaning and technical details.</mark><cite>Ví dụ trên Wikipedia</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> chỉ ghi phần không đổi khi người đọc cần biết (ví dụ "API giữ tương thích với frontend cũ" khi có thay đổi schema).</p>
+      </article>
+
+      <article class="sign" id="g3">
+        <div class="head"><div><h3>Nhấn mạnh việc có nguồn, nhấn mạnh tên tham số</h3><span class="en">Overemphasis on presence/reliability of citations · on parameter/template names and markup idiosyncrasies</span></div><span class="lvl m">Vừa</span></div>
+        <p>Tóm tắt nói "đã thêm nguồn độc lập, đã xác minh" mà không nói nguồn nói gì; hoặc kể chi tiết tên tham số, template đã chỉnh.</p>
+        <div class="words"><span class="w">added sourced/verified content</span><span class="w">improved attribution</span><span class="w">with independent/secondary/peer-reviewed sources</span></div>
+      </article>
+
+      <article class="sign" id="g4">
+        <div class="head"><div><h3>Dấu hiệu riêng trong bình luận thảo luận</h3><span class="en">Comment-specific indicators</span></div><span class="lvl m">Vừa</span></div>
+        <ul class="plain">
+          <li>Trích sai quy định, dẫn shortcut không tồn tại.</li>
+          <li>Bình luận dài chia mục có tiêu đề (Markdown hoặc heading cấp 2, 3).</li>
+          <li>Tự khẳng định đã bỏ công sức kiểm tra, liệt kê các quy định đã tuân thủ.</li>
+          <li>Mời người phản biện chỉ ra chính xác cần sửa gì.</li>
+          <li>Gạt nghi vấn là "suy đoán thiếu căn cứ", đề nghị "hãy tập trung vào cải thiện nội dung".</li>
+          <li>Mở đầu kiểu thư: "Dear … Team", "I hope this message finds you well", "I am writing to…".</li>
+        </ul>
+        <p class="fix"><b>Trong dự án:</b> góp ý review viết ngắn, chỉ đúng dòng và lý do. Không mở bằng lời chào kiểu thư.</p>
+      </article>
+    </section>
+
+    <section class="group" id="khac">
+      <h2>H. Dấu hiệu khác</h2>
+
+      <article class="sign" id="h1">
+        <div class="head"><div><h3>Văn phong đổi đột ngột</h3><span class="en">Pronounced shift in writing style</span></div><span class="lvl m">Vừa</span></div>
+        <p>Ngữ pháp bỗng hoàn hảo so với các bài viết khác của cùng người, hoặc đổi biến thể tiếng Anh. Người dùng AI lâu năm có văn phong đổi theo từng thế hệ model. Cần loại trừ người viết song ngữ và việc đổi giọng theo hoàn cảnh.</p>
+        <p class="fix"><b>Trong dự án:</b> một tài liệu nhiều người sửa thì giữ một giọng. Đoạn do AI soạn phải được sửa cho khớp phần xung quanh.</p>
+      </article>
+
+      <article class="sign" id="h2">
+        <div class="head"><div><h3>Phần thừa đặt sẵn</h3><span class="en">"Submission statements" · Pre-placed maintenance templates · Canned user pages</span></div><span class="lvl m">Vừa</span></div>
+        <p>Đoạn "lời trình bày với người duyệt" giải thích vì sao bài đạt chuẩn; template bảo trì hoặc trạng thái "đã từ chối" có sẵn trong bản nháp mới; trang cá nhân theo khuôn "About Me / My Interests / Let's Connect!" với emoji.</p>
+        <p class="fix"><b>Trong dự án:</b> không để đoạn tự đánh giá kiểu "Tài liệu này đáp ứng đầy đủ yêu cầu của đề bài" trong README hay tài liệu nộp.</p>
+      </article>
+
+      <article class="sign" id="h3">
+        <div class="head"><div><h3>Khác biệt giữa các model, thiên lệch nội dung</h3><span class="en">Differences between LLMs · Biases in content</span></div><span class="lvl i">Tham khảo</span></div>
+        <p>Mỗi model có thói quen riêng (Grok hay dùng "Y rather than X" và từ nghe khoa học; ChatGPT dùng nháy cong). Trang gốc ghi nhận một số model có thiên hướng mô tả tích cực các chế độ độc tài.</p>
+      </article>
+    </section>
+
+    <section class="group" id="cu">
+      <h2>I. Dấu hiệu của model cũ</h2>
+      <p class="lead">Phổ biến ở model 2022–2024, nay ít gặp. Vẫn hữu ích khi rà văn bản cũ, và vẫn là lỗi nếu xuất hiện trong dự án.</p>
+
+      <article class="sign" id="i1">
+        <div class="head"><div><h3>Lời răn dạy "cần lưu ý rằng"</h3><span class="en">Didactic disclaimers (November 2022–2024)</span></div><span class="lvl m">Vừa</span></div>
+        <div class="words"><span class="w">it's important/critical/crucial to note/remember/consider</span><span class="w">worth noting</span><span class="w">may vary</span></div>
+        <blockquote><mark>It's important to remember</mark> that what's free in one country might not be free in another, so always check before you use something.<cite>Bản tóm tắt do LLM sinh của Wikimedia, bài Public domain</cite></blockquote>
+        <p class="fix"><b>Trong dự án:</b> tiếng Việt tương ứng "Cần lưu ý rằng", "Điều quan trọng là". Nếu thật sự cần cảnh báo thì viết thẳng nội dung cảnh báo.</p>
+      </article>
+
+      <article class="sign" id="i2">
+        <div class="head"><div><h3>Câu tóm tắt cuối đoạn, mục "Kết luận"</h3><span class="en">Section summaries</span></div><span class="lvl m">Vừa</span></div>
+        <div class="words"><span class="w">In summary</span><span class="w">In conclusion</span><span class="w">Overall</span></div>
+        <p>Kết mỗi đoạn hoặc mục bằng câu nhắc lại ý chính.</p>
+        <p class="fix"><b>Trong dự án:</b> không "Tóm lại", "Nhìn chung", "Kết luận" ở cuối README, mô tả PR hay dòng AI_USAGE.</p>
+      </article>
+
+      <article class="sign" id="i3">
+        <div class="head"><div><h3>Từ chối, bị cắt ngang</h3><span class="en">Prompt refusal · Abrupt cut offs</span></div><span class="lvl s">Mạnh</span></div>
+        <div class="words"><span class="w">as an AI language model</span><span class="w">as a large language model</span><span class="w">I cannot offer medical advice, but I can…</span><span class="w">I'm sorry</span></div>
+        <p>Chatbot từ chối kèm lời xin lỗi rồi gợi ý việc khác. Văn bản dừng giữa câu do hết token (cũng có thể do copy lỗi).</p>
+        <p class="fix"><b>Trong dự án:</b> output Gemini bị cắt sẽ làm hỏng JSON và bị schema chặn. Nội dung bài học không được chứa lời từ chối.</p>
+      </article>
+
+      <article class="sign" id="i4">
+        <div class="head"><div><h3>Ngày truy cập cũ bất thường</h3><span class="en">Outdated access-date parameters</span></div><span class="lvl l">Yếu</span></div>
+        <p>Trích dẫn có ngày truy cập cũ hơn nhiều so với ngày sửa, trùng mốc dữ liệu của model.</p>
+        <p class="fix"><b>Trong dự án:</b> ngày trong <code>AI_USAGE.md</code>, Revision History của tài liệu mẫu, <code>effective_date</code> phải là ngày thật.</p>
+      </article>
+
+      <article class="sign" id="i5">
+        <div class="head"><div><h3>Đổi từ đồng nghĩa liên tục</h3><span class="en">Lexical diversity / elegant variation</span></div><span class="lvl l">Yếu</span></div>
+        <p>Model cũ có phạt lặp từ, nên cùng một thứ được gọi bằng nhiều cách: "the constraints of socialist realism", "Soviet artistic constraints", "state-imposed artistic norms"… Người viết không bản ngữ cũng hay làm vậy vì được dạy tránh lặp từ.</p>
+        <p class="fix"><b>Trong dự án:</b> một khái niệm một tên. Đã gọi là "lộ trình" thì không đổi sang "hành trình", "con đường học tập". Tên phải khớp khoá dịch và tên trong code.</p>
+      </article>
+    </section>
+
+    <section class="group" id="khong-phai">
+      <h2>J. Không phải dấu hiệu</h2>
+      <p class="lead">Những điều hay bị dùng để nghi ngờ nhưng không có giá trị, có khi còn chỉ điều ngược lại. Nghi oan làm người mới nản và tạo không khí nghi kỵ.</p>
+      <article class="sign" id="j1">
+        <div class="head"><div><h3>Chỉ báo không hiệu quả</h3><span class="en">Ineffective indicators</span></div><span class="lvl i">Tham khảo</span></div>
+        <ul class="plain">
+          <li><b>Ngữ pháp hoàn hảo.</b> Nhiều người viết giỏi.</li>
+          <li><b>Trộn giọng thân mật và trang trọng.</b> Có thể do người làm kỹ thuật, người trẻ, người đa dạng thần kinh, hoặc nhiều người cùng sửa.</li>
+          <li><b>Văn "nhạt", "máy móc".</b> Văn LLM có đặc điểm riêng như đã liệt kê, và thường tích cực, dài dòng; người không quen sẽ không thấy nó "máy móc".</li>
+          <li><b>Văn "sang", học thuật.</b> LLM ưa một số từ cụ thể, không phải mọi từ trang trọng.</li>
+          <li><b>Từ nối, nếu đứng riêng.</b> Chỉ vài từ (Additionally, Consequently, Notably) bị lạm dụng, và văn nghị luận của người cũng dùng.</li>
+          <li><b>Không có nguồn.</b> Hơn 570.000 bài Wikipedia thiếu nguồn, phần lớn có trước LLM. Chatbot nay thường có trích dẫn, chỉ là không chắc đúng.</li>
+          <li><b>Markup kỳ quặc</b> (thẻ HTML đặt lung tung) thường do extension trình duyệt hoặc công cụ dịch. <b>Markup đúng</b> cũng không nói lên gì.</li>
+        </ul>
+      </article>
+      <article class="sign" id="j2">
+        <div class="head"><div><h3>Dấu hiệu của người viết</h3><span class="en">Signs of human writing</span></div><span class="lvl i">Tham khảo</span></div>
+        <ul class="plain">
+          <li><b>Viết trước 30/11/2022</b> (ngày ChatGPT ra mắt công chúng).</li>
+          <li><b>Giải thích được lựa chọn của mình.</b> Hỏi người viết vì sao có một URL lạ; nếu họ đưa được link đúng hoặc đoạn nguồn thật thì đó là lỗi người.</li>
+          <li><b>Cú pháp.</b> LLM cố viết "trang trọng, trung lập" nên né một số cấu trúc câu người viết dùng tự nhiên.</li>
+        </ul>
+        <p class="fix"><b>Trong dự án:</b> người ký tên ở cột "Verified By" của <code>AI_USAGE.md</code> phải giải thích được mọi thay đổi trong dòng đó.</p>
+      </article>
+    </section>
+
+    <section class="group" id="tieng-viet">
+      <h2>K. Mở rộng cho tiếng Việt</h2>
+      <p class="lead">Phần này do nhóm bổ sung, không có trong trang Wikipedia. Đây là các cụm tương đương hay gặp khi AI viết hoặc dịch sang tiếng Việt, dùng cho tài liệu tiếng Việt, <code>locales/vi.js</code> và bài học Gemini sinh bằng tiếng Việt.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Nhóm (xem mục)</th><th>Cụm cần để ý</th><th>Viết lại</th></tr></thead>
+        <tbody>
+          <tr><td>Thổi phồng (A1, B1)</td><td>đóng vai trò then chốt/quan trọng, là minh chứng cho, đánh dấu bước ngoặt, góp phần không nhỏ, nâng tầm, bức tranh toàn cảnh, trong bối cảnh … ngày càng phát triển</td><td>Nói việc cụ thể và số liệu</td></tr>
+          <tr><td>Quảng cáo (A4)</td><td>đột phá, toàn diện, liền mạch, vượt trội, mạnh mẽ, tối ưu hoá trải nghiệm, hành trình</td><td>Mô tả chức năng</td></tr>
+          <tr><td>Né "là" (B2)</td><td>đóng vai trò là, đóng vai trò như, đóng vai trò như một</td><td>là</td></tr>
+          <tr><td>Song hành phủ định (B4)</td><td>không chỉ … mà còn …, không phải … mà là …, không đơn thuần là …</td><td>Câu khẳng định trực tiếp</td></tr>
+          <tr><td>Phân tích rỗng (A3)</td><td>…, qua đó góp phần …; …, từ đó giúp …; …, thể hiện …</td><td>Bỏ vế sau hoặc tách câu có căn cứ</td></tr>
+          <tr><td>Nguồn mơ hồ (A5)</td><td>nhiều chuyên gia cho rằng, theo các nguồn tin, được đánh giá cao</td><td>Tên tài liệu, mục, trang</td></tr>
+          <tr><td>Lời thoại (D1)</td><td>Chắc chắn rồi!, Dưới đây là…, Hy vọng điều này hữu ích, Bạn có muốn tôi…, Hãy cho tôi biết</td><td>Xoá</td></tr>
+          <tr><td>Răn dạy, tóm tắt (I1, I2)</td><td>Cần lưu ý rằng, Điều quan trọng là, Tóm lại, Nhìn chung, Tổng kết lại</td><td>Xoá hoặc nói thẳng nội dung</td></tr>
+          <tr><td>Cam kết chung (G1, G2)</td><td>đảm bảo tuân thủ, tối ưu hoá, cải thiện đáng kể, giữ nguyên toàn bộ, tránh làm ảnh hưởng</td><td>Kết quả test bằng số</td></tr>
+          <tr><td>Heading (C2)</td><td>Viết Hoa Mọi Chữ Trong Tiêu Đề</td><td>Viết hoa chữ đầu</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="group" id="checklist">
+      <h2>Checklist trước khi commit</h2>
+      <div class="note">
+        <ul class="plain">
+          <li>Đọc lại đoạn do AI soạn. Có từ ba dấu hiệu ở nhóm A, B trong một đoạn thì viết lại đoạn đó.</li>
+          <li>Không còn lời thoại chatbot, placeholder, mã trích dẫn nội bộ (nhóm D, E).</li>
+          <li>Mọi file, hàm, endpoint, số test nhắc tới đều có thật và khớp kết quả chạy.</li>
+          <li>Commit và dòng AI_USAGE ghi việc đã làm, căn cứ, kết quả kiểm tra bằng số. Không cam kết chung chung, không "while preserving", không "Tóm lại".</li>
+          <li>Heading viết hoa kiểu câu, không emoji, không in đậm dàn trải, không kẻ ngang giữa mục.</li>
+        </ul>
+      </div>
+      <p>Lệnh tìm rác chatbot (chạy ở gốc repo, Git Bash):</p>
+      <blockquote><code>git grep -n -I -E "oaicite|oai_citation|contentReference|turn0search|attributableIndex|\[cite: ?[0-9]|start_span|grok_card|attached_file|ppl-ai-file-upload|utm_source=|:::writing|【[0-9]+†|As an AI language model|as of my last knowledge update|I hope this helps" -- . ":!documentation/AI_WRITING_SIGNS.html" ":!Rules/Rules"</code></blockquote>
+      <p>Lệnh gợi ý từ vựng cần xem lại (sẽ có kết quả đúng, đọc từng chỗ):</p>
+      <blockquote><code>git grep -n -i -I -E "\b(delve|tapestry|testament|pivotal|vibrant|showcas|underscor|foster|seamless|groundbreaking|meticulous|nestled|in summary|in conclusion|it'?s important to note|serves as|stands as)" -- "*.md" "frontend/src/locales/*" "backend/app/genai_pipeline/prompts/*"</code></blockquote>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p>Nguồn: <a href="https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing">Wikipedia:Signs of AI writing</a>, WikiProject AI Cleanup, các tác giả Wikipedia. Nội dung gốc theo giấy phép <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>; trang này là bản tóm tắt, dịch và chuyển thể theo cùng giấy phép. Mục K, phần "Trong dự án", mức độ và checklist do nhóm FourAngryBirds bổ sung.</p>
+    <p>Trang gốc được cập nhật thường xuyên theo model mới. Khi thấy dấu hiệu mới, cập nhật trang này và Rules mục 6 cùng lúc.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var q = document.getElementById('q');
+  var count = document.getElementById('count');
+  var signs = Array.prototype.slice.call(document.querySelectorAll('.sign'));
+  var groups = Array.prototype.slice.call(document.querySelectorAll('section.group'));
+
+  function norm(s) {
+    return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
+  }
+  var texts = signs.map(function (el) { return norm(el.id + ' ' + el.textContent); });
+
+  function apply() {
+    var term = norm(q.value.trim());
+    var shown = 0;
+    signs.forEach(function (el, i) {
+      var hit = !term || texts[i].indexOf(term) !== -1;
+      el.classList.toggle('hidden', !hit);
+      if (hit) shown++;
+    });
+    groups.forEach(function (g) {
+      var cards = g.querySelectorAll('.sign');
+      if (!cards.length) { g.classList.toggle('hidden', !!term); return; }
+      g.classList.toggle('hidden', !g.querySelector('.sign:not(.hidden)'));
+    });
+    count.textContent = term ? shown + ' / ' + signs.length + ' dấu hiệu' : signs.length + ' dấu hiệu';
+  }
+  q.addEventListener('input', apply);
+  apply();
+
+  var root = document.documentElement;
+  try {
+    var saved = localStorage.getItem('aisigns-theme');
+    if (saved) root.setAttribute('data-theme', saved);
+  } catch (e) {}
+  document.getElementById('theme').addEventListener('click', function () {
+    var dark = root.getAttribute('data-theme') === 'dark' ||
+      (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = dark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('aisigns-theme', next); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>

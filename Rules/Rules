@@ -48,4 +48,39 @@
   * Chặn/cảnh báo các chuỗi ký tự tấn công phổ biến: "ignore previous instructions", "system override", "you are now in DAN mode".
   * API Key LLM bắt buộc đọc từ biến môi trường qua `os.getenv` hoặc `pydantic_settings`. Cấm tuyệt đối commit key lên Git.
 
+## 6. VĂN PHONG TỰ NHIÊN (ANTI-AI WRITING RULES)
+- Giải thích và ví dụ đầy đủ: `documentation/AI_WRITING_SIGNS.html` (tóm tắt từ Wikipedia:Signs of AI writing). Mã trong ngoặc (A1, B4…) trỏ tới mục tương ứng.
+- Phạm vi: README, `documentation/`, `AI_USAGE.md`, commit message, mô tả PR, comment/docstring, chuỗi giao diện `locales/`, prompt Gemini và nội dung bài học Gemini sinh ra.
+- Nói thông tin, không nói ý nghĩa:
+  * CẤM thổi phồng (A1, B1): "pivotal", "crucial", "testament", "vibrant", "showcase", "underscore", "delve", "tapestry", "landscape" (nghĩa trừu tượng), "đóng vai trò then chốt", "minh chứng cho", "đánh dấu bước ngoặt".
+  * CẤM giọng quảng cáo (A4): "groundbreaking", "seamless", "robust", "đột phá", "liền mạch", "toàn diện", "vượt trội".
+  * CẤM đuôi phân tích rỗng (A3): "..., highlighting/ensuring/contributing to/fostering ...", "..., qua đó góp phần ...".
+  * Dùng "is/has", "là/có" thay cho "serves as/stands as/boasts/features", "đóng vai trò là" (B2).
+  * Nguồn phải cụ thể (A5): ghi DOC-xx, mục, trang, ngày review; không "experts argue", "nhiều nguồn cho rằng".
+- Cấu trúc câu:
+  * Không dùng song hành phủ định khi không ai hiểu sai (B4): "not only ... but also", "it's not X, it's Y", "không chỉ ... mà còn", "không phải ... mà là".
+  * Liệt kê đúng số mục có thật, không gom cho đủ ba (B5).
+  * Một khái niệm một tên, khớp tên trong code và khoá dịch; không đổi từ đồng nghĩa cho đỡ lặp (I5).
+- Trình bày:
+  * Heading viết hoa kiểu câu, không Title Case (C2); mỗi file Markdown một `#`, không nhảy cấp, không `---` giữa các mục (C10).
+  * In đậm tối đa một cụm mỗi đoạn (C4). Không danh sách dạng `- **Tiêu đề:** mô tả` cho nội dung viết thành đoạn được (C5).
+  * Không emoji trong heading, danh sách, commit, chuỗi giao diện (C7).
+  * Không dùng gạch dài (—) để nhấn mạnh; dùng dấu phẩy, ngoặc đơn, hai chấm (C6).
+  * Nháy thẳng " ' trong code, JSON, prompt, file nguồn Markdown (C9).
+- Xoá sạch dấu vết chatbot (bổ sung cho mục 1):
+  * CẤM lời thoại (D1): "Certainly!", "I hope this helps", "Let me know", "Here is", "Chắc chắn rồi!", "Dưới đây là", "Hy vọng hữu ích", "Bạn có muốn".
+  * CẤM câu giới hạn kiến thức hoặc đoán phần tài liệu không nêu (D2): "as of my last knowledge update", "not widely documented", "tài liệu không nêu rõ, nhưng có thể".
+  * CẤM placeholder trong tài liệu (D3): `[Insert ...]`, `[Your Name]`, `(Add ... here)`, `[Mô tả ...]`.
+  * CẤM mã trích dẫn nội bộ và tham số theo dõi (E2, F3): chạy lệnh grep ở mục "Checklist trước khi commit" trong file HTML, kết quả phải rỗng.
+  * CẤM "In summary / In conclusion / Tóm lại / Nhìn chung" và "It's important to note / Cần lưu ý rằng" (I1, I2).
+- Commit, PR, `AI_USAGE.md` (nhóm G):
+  * Ghi việc đã làm, căn cứ (mục Rules, SRS Step, góp ý review) và kết quả kiểm tra bằng số (số test đạt, lỗi tái hiện được).
+  * CẤM cam kết chung: "ensured compliance", "improved code quality", "follows best practices", "đảm bảo tuân thủ", "tối ưu hoá".
+  * Không kể phần không đổi ("while preserving ...", "giữ nguyên toàn bộ ...") trừ khi người đọc cần biết.
+  * Mọi file, hàm, endpoint, số test được nhắc tới phải có thật tại thời điểm commit (E3). Người ký "Verified By" phải giải thích được từng thay đổi (J2).
+- Prompt và nội dung Gemini:
+  * Khi tạo phiên bản prompt mới, đưa các yêu cầu văn phong của mục này vào system prompt (không thổi phồng, không song hành phủ định, không "Cần lưu ý rằng", không emoji, không Title Case).
+  * Output không được chứa `[cite: N]`, lời thoại, lời từ chối; gặp thì coi là lỗi định dạng như JSON hỏng.
+- Không dùng danh sách này để kết tội: một từ đơn lẻ không chứng minh gì, công cụ "AI detector" không được dùng làm căn cứ (mục J). Mục đích là tự rà văn bản của mình trước khi commit và khi review.
+
 RULES khi vibe code dự án - copy dán vào folder trong project cho AI đọc trước khi làm

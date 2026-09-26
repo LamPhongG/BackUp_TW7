@@ -8,7 +8,7 @@
 
 SkillSprint AI **không phải** web quản lý nhân sự. Đây là nền tảng biến tài liệu nội bộ của công ty thành **lộ trình học** cho từng vị trí:
 
-- HR tải lên tài liệu công ty: chính sách, SOP, sổ tay, mô tả công việc (PDF, DOCX, TXT, MD, CSV).
+- HR tải lên tài liệu công ty: chính sách, SOP, sổ tay, mô tả công việc (PDF, DOCX, TXT, MD/MARKDOWN, CSV).
 - AI dựng lộ trình gồm các giai đoạn, học phần, bài học, nhiệm vụ nghiệp vụ và bài kiểm tra.
 - Lộ trình phục vụ hai nhóm: **nhân viên mới hội nhập**, hoặc **nhân viên thăng chức** cần thêm kiến thức nghề.
 - Reviewer kiểm duyệt từng lộ trình trước khi phát hành cho nhân viên.
@@ -86,9 +86,27 @@ Quy tắc phân quyền nằm ở `src/utils/pathWorkflow.js` và được kiể
    - PDF scan (chỉ có ảnh) báo *cần OCR*, có nút *Thử lại*.
 2. **Tạo lộ trình** (`/hr/paths/new`)
    - Chọn vị trí, mục đích (*Hội nhập nhân viên mới* / *Bồi dưỡng thăng chức*), mức độ, yêu cầu thêm cho AI.
+   - **Độ dài lộ trình** (chỉ với hội nhập, SRS Step 13):
+     - *1 tuần*: Ngày 1 → Tuần 1.
+     - *30 ngày*: thêm Tuần 2 → 30 ngày.
+     - *90 ngày*: đủ 6 mốc.
+     - Mốc nằm ngoài độ dài được dồn vào giai đoạn cuối, nên lộ trình ngắn vẫn học đủ mọi nguồn.
+     - AI được báo mỗi học phần học vào giai đoạn nào, để giao nhiệm vụ làm được trong khoảng thời gian đó.
+     - Độ dài được lưu lại. Sinh lại vẫn giữ độ dài cũ; khi sửa, chỉ chuyển học phần được giữa các giai đoạn của độ dài đó.
+   - **Tài liệu bắt buộc theo Role Requirement Matrix** (SRS Step 10, 28, chỉ ở chế độ backend):
+     - Khi chọn vị trí, hệ thống tra ma trận. Mọi tài liệu có ít nhất một yêu cầu *Mandatory* được **chọn sẵn và khoá** (biểu tượng ổ khoá, nhãn "Bắt buộc · n yêu cầu"). HR không bỏ chọn được, chỉ chọn thêm tài liệu khác.
+     - Tài liệu ma trận chỉ ghi *Optional* có nhãn "Tuỳ chọn", không tự chọn.
+     - Mỗi mã tài liệu được quy về **bản đang hiệu lực**. Bản cũ không thay thế được bản bắt buộc.
+     - Server kiểm tra lại: bỏ sót một tài liệu bắt buộc đã sẵn sàng thì trả `err_mandatory_sources`.
+     - Tài liệu bắt buộc chưa có trong kho hoặc chưa xử lý xong: vẫn sinh được, nhưng có cảnh báo trên màn hình, và Reviewer thấy `reason_mandatory_sources_missing`.
    - Chọn tài liệu nguồn. Chỉ chọn được tài liệu đã xử lý xong; nút *Chọn tất cả tài liệu sẵn sàng* chọn nhanh.
    - Nguồn có cờ injection được cảnh báo; chunk bị gắn cờ sẽ bị loại khỏi lộ trình.
-   - Bấm **Sinh lộ trình** → mở trang chi tiết bản nháp.
+   - Bấm **Sinh lộ trình** → màn hình **tiến độ AI** (chế độ backend). Mọi con số đều lấy từ lần chạy thật, không có thanh tiến độ giả:
+     - Phần trăm và đồng hồ.
+     - Dòng thời gian 6 bước: kiểm tra nguồn và ma trận → phân tích tài liệu (số đoạn, số đoạn bị loại vì injection) → lập dàn ý (số học phần, số giai đoạn) → soạn từng học phần → đối chiếu ma trận → lưu.
+     - Bảng học phần: mỗi học phần có trạng thái *chờ* / *đang soạn bài học & nhiệm vụ* / *đang soạn câu hỏi* / *xong* (kèm số bài, nhiệm vụ, câu hỏi, số mục bị loại) / *AI lỗi, dùng bản nháp*.
+     - Xong thì tự mở bản nháp. Lỗi thì hiện lý do và nút quay lại chỉnh cấu hình.
+     - Hộp thoại **Sinh lại** hiện dòng thời gian dạng gọn.
 3. **Xem và sửa bản nháp** (`/hr/paths/:id`)
    - **Tab Nội dung:** sửa bài học, nhiệm vụ, câu hỏi (câu hỏi, phương án, đáp án đúng); xoá mục; chuyển học phần sang giai đoạn khác. Mỗi mục có biểu tượng trạng thái kiểm định.
    - **Tab Kiểm định:** xem kết quả 4 nhóm kiểm tra (mục 5).
@@ -99,6 +117,11 @@ Quy tắc phân quyền nằm ở `src/utils/pathWorkflow.js` và được kiể
    - Sửa nội dung, hoặc **Sinh lại** từ phiên bản tài liệu mới nhất (góp ý và lịch sử được giữ).
    - Bấm **Gửi duyệt lại** → revision tăng lên (`r2`, `r3`…).
 5. **Thu hồi** một lộ trình đã phát hành khi chính sách thay đổi (bắt buộc lý do).
+6. **Mời nhân viên mới** (`/hr/invites`, chỉ ở chế độ backend)
+   - Chọn phòng ban, vị trí, số ngày hiệu lực; nhập email thì link được gửi qua email.
+   - Chưa cấu hình máy chủ email thì vẫn tạo được link, thông báo nói rõ email chưa gửi để HR tự sao chép link.
+   - Danh sách lời mời có trạng thái *Còn hiệu lực* / *Đã đăng ký* / *Hết hạn hoặc đã thu hồi*, nút sao chép link và thu hồi.
+   - Nhân viên mở link (`/register/:token`), tự đặt mật khẩu và điền hồ sơ; tài khoản nhận đúng vị trí và phòng ban HR đã chọn.
 
 ### 3.2 Reviewer
 
@@ -154,6 +177,8 @@ Quy tắc phân quyền nằm ở `src/utils/pathWorkflow.js` và được kiể
 | `/hr/paths` | HR | Danh sách lộ trình theo trạng thái, kết quả kiểm định, Coverage (từ backend) |
 | `/hr/paths/:id` | HR | Chi tiết: Nội dung / Kiểm định / Trao đổi / Lịch sử và các thao tác của HR |
 | `/hr/audit-log` | HR | Nhật ký kiểm toán |
+| `/hr/invites` | HR | Tạo, sao chép, thu hồi link mời nhân viên mới (cần backend) |
+| `/register/:token` | Công khai | Nhân viên tự tạo tài khoản từ link mời còn hiệu lực |
 | `/reviewer/dashboard` | Reviewer | Việc chờ duyệt, quyết định gần đây |
 | `/reviewer/queue` | Reviewer | Hàng đợi `in_review` |
 | `/reviewer/paths`, `/reviewer/paths/:id` | Reviewer | Mọi lộ trình; kiểm định, sửa, trả về, duyệt & phát hành, thu hồi |
@@ -178,7 +203,7 @@ Nhóm Kiến thức, Luồng, An toàn chạy ở frontend bằng JavaScript thu
 | Nhóm | Câu hỏi của Reviewer | Cách kiểm tra | Kết quả mỗi mục |
 | :--- | :--- | :--- | :--- |
 | **Kiến thức** | Nội dung có đúng tài liệu không? | Mỗi bài học, nhiệm vụ, câu hỏi phải có `source_reference.exact_quote`. Câu trích phải tìm được **nguyên văn** trong chunk của tài liệu nguồn (không phân biệt hoa thường, khoảng trắng, dấu nháy). Với câu hỏi: đáp án đúng phải nằm trong câu trích. | `verified` · `hallucination` (câu trích không có trong tài liệu) · `contradiction` (đáp án không có căn cứ) · `source_missing` · `outdated_source` (phiên bản tài liệu không còn hiệu lực) · `pending` (chưa trích xuất) |
-| **Luồng** | Thứ tự học có hợp lý không? | Giai đoạn đúng thứ tự mẫu. Nền tảng công ty (sổ tay, chính sách toàn công ty) đứng trước nghiệp vụ phòng ban. Học phần có bài học và bài kiểm tra. Câu hỏi hợp lệ. Không trùng tài liệu. Bài đánh giá tổng hợp ở giai đoạn cuối. | Lỗi (`error`) hoặc cảnh báo (`warning`) |
+| **Luồng** | Thứ tự học có hợp lý không? | Giai đoạn đúng thứ tự mẫu. Nền tảng công ty (sổ tay, chính sách toàn công ty) đứng trước nghiệp vụ phòng ban. Học phần có bài học và bài kiểm tra. Câu hỏi hợp lệ. **Mỗi nhiệm vụ có tiêu chí hoàn thành** (thiếu là lỗi chặn `flow_task_no_criteria`; thiếu nguồn đã bị nhóm Kiến thức bắt). **Dạy trước rồi mới kiểm tra:** nhiệm vụ hoặc câu hỏi trích chunk mà chưa bài học nào dạy (tính theo thứ tự học) là lỗi chặn `flow_untaught_item`. Không trùng tài liệu. Bài đánh giá tổng hợp ở giai đoạn cuối. | Lỗi (`error`) hoặc cảnh báo (`warning`) |
 | **Chức năng** | Có đúng việc của vị trí không? | **Backend Python** đối chiếu lộ trình với Role Requirement Matrix và trả `coverage: { score, requiredDocs: [{ code, covered }], topics: [{ id, label, covered, matchedKeyword }] }`. Frontend chỉ hiển thị; chưa có kết quả thì là cảnh báo *chờ backend* | Điểm 0–100% hoặc *chờ backend* |
 | **An toàn** | Có câu lệnh tấn công không? | Quét mẫu prompt injection EN/VI trên toàn bộ nội dung sẽ đến tay nhân viên. Liệt kê các chunk đã bị loại khi sinh. | Cờ theo luật |
 
@@ -382,6 +407,14 @@ Có `VITE_API_URL` thì `DocumentsContext`, `PathsContext` và `useAuth` gọi A
 - **Mở tài liệu gốc:** file được tải kèm token rồi mới mở.
 
 Chi tiết backend xem `backend/README.md`.
+
+### 8.11 Mời nhân viên mới (26/09/2026)
+
+Trang đăng ký công khai đã bị xoá ở mục 8.6 vẫn không quay lại: chỉ người có link mời do HR tạo mới đăng ký được, và tài khoản luôn là nhân viên ở đúng vị trí trong lời mời.
+- Hai trang dùng khoá dịch như các trang khác (64 khoá mới, en/vi khớp nhau), không còn chuỗi tiếng Việt viết cứng.
+- Ở chế độ trình duyệt (không có backend), hai trang báo cần backend thay vì tải mãi.
+- Sửa lỗi: form gửi mức kinh nghiệm viết thường (`beginner`) trong khi backend nhận `Beginner`, nên trước đây mọi lần đăng ký đều bị 422.
+- CSS của trang đăng ký chỉ áp dụng trong `.register-card`; trước đó quy tắc chung `.glass-float input { padding-left: 36px }` làm lệch ô nhập của trang đăng nhập.
 
 ### 8.9 Trang đăng nhập Glassmorphism (25/09/2026)
 
