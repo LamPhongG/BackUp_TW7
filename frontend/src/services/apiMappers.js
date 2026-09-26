@@ -109,3 +109,15 @@ export function mapAuditEntry(e) {
     details: e.details,
   };
 }
+
+/** Bản ghi gán lộ trình (GET /me/enrollments) → cùng dạng tiến độ mà utils/progress.js dùng ở chế độ trình duyệt */
+export function mapEnrollment(e) {
+  const quiz = Object.fromEntries(Object.entries(e.quiz || {}).map(([moduleId, attempts]) => [
+    moduleId, attempts.map(a => ({ at: a.at, answers: a.answers, score: a.score, total: a.total })),
+  ]));
+  return {
+    lessonsRead: e.lessons_read, tasksDone: e.tasks_done, quiz,
+    startedAt: e.started_at, completedAt: e.completed_at,
+    status: e.status, source: e.source, dueDate: e.due_date, overdue: e.overdue,
+  };
+}

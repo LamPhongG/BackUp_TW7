@@ -36,6 +36,9 @@ export default function GenerationReport({ generation }) {
         {coverage && <><dt>{t("gen_requirements")}</dt><dd>{t("gen_requirements_value", { taught: coverage.taught.length, assessed: coverage.assessed.length, total: coverage.total, mandatory: coverage.mandatory })}</dd></>}
       </dl>
       {/* Python tự đối chiếu mục ↔ ma trận theo mục tài liệu, không tin mô hình tự khai */}
+      {generation.mandatory_omitted?.length > 0 && (
+        <div className="notice notice--warning"><CircleAlert size={16} /><span>{t("gen_mandatory_omitted", { list: generation.mandatory_omitted.join(", ") })}</span></div>
+      )}
       {coverage?.mandatory_not_taught.length > 0 && (
         <div className="notice notice--warning"><CircleAlert size={16} /><span>{t("gen_requirements_not_taught", { list: coverage.mandatory_not_taught.join(", ") })}</span></div>
       )}

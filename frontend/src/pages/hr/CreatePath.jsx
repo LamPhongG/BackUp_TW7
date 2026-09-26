@@ -15,8 +15,9 @@ const NO_MATRIX = { roleId: null, list: [], loading: false, error: "" };
 const DONE_PAUSE_MS = 1200;
 
 /**
- * Ma trận yêu cầu của vị trí (SRS Step 10, 28): tài liệu bắt buộc được chọn sẵn và khoá.
- * Chỉ có ở chế độ backend — ma trận nằm ở server; server cũng chặn lại nếu thiếu, không tin giao diện.
+ * Ma trận yêu cầu của vị trí (SRS Step 10, 28): tài liệu bắt buộc được chọn sẵn.
+ * Chỉ có ở chế độ backend — ma trận nằm ở server. HR bỏ chọn được, nhưng server chỉ nhận khi request
+ * xác nhận `allow_missing_mandatory`, và Reviewer luôn thấy cảnh báo thiếu tài liệu bắt buộc.
  */
 function useRequiredSources(roleId, readyKey) {
   const [state, setState] = useState(NO_MATRIX);
@@ -45,8 +46,9 @@ export default function CreatePath() {
   const [purpose, setPurpose] = useState("onboarding");
   const [durationDays, setDurationDays] = useState(DEFAULT_ONBOARDING_DAYS);
   const [prompt, setPrompt] = useState("");
-  // Chỉ những tài liệu HR tự chọn thêm; tài liệu bắt buộc luôn được cộng vào và không bỏ được
+  // Tài liệu HR tự chọn thêm, và tài liệu bắt buộc HR đã bỏ chọn
   const [extraIds, setExtraIds] = useState([]);
+  const [omittedIds, setOmittedIds] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [job, setJob] = useState(null);
@@ -57,43 +59,44 @@ export default function CreatePath() {
   const matrix = useRequiredSources(roleId, readyKey);
   const matrixReady = !backendEnabled() || (matrix.roleId === roleId && !matrix.loading);
 
-  const { lockedIds, byDocId, unavailable, outdated } = useMemo(() => {
-    const locked = new Set();
+  const { mandatoryIds, byDocId, unavailable, outdated } = useMemo(() => {
+    const mandatory = new Set();
     const map = {};
     for (const s of matrix.list) {
       if (!s.document) continue;
       map[s.document.id] = s;
-      if (s.mandatory && s.status === "ready") locked.add(s.document.id);
+      if (s.mandatory && s.status === "ready") mandatory.add(s.document.id);
     }
     return {
-      lockedIds: locked,
+      mandatoryIds: mandatory,
       byDocId: map,
       unavailable: matrix.list.filter(s => s.mandatory && s.status !== "ready"),
       outdated: matrix.list.filter(s => s.outdated_requirement_ids.length > 0),
     };
   }, [matrix.list]);
 
-  const selectedIds = new Set([...lockedIds, ...extraIds]);
+  const selectedIds = new Set([...[...mandatoryIds].filter(id => !omittedIds.includes(id)), ...extraIds]);
+  const omittedCodes = omittedIds.filter(id => mandatoryIds.has(id)).map(id => byDocId[id].code);
   const sources = ready.filter(d => selectedIds.has(d.id));
   const flagged = sources.filter(d => d.injectionFlagCount > 0);
   const notReady = activeDocuments.filter(d => d.processing !== "done");
   // Bắt buộc lên đầu, rồi đến tài liệu ma trận gợi ý, cuối cùng là phần còn lại
-  const rank = d => (lockedIds.has(d.id) ? 0 : byDocId[d.id] ? 1 : 2);
+  const rank = d => (mandatoryIds.has(d.id) ? 0 : byDocId[d.id] ? 1 : 2);
   const listed = [...activeDocuments].sort((a, b) => rank(a) - rank(b));
 
-  const changeRole = id => { setRoleId(id); setExtraIds([]); };
-  const toggle = id => {
-    if (lockedIds.has(id)) return;
-    setExtraIds(ids => (ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]));
-  };
-  const selectAll = () => setExtraIds(ready.map(d => d.id));
+  const flip = (ids, id) => (ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]);
+  const changeRole = id => { setRoleId(id); setExtraIds([]); setOmittedIds([]); };
+  const toggle = id => (mandatoryIds.has(id) ? setOmittedIds(ids => flip(ids, id)) : setExtraIds(ids => flip(ids, id)));
+  const restoreMandatory = () => setOmittedIds([]);
+  const selectAll = () => { setExtraIds(ready.map(d => d.id)); setOmittedIds([]); };
 
   const generate = async () => {
     setError("");
     setJob(null);
     setBusy(true);
     try {
-      const path = await createPath({ role, level, purpose, durationDays, sourceDocs: sources, processed, prompt: prompt.trim(), onProgress: setJob });
+      const path = await createPath({ role, level, purpose, durationDays, sourceDocs: sources, processed, prompt: prompt.trim(),
+        allowMissingMandatory: omittedCodes.length > 0, onProgress: setJob });
       // Để HR kịp thấy mọi bước đã xong trước khi chuyển sang bản nháp
       if (backendEnabled()) await new Promise(resolve => setTimeout(resolve, DONE_PAUSE_MS));
       navigate(`/hr/paths/${path.id}`);
@@ -208,11 +211,20 @@ export default function CreatePath() {
             ) : matrixReady && (
               <div className="notice notice--info">
                 <LockKeyhole size={16} />
-                <span>{lockedIds.size > 0 ? t("matrix_mandatory_locked", { n: lockedIds.size, role: pick(role, "name") }) : t("matrix_no_mandatory", { role: pick(role, "name") })}</span>
+                <span>{mandatoryIds.size > 0 ? t("matrix_mandatory_selected", { n: mandatoryIds.size, role: pick(role, "name") }) : t("matrix_no_mandatory", { role: pick(role, "name") })}</span>
               </div>
             )
           ) : (
             <div className="notice notice--info"><Info size={16} /><span>{t("matrix_backend_only")}</span></div>
+          )}
+          {omittedCodes.length > 0 && (
+            <div className="notice notice--warning" role="alert">
+              <CircleAlert size={16} />
+              <span>
+                {t("mandatory_omitted_warning", { list: omittedCodes.join(", ") })}{" "}
+                <button type="button" className="link-btn" onClick={restoreMandatory}>{t("mandatory_restore_all")}</button>
+              </span>
+            </div>
           )}
           {unavailable.length > 0 && (
             <div className="notice notice--warning">
@@ -236,14 +248,14 @@ export default function CreatePath() {
             <div className="source-select">
               {listed.map(d => {
                 const selected = selectedIds.has(d.id);
-                const locked = lockedIds.has(d.id);
+                const mandatory = mandatoryIds.has(d.id);
                 const matrixEntry = byDocId[d.id];
                 const disabled = d.processing !== "done";
                 return (
-                  <button className={`${selected ? "selected" : ""} ${locked ? "is-locked" : ""}`} disabled={disabled} aria-pressed={selected}
-                    aria-disabled={locked || undefined} onClick={() => toggle(d.id)} key={d.id}
-                    title={disabled ? t("source_not_ready") : locked ? t("source_locked_hint") : undefined}>
-                    <span>{locked ? <LockKeyhole size={11} /> : selected && <Check size={13} />}</span>
+                  <button className={`${selected ? "selected" : ""} ${mandatory ? (selected ? "is-mandatory" : "is-omitted") : ""}`}
+                    disabled={disabled} aria-pressed={selected} onClick={() => toggle(d.id)} key={d.id}
+                    title={disabled ? t("source_not_ready") : mandatory ? t("source_mandatory_hint") : undefined}>
+                    <span>{selected && <Check size={13} />}</span>
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
                       <span className="source-select__title">
                         {d.code} · {pick(d, "title")}

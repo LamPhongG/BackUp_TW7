@@ -48,6 +48,21 @@ class TrainingStatus(StrEnum):
     COMPLETED = "completed"
 
 
+class EnrollmentStatus(StrEnum):
+    ASSIGNED = "assigned"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    WITHDRAWN = "withdrawn"
+
+
+class AssignmentSource(StrEnum):
+    AUTO_DEPARTMENT = "auto_department"
+    AUTO_POSITION = "auto_position"
+    MANUAL = "manual"
+    # The employee enrolled from "Explore paths" (optional path, no due date).
+    SELF = "self"
+
+
 class Priority(StrEnum):
     HIGH = "High"
     MEDIUM = "Medium"

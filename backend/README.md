@@ -132,6 +132,9 @@ Lỗi nghiệp vụ trả về `{"detail": "...", "code": "err_...", "vars": {..
 | `POST /paths`, `PATCH /paths/{id}`, `DELETE /paths/{id}`, `/regenerate`, `/submit`, `/archive` | HR (sửa và thu hồi: cả Reviewer) | ✅ |
 | `POST /paths/{id}/comments`, `/comments/{cid}/resolve` | HR, Reviewer | ✅ |
 | `GET /audit-logs?path_id=&action=&limit=&offset=` | HR, Reviewer | ✅ |
+| `GET /me/enrollments` (lộ trình được giao, trạng thái, %, hạn, quá hạn); `POST /me/enrollments/{path_id}/lessons/{lesson_id}`, `PUT …/tasks/{task_id}` `{done}`, `POST …/quizzes/{module_id}` `{answers}` (server chấm) | Nhân viên | ✅ |
+| `GET /paths/{id}/enrollments` (học viên của một lộ trình) | HR, Reviewer | ✅ |
+| `GET /explore/paths`, `GET /explore/paths/{id}` (dàn ý, không có nội dung bài và đáp án), `POST /explore/paths/{id}/enroll` (tự đăng ký, `source = self`, không có hạn) | Nhân viên | ✅ |
 | `POST /invite` (tạo link mời theo vị trí, gửi email nếu có `invited_email`), `GET /invite`, `DELETE /invite/{token}` (thu hồi) | HR (chỉ lời mời mình tạo) | ✅ |
 | `GET /invite/{token}`, `POST /invite/{token}/register` (nhân viên tự tạo tài khoản, vai trò `employee`, đúng vị trí và phòng ban của lời mời) | Công khai, cần token còn hiệu lực | ✅ |
 | `/paths/{id}/approve` (server chạy lại kiểm định), `/request-changes` | Reviewer | ✅ |
@@ -142,7 +145,7 @@ Lỗi nghiệp vụ trả về `{"detail": "...", "code": "err_...", "vars": {..
 **Tạo lộ trình:** `POST /paths` không kèm `content` thì server tự sinh (mục 8). Vẫn nhận `content` gửi lên (ví dụ để test); server kiểm tra cấu trúc, id không trùng, đáp án hợp lệ, giai đoạn đúng mục đích và độ dài, và tài liệu nguồn đã xử lý xong.
 - `duration_days` (7 / 30 / 90, chỉ với hội nhập, mặc định 90) cắt mẫu giai đoạn. Giá trị được lưu ở `learning_paths.duration_days`; sinh lại và sửa đều dùng giá trị này.
 - **Tài liệu bắt buộc** (`services/role_matrix.py`: `required_sources`, `missing_mandatory_sources`), áp dụng cả khi tạo lẫn khi sinh lại:
-  - Bỏ sót bản đang hiệu lực, đã xử lý xong, của một tài liệu bắt buộc → 422 `err_mandatory_sources`.
+  - Bỏ bản đang hiệu lực, đã xử lý xong, của một tài liệu bắt buộc → 422 `err_mandatory_sources`, trừ khi request có `allow_missing_mandatory: true` (HR chủ động bỏ). Khi đó vẫn sinh, mã bị bỏ ghi vào `generation.mandatory_omitted` và `details.mandatory_omitted` của audit log.
   - Tài liệu bắt buộc không chọn được (chưa có trong kho, chưa xử lý xong, hoặc chỉ còn bản cũ) → vẫn sinh, ghi vào `generation.mandatory_unavailable`.
   - Kiểm định luôn báo `reason_mandatory_sources_missing`, kể cả khi tài liệu bắt buộc được tải lên sau khi lộ trình đã sinh.
 

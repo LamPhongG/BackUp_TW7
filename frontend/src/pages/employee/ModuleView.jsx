@@ -14,7 +14,7 @@ export default function ModuleView() {
   const { id, moduleId } = useParams();
   const navigate = useNavigate();
   const { t, pick } = useLanguage();
-  const { enrollmentFor, markLessonRead, toggleTask, submitQuiz } = useEnrollment();
+  const { enrollmentFor, markLessonRead, toggleTask, submitQuiz, error } = useEnrollment();
   const { documents, getFile } = useDocuments();
   const [toast, setToast] = useState("");
   const path = useMyPaths().find(p => p.id === id);
@@ -50,6 +50,7 @@ export default function ModuleView() {
   return (
     <div>
       <button className="back-btn" onClick={back}><ArrowLeft size={16} /> {t("back_to_path")}</button>
+      {error && <div className="notice notice--danger" role="alert"><CircleAlert size={16} /><span>{t(error)}</span></div>}
       <div className="page-heading">
         <div>
           <span className="eyebrow">{t(`stage_${path.stages[stageIndex].key}`)}{module.doc_code ? ` · ${module.doc_code}` : ""}</span>
@@ -141,7 +142,19 @@ function QuizBlock({ module, best, onSubmit }) {
   const { t, pick } = useLanguage();
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
+  const [sending, setSending] = useState(false);
   const allAnswered = module.quiz.every(q => answers[q.id] !== undefined);
+  // Chế độ backend chấm bài ở server; lỗi mạng hiện ở thông báo của trang, giữ nguyên bài đang làm
+  const submit = async () => {
+    setSending(true);
+    try {
+      setResult(await onSubmit(answers));
+    } catch {
+      setResult(null);
+    } finally {
+      setSending(false);
+    }
+  };
 
   if (result) {
     return (
@@ -193,7 +206,7 @@ function QuizBlock({ module, best, onSubmit }) {
         </div>
       ))}
       <div className="review-actions">
-        <Button disabled={!allAnswered} onClick={() => setResult(onSubmit(answers))}>{t("finish_quiz")}</Button>
+        <Button disabled={!allAnswered || sending} onClick={submit}>{t("finish_quiz")}</Button>
       </div>
     </Card>
   );

@@ -11,7 +11,7 @@ SkillSprint AI turns a company's internal documents (policies, SOPs, handbooks, 
 | `frontend/` | React + Vite web app for HR, Reviewer and Employee ([frontend/README.md](frontend/README.md)) |
 | `backend/` | FastAPI API, SQLAlchemy + Alembic database, document ingestion, Gemini pipeline, server-side checks ([backend/README.md](backend/README.md)) |
 | `sample_documents/` | Sample company documents DOC-11…DOC-20 as PDF, with Markdown sources and test answer keys ([sample_documents/README_PHASE2.md](sample_documents/README_PHASE2.md)) |
-| `documentation/` | Functional flows ([FRONTEND_FLOWS.md](documentation/FRONTEND_FLOWS.md)), the team work breakdown, and signs of AI-generated writing ([AI_WRITING_SIGNS.html](documentation/AI_WRITING_SIGNS.html)) |
+| `documentation/` | Functional flows ([FRONTEND_FLOWS.md](documentation/FRONTEND_FLOWS.md)), the team work breakdown, signs of AI-generated writing ([AI_WRITING_SIGNS.html](documentation/AI_WRITING_SIGNS.html)), and the proposed design for path assignment and progress tracking ([DESIGN_PATH_ASSIGNMENT.md](documentation/DESIGN_PATH_ASSIGNMENT.md)) |
 | `Rules/` | Team coding and writing rules |
 | `AI_USAGE.md` | Declaration of every AI-assisted change |
 

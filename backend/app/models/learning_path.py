@@ -85,20 +85,15 @@ class PathSource(Base):
 
 
 class PathAssignment(Base):
-    """Publish target: a published path is visible to a department, a job position or one employee."""
+    """Publish target of a path: a department or a job position. Who actually studies it is in `enrollments`."""
 
     __tablename__ = "path_assignments"
-    __table_args__ = (
-        CheckConstraint(
-            "department_code IS NOT NULL OR job_position_id IS NOT NULL OR user_id IS NOT NULL", name="has_target"
-        ),
-    )
+    __table_args__ = (CheckConstraint("department_code IS NOT NULL OR job_position_id IS NOT NULL", name="has_target"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     path_id: Mapped[str] = mapped_column(ForeignKey("learning_paths.id", ondelete="CASCADE"), index=True)
     department_code: Mapped[str | None] = mapped_column(ForeignKey("departments.code"), index=True)
     job_position_id: Mapped[str | None] = mapped_column(ForeignKey("job_positions.id"), index=True)
-    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
 
 
 class PathComment(Base):

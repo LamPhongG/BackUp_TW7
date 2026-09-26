@@ -52,7 +52,7 @@ def list_paths(
 
 @router.post("", response_model=PathOut, status_code=status.HTTP_201_CREATED)
 def create_path(body: PathCreate, db: DbSession, user: HrUser):
-    """Save a generated draft. Until Pipeline 1 is wired in, `content` comes from the frontend generator."""
+    """Create a draft: the server generates it (Pipeline 1), or saves `content` sent by the client (tests, browser draft)."""
     return service.to_detail(db, user, service.create(db, user, body))
 
 

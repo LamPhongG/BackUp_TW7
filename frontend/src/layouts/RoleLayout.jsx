@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet, NavLink, Navigate, useLocation, useNavigate } from "react-router-dom";
-import {
+import { Compass,
   LayoutDashboard, RouteIcon, FileText, UserRound, ShieldCheck, History, WandSparkles, Layers3,
   Menu, ChevronDown, LogOut, Sparkles, Link2
 } from "../components/Icons";
@@ -38,6 +38,7 @@ function navFor(role, paths) {
   return [
     ["menu_dashboard", "/employee/dashboard", LayoutDashboard],
     ["menu_my_paths", "/employee/paths", RouteIcon],
+    ["menu_explore", "/employee/explore", Compass],
     ["menu_documents", "/employee/documents", FileText],
     ["menu_profile", "/employee/profile", UserRound],
   ];

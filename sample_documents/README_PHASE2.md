@@ -4,7 +4,7 @@
 > Bổ sung cho bộ DOC-01 → DOC-10 của Duyên (nhánh `feat/le-thi-kieu-duyen`, file `README.md` cùng thư mục).
 > File này tên `README_PHASE2.md` để không xung đột với `README.md` của Duyên khi merge.
 
-Bộ tài liệu hoàn thành danh mục 20 tài liệu trong `frontend/src/data/company.js`. Mỗi tài liệu:
+Bộ tài liệu hoàn thành danh mục 20 tài liệu đầu tiên trong `frontend/src/data/company.js`; DOC-21 → DOC-28 bổ sung cho các phòng ban còn thiếu, xem mục 9. Mỗi tài liệu:
 - Có bản PDF 3–5 trang, tiếng Anh, cùng quy ước với DOC-01…10:
   - mục đánh số `§x.y`,
   - các thẻ `[MANDATORY]` / `[OPTIONAL]` / `[ROLE-SPECIFIC]` / `[EXCEPTION]`,
@@ -186,9 +186,43 @@ node build_pdfs.mjs DOC-12_v2.0     # đúng một phiên bản
 - Bản mới của một tài liệu là file nguồn riêng tên `DOC-XX_<family>_v<phiên bản>.md`. Số phiên bản trong tên file phải khớp `version` trong front matter.
 - Build lại một file đã commit sẽ đổi mã băm của PDF. Hệ thống sẽ coi đó là file khác, nên chỉ build lại file nào thật sự có sửa nội dung.
 
+- File nguồn có `format: docx | md | txt` trong front matter và file `DOC-XX_*.csv` được build bằng `build_other_formats.py` (chạy bằng Python của `backend/.venv`, cần `python-docx`):
+  ```powershell
+  ../../backend/.venv/Scripts/python build_other_formats.py          # mọi file DOCX, TXT, MD, CSV
+  ../../backend/.venv/Scripts/python build_other_formats.py DOC-21   # một tài liệu
+  ```
 - Cần Chrome. Nếu Chrome không nằm ở đường dẫn mặc định `C:/Program Files/Google/Chrome/Application/chrome.exe` thì đặt biến `CHROME_PATH`.
 - PDF cố ý **không có header/footer** (số trang, tên tài liệu), vì chữ ở đó sẽ lọt vào chunk của mọi trang.
 - **Khi viết thêm tài liệu, cần tránh 3 điều sau** vì chunker sẽ nhận nhầm heading:
   - Danh sách đánh số `1.`, `2.` trong thân bài: dòng bị ngắt trông giống heading đánh số. Dùng gạch đầu dòng hoặc "Step 1:".
   - Dòng viết hoa toàn bộ.
   - Heading dài hơn một dòng.
+
+## 9. Tài liệu bổ sung DOC-21 → DOC-28 (26/09/2026)
+
+Trước đợt này, phòng **Data, Marketing, Operations** chưa có tài liệu nào; Customer Support, Finance, Branch Management mỗi phòng chỉ có một. 8 tài liệu dưới đây lấp khoảng trống đó, dùng 5 định dạng hệ thống nhận.
+
+| Mã | File | Phòng ban | Loại | Định dạng | Độ dài | Nội dung |
+| :--- | :--- | :--- | :--- | :---: | :---: | :--- |
+| DOC-21 | `DOC-21_brand-content-guidelines_v1.0.docx` | Marketing | Policy | DOCX | 3 trang | Tên công ty và sản phẩm, logo, giọng văn, bản Việt/Anh, trích dẫn số liệu và lời khách hàng, ảnh, khả năng tiếp cận, quy trình duyệt nội dung |
+| DOC-22 | `DOC-22_sop-digital-campaign-operations_v1.0.pdf` | Marketing | SOP | PDF | 4 trang | Kế hoạch năm, brief và duyệt chiến dịch, dữ liệu liên hệ và đồng ý, quảng cáo, email, sự kiện, chuyển lead cho Sales, báo cáo tháng, xử lý sự cố |
+| DOC-23 | `DOC-23_sop-partner-school-session-delivery_v1.0.pdf` | Operations | SOP | PDF | 4 trang | Lịch đào tạo, chuẩn bị trước 5 ngày và 1 ngày, dữ liệu điểm danh, xử lý gián đoạn, báo cáo thực địa, an toàn, rà soát tháng |
+| DOC-24 | `DOC-24_vendor-procurement-procedure_v1.0.docx` | Operations | Process Manual | DOCX | 3 trang | Số báo giá theo giá trị, đơn mua hàng, đối chiếu hoá đơn, đánh giá nhà cung cấp quý, đăng ký nhà cung cấp và tài khoản ngân hàng, xung đột lợi ích |
+| DOC-25 | `DOC-25_data-governance-reporting-standards_v1.0.md` | Data | Policy | MD | ≈ 4 trang | Phân loại dữ liệu, sổ đăng ký dataset, quyền truy cập, chuẩn ẩn danh (nhóm dưới 5 người), kiểm tra chất lượng, báo cáo, lưu trữ, rà soát quý |
+| DOC-26 | `DOC-26_metric-definitions_v1.0.csv` | Data | Process Manual | CSV | ≈ 4 trang | 40 chỉ số của 8 phòng ban: định nghĩa, công thức, hệ thống nguồn, người phụ trách, chu kỳ, mục tiêu, tài liệu liên quan |
+| DOC-27 | `DOC-27_support-service-standards_v1.0.txt` | Customer Support | SOP | TXT | ≈ 4 trang | Kênh hỗ trợ, phân loại P1–P4, thời hạn phản hồi và xử lý, dùng và duy trì cơ sở tri thức, xác minh danh tính, bàn giao ca, khảo sát, rà soát chất lượng |
+| DOC-28 | `DOC-28_sop-budget-and-month-end-close_v1.0.pdf` | Finance | SOP | PDF | 4 trang | Lịch lập ngân sách năm, theo dõi ngân sách tháng, khoá sổ cuối tháng, đối chiếu ngân hàng, trích trước, thanh toán nhà cung cấp, phân tách nhiệm vụ |
+
+Độ dài PDF đếm bằng PyMuPDF; DOCX đếm bằng Microsoft Word; MD, TXT, CSV không có trang cố định nên ghi số trang khi mở bằng Word.
+
+**Cách soạn:**
+- Cùng quy ước với DOC-11…20 (tiếng Anh, mục `§x.y`, thẻ `[MANDATORY]` / `[OPTIONAL]`, Cross-References). Không có mâu thuẫn cài sẵn: mọi con số lấy lại từ tài liệu gốc **đang hiệu lực** và ghi nguồn, ví dụ ngưỡng duyệt chiến dịch 50.000.000 VND (DOC-13 v1.1 §4.3), hạn mức đơn mua hàng 100.000.000 VND (DOC-12 v2.0 §3.1), khoá sổ trong 3 ngày làm việc cuối tháng (DOC-15 §4.4), xoá bản trích dữ liệu cá nhân sau 14 ngày (DOC-14 v1.1 §6.2).
+- Quy định sắp đổi thì không chép lại mà chỉ trỏ tới nguồn: giờ làm của Customer Support (DOC-20 §3 đổi ca thứ Bảy từ 01/01/2027) được DOC-27 dẫn là "theo DOC-20 §3".
+- Số liệu mới do tài liệu này đặt ra (ví dụ số báo giá theo giá trị đơn, thời hạn xử lý P1–P4, lịch ngân sách năm) không trùng với quy định nào đã có.
+- Các tài liệu dẫn chéo lẫn nhau (DOC-22 ↔ DOC-21, DOC-24, DOC-26, DOC-28…); mọi mục được dẫn đều có thật.
+
+**Kiểm tra qua pipeline backend:** 8/8 xử lý xong, 0 heading nhận nhầm, 0 cờ injection, 17–21 chunk mỗi tài liệu (CSV: 2 chunk, 25 dòng mỗi chunk). Bộ sinh bản nháp theo luật dựng được bài học và câu hỏi từ cả 8 tài liệu; riêng DOC-26 (bảng chỉ số) chỉ cho bài học, không cho câu hỏi.
+
+**Tải lên:** DOC-21…28 đã có trong danh mục `company.js` và `document_catalog.py`, nên giao diện tự điền mã, tên, loại và phòng ban từ tên file. Ngày hiệu lực: **2026-09-01**, riêng DOC-28 là **2026-08-01**. Không có ngày hết hạn.
+
+**Chưa làm:** ma trận vai trò (`role_matrix/role_matrix.csv`) chưa có dòng nào trỏ tới DOC-21…28, nên các tài liệu này chưa được chọn sẵn là tài liệu bắt buộc khi tạo lộ trình.

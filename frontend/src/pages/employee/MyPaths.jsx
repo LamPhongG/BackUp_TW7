@@ -5,8 +5,9 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useEnrollment } from "../../contexts/EnrollmentContext";
 import { useAuth } from "../../hooks/useAuth";
 import { useMyPaths } from "../../hooks/useMyPaths";
+import { usePaths } from "../../contexts/PathsContext";
 import { pathProgress } from "../../utils/progress";
-import { formatDateTime } from "../../utils/helpers";
+import { formatDateTime, formatLocalDate } from "../../utils/helpers";
 
 export default function MyPaths() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function MyPaths() {
   const { user } = useAuth();
   const { enrollmentFor } = useEnrollment();
   const myPaths = useMyPaths();
+  const { loaded } = usePaths();
 
   return (
     <div>
@@ -24,7 +26,9 @@ export default function MyPaths() {
           <p>{t("my_paths_desc")}</p>
         </div>
       </div>
-      {myPaths.length === 0 ? (
+      {!loaded ? (
+        <Card><p className="cell-sub">{t("explore_loading")}</p></Card>
+      ) : myPaths.length === 0 ? (
         <Card><EmptyState title={t("no_assigned_paths")} description={t("no_assigned_paths_desc", { department: tv(user.department) })} /></Card>
       ) : (
         <div className="path-grid">
@@ -39,9 +43,14 @@ export default function MyPaths() {
                     {t(prog.complete ? "completed" : e.startedAt ? "in_progress" : "not_started")}
                   </Badge>
                 </div>
-                <h3>{pick(p, "title")}</h3>
+                <h3>{pick(p, "title")} {e.source === "self" && <Badge tone="blue">{t("explore_status_self")}</Badge>}</h3>
                 <p className="cell-sub">{t(`purpose_${p.purpose}`)} · {tv(p.level)} · {t("stages_modules", { s: p.stages.length, m: prog.total })}</p>
                 <p className="cell-sub">{t("published_on", { date: formatDateTime(p.published_at, locale) })}</p>
+                {e.dueDate && !prog.complete && (
+                  <p className={e.overdue ? "text-danger" : "cell-sub"}>
+                    {t(e.overdue ? "due_overdue" : "due_on", { date: formatLocalDate(e.dueDate, locale, { day: "2-digit", month: "2-digit", year: "numeric" }) })}
+                  </p>
+                )}
                 <ProgressBar value={prog.percent} showValue />
                 <Button variant="secondary" onClick={() => navigate(`/employee/paths/${p.id}`)} style={{ marginTop: 12 }}>
                   {t("open")} <ArrowUpRight size={14} />

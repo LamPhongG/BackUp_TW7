@@ -14,8 +14,12 @@ export default function AuthLayout() {
   return (
     <div className="auth-page">
       <section className="auth-visual">
+        <video autoPlay loop muted playsInline className="auth-video-bg">
+          <source src="/videocym.mp4" type="video/mp4" />
+        </video>
+        <div className="auth-overlay"></div>
         <div className="auth-brand">
-          <div className="brand-mark"><Sparkles size={18} /></div>
+          <img src="/logonhomai.jpg" alt="Logo" className="auth-logo-icon" />
           SkillSprint AI
         </div>
         <div className="auth-hero">

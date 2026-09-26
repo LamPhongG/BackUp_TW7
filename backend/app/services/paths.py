@@ -1,5 +1,7 @@
 """Learning-path operations. Every change checks the workflow table, then saves the path and its
 audit row in one commit (same contract as frontend `contexts/PathsContext.jsx`)."""
+from dataclasses import dataclass
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -51,7 +53,7 @@ from app.schemas.paths import (
     Stage,
     Target,
 )
-from app.services import audit, documents, role_matrix
+from app.services import audit, documents, enrollments, role_matrix
 from app.services.path_checks import check_path
 from app.services.path_workflow import allowed_actions, check_stage_keys, ensure_allowed
 from app.services.visibility import path_filter
@@ -97,8 +99,9 @@ def create(db: Session, actor: User, body: PathCreate, progress: Progress | None
         raise AppError(422, "err_job_position", "Unknown job position")
     prompt = _checked_prompt(body.prompt)
     docs = _ready_sources(db, body.source_document_ids)
-    unavailable = _check_mandatory_sources(db, position.id, docs)
-    emit("sources", count=len(docs), codes=[d.code for d in docs], mandatory_unavailable=unavailable)
+    gaps = _check_mandatory_sources(db, position.id, docs, body.allow_missing_mandatory)
+    emit("sources", count=len(docs), codes=[d.code for d in docs], mandatory_unavailable=gaps.unavailable,
+         mandatory_omitted=gaps.omitted)
     duration = (body.duration_days or DEFAULT_ONBOARDING_DAYS) if body.purpose is PathPurpose.ONBOARDING else None
     path_id = new_id("LP")
     content = body.content or _generate(db, path_id, body.purpose, body.level, position, docs, prompt, body.language,
@@ -120,11 +123,11 @@ def create(db: Session, actor: User, body: PathCreate, progress: Progress | None
         revision=1,
         created_by_id=actor.id,
     )
-    _apply_content(path, content, unavailable)
+    _apply_content(path, content, gaps)
     path.sources = _source_rows(docs)
     db.add(path)
     audit.record(db, actor, "generate", path, status_before=None, status_after=PathStatus.DRAFT,
-                 details=_generation_details(path, docs, unavailable))
+                 details=_generation_details(path, docs, gaps))
     emit("saving")
     db.commit()
     return path
@@ -138,15 +141,16 @@ def regenerate(db: Session, actor: User, path: LearningPath, body: PathRegenerat
     if body.prompt is not None:
         path.prompt = _checked_prompt(body.prompt)
     docs = _ready_sources(db, body.source_document_ids)
-    unavailable = _check_mandatory_sources(db, path.target_job_position_id, docs)
-    emit("sources", count=len(docs), codes=[d.code for d in docs], mandatory_unavailable=unavailable)
+    gaps = _check_mandatory_sources(db, path.target_job_position_id, docs, body.allow_missing_mandatory)
+    emit("sources", count=len(docs), codes=[d.code for d in docs], mandatory_unavailable=gaps.unavailable,
+         mandatory_omitted=gaps.omitted)
     content = body.content or _generate(db, path.id, path.purpose, path.level, db.get(JobPosition, path.target_job_position_id),
                                         docs, path.prompt, body.language, path.duration_days, emit)
     check_stage_keys(path.purpose, [s.key for s in content.stages], path.duration_days)
-    _apply_content(path, content, unavailable)
+    _apply_content(path, content, gaps)
     path.sources = _source_rows(docs)
     audit.record(db, actor, "regenerate", path, status_before=path.status, status_after=path.status,
-                 details=_generation_details(path, docs, unavailable))
+                 details=_generation_details(path, docs, gaps))
     emit("saving")
     db.commit()
     return path
@@ -228,6 +232,7 @@ def approve(db: Session, actor: User, path: LearningPath, body: PathApprove) -> 
     audit.record(db, actor, "approve", path, status_before=before, status_after=PathStatus.PUBLISHED,
                  final_status=checks.final_status, reason=reason,
                  details={"departments": ", ".join(departments), "roles": ", ".join(positions)})
+    enrollments.assign_published_path(db, path, actor)
     db.commit()
     return path
 
@@ -237,6 +242,7 @@ def archive(db: Session, actor: User, path: LearningPath, reason: str) -> Learni
     before = path.status
     path.status = PathStatus.ARCHIVED
     path.archived_at = utcnow()
+    enrollments.withdraw_for_archived_path(db, path)
     audit.record(db, actor, "archive", path, status_before=before, status_after=PathStatus.ARCHIVED, reason=reason)
     db.commit()
     return path
@@ -292,25 +298,35 @@ def _checked_prompt(text: str | None) -> str | None:
     return prompt
 
 
-def _check_mandatory_sources(db: Session, position_id: str, docs: list[Document]) -> list[str]:
-    """Refuse sources that leave out a mandatory document of the Role Requirement Matrix (SRS Step 10, 28).
+@dataclass
+class MandatoryGaps:
+    # Ready in the repository but left out by HR (allowed only with `allow_missing_mandatory`).
+    omitted: list[str]
+    # Not selectable yet: not uploaded, still processing, or only an outdated version on file.
+    unavailable: list[str]
 
-    Returns the mandatory codes that could not be selected (not uploaded, still processing, or only an outdated
-    version on file): generation goes ahead, and the gap is recorded for the Reviewer.
+
+def _check_mandatory_sources(db: Session, position_id: str, docs: list[Document], allow_missing: bool) -> MandatoryGaps:
+    """Mandatory documents of the Role Requirement Matrix (SRS Step 10, 28) that the sources do not cover.
+
+    Leaving out a ready one is refused unless HR confirmed it; either way the gap is recorded and the checks
+    warn the Reviewer (`reason_mandatory_sources_missing`).
     """
     omitted, unavailable = role_matrix.missing_mandatory_sources(db, position_id, {d.id for d in docs})
-    if omitted:
+    if omitted and not allow_missing:
         raise AppError(422, "err_mandatory_sources", "Mandatory documents of the Role Requirement Matrix are missing",
                        codes=", ".join(omitted))
-    return unavailable
+    return MandatoryGaps(omitted, unavailable)
 
 
-def _generation_details(path: LearningPath, docs: list[Document], unavailable: list[str]) -> dict[str, str]:
+def _generation_details(path: LearningPath, docs: list[Document], gaps: MandatoryGaps) -> dict[str, str]:
     details = {"engine": path.engine, "sources": ", ".join(d.code for d in docs)}
     if path.duration_days:
         details["duration_days"] = str(path.duration_days)
-    if unavailable:
-        details["mandatory_unavailable"] = ", ".join(unavailable)
+    if gaps.unavailable:
+        details["mandatory_unavailable"] = ", ".join(gaps.unavailable)
+    if gaps.omitted:
+        details["mandatory_omitted"] = ", ".join(gaps.omitted)
     return details
 
 
@@ -371,7 +387,7 @@ def _dump_stages(stages: list[Stage]) -> list[dict]:
     return [s.model_dump(mode="json") for s in stages]
 
 
-def _apply_content(path: LearningPath, content: PathContent, mandatory_unavailable: list[str]) -> None:
+def _apply_content(path: LearningPath, content: PathContent, gaps: MandatoryGaps) -> None:
     path.stages = _dump_stages(content.stages)
     path.excluded_chunks = [c.model_dump(mode="json") for c in content.excluded_chunks]
     path.coverage = content.coverage
@@ -379,8 +395,10 @@ def _apply_content(path: LearningPath, content: PathContent, mandatory_unavailab
     path.model = content.model
     path.prompt_version = content.prompt_version
     path.generation = content.generation
-    if path.generation is not None and mandatory_unavailable:
-        path.generation = {**path.generation, "mandatory_unavailable": mandatory_unavailable}
+    if path.generation is not None and gaps.unavailable:
+        path.generation = {**path.generation, "mandatory_unavailable": gaps.unavailable}
+    if path.generation is not None and gaps.omitted:
+        path.generation = {**path.generation, "mandatory_omitted": gaps.omitted}
 
 
 def _ready_sources(db: Session, doc_ids: list[str]) -> list[Document]:

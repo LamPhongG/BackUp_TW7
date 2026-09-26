@@ -208,7 +208,7 @@ export default function PathContent({ path, editable = false, statusByItem = {},
 }
 
 /** Mục tiêu học tập và yêu cầu ma trận mà học phần phủ (backend gắn theo mục tài liệu của từng bài) */
-export function ModuleBrief({ module }) {
+function ModuleBrief({ module }) {
   const { t } = useLanguage();
   const objectives = module.learning_objectives || [];
   const reqs = module.requirement_ids || [];

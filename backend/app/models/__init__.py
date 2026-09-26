@@ -3,6 +3,8 @@ from app.models.audit import AuditLog
 from app.models.document import Document, DocumentChunk, InjectionFlag
 from app.models.enrollment import Enrollment, QuizAttempt
 from app.models.enums import (
+    AssignmentSource,
+    EnrollmentStatus,
     FinalStatus,
     PathLevel,
     PathPurpose,
@@ -17,11 +19,13 @@ from app.models.learning_path import LearningPath, PathAssignment, PathComment, 
 from app.models.organization import Department, JobPosition, RoleRequirement, User
 
 __all__ = [
+    "AssignmentSource",
     "AuditLog",
     "Department",
     "Document",
     "DocumentChunk",
     "Enrollment",
+    "EnrollmentStatus",
     "FinalStatus",
     "InjectionFlag",
     "InvitationToken",

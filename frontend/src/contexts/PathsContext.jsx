@@ -203,11 +203,14 @@ function useBrowserPaths() {
     commit(replace({ ...path, comments }), null);
   }, [actor, commit]);
 
+  // Chế độ trình duyệt đọc thẳng từ localStorage, không có gì để tải lại
+  const refreshPaths = useCallback(() => Promise.resolve(), []);
+
   return useMemo(() => ({
     paths,
     auditLog,
-    createPath, regeneratePath, editPath, submitPath, requestChanges, approvePath, archivePath, deletePath, addComment, resolveComment,
-  }), [paths, auditLog, createPath, regeneratePath, editPath, submitPath, requestChanges, approvePath, archivePath, deletePath, addComment, resolveComment]);
+    createPath, regeneratePath, editPath, submitPath, requestChanges, approvePath, archivePath, deletePath, addComment, resolveComment, refreshPaths, loaded: true,
+  }), [paths, auditLog, createPath, regeneratePath, editPath, submitPath, requestChanges, approvePath, archivePath, deletePath, addComment, resolveComment, refreshPaths]);
 }
 
 // Lỗi nghiệp vụ của backend mang khoá dịch (err_...) → PathError để trang hiển thị như lỗi ở chế độ trình duyệt
@@ -222,6 +225,8 @@ function useBackendPaths() {
   const { lang } = useLanguage();
   const [paths, setPaths] = useState([]);
   const [auditLog, setAuditLog] = useState([]);
+  // Chưa tải xong lần đầu: trang nhân viên hiện "đang tải" thay vì "chưa có lộ trình"
+  const [loaded, setLoaded] = useState(false);
   const latest = useRef(paths);
   latest.current = paths;
   const canReadAudit = user?.userRole === "hr" || user?.userRole === "reviewer";
@@ -236,13 +241,15 @@ function useBackendPaths() {
     if (!user) {
       setPaths([]);
       setAuditLog([]);
+      setLoaded(false);
       return;
     }
     let cancelled = false;
     // Lấy kèm nội dung: danh sách, tiến độ học và kiểm định đều cần stages
     apiRequest("/paths", { query: { include_content: true } })
       .then(list => { if (!cancelled) setPaths(list.map(mapPath)); })
-      .catch(() => { if (!cancelled) setPaths([]); });
+      .catch(() => { if (!cancelled) setPaths([]); })
+      .finally(() => { if (!cancelled) setLoaded(true); });
     reloadAudit().catch(() => {});
     return () => { cancelled = true; };
   }, [user, reloadAudit]);
@@ -284,13 +291,14 @@ function useBackendPaths() {
     return call(`/paths/${job.path_id}`);
   }, [call]);
 
-  const createPath = useCallback(({ role, level, purpose, durationDays, sourceDocs, prompt, onProgress }) => runJob("/paths/jobs", {
+  // allowMissingMandatory: HR đã chủ động bỏ tài liệu bắt buộc; server vẫn sinh và cảnh báo Reviewer
+  const createPath = useCallback(({ role, level, purpose, durationDays, sourceDocs, prompt, allowMissingMandatory, onProgress }) => runJob("/paths/jobs", {
     job_position_id: role.id, level, purpose, source_document_ids: sourceDocs.map(d => d.id), prompt, language: lang,
-    duration_days: purpose === "onboarding" ? durationDays : null,
+    duration_days: purpose === "onboarding" ? durationDays : null, allow_missing_mandatory: !!allowMissingMandatory,
   }, onProgress), [runJob, lang]);
 
-  const regeneratePath = useCallback((id, { sourceDocs, prompt, onProgress }) => runJob(`/paths/${id}/regenerate/jobs`, {
-    source_document_ids: sourceDocs.map(d => d.id), prompt, language: lang,
+  const regeneratePath = useCallback((id, { sourceDocs, prompt, allowMissingMandatory, onProgress }) => runJob(`/paths/${id}/regenerate/jobs`, {
+    source_document_ids: sourceDocs.map(d => d.id), prompt, language: lang, allow_missing_mandatory: !!allowMissingMandatory,
   }, onProgress), [runJob, lang]);
 
   const editPath = useCallback((id, mutate, details) => {
@@ -324,11 +332,17 @@ function useBackendPaths() {
   const resolveComment = useCallback((id, commentId, resolved = true) =>
     call(`/paths/${id}/comments/${commentId}/resolve`, { method: "POST", body: { resolved } }), [call]);
 
+  // Tự đăng ký một lộ trình làm server cho xem thêm lộ trình đó: tải lại danh sách
+  const refreshPaths = useCallback(async () => {
+    const list = await apiRequest("/paths", { query: { include_content: true } });
+    setPaths(list.map(mapPath));
+  }, []);
+
   return useMemo(() => ({
     paths,
     auditLog,
-    createPath, regeneratePath, editPath, submitPath, requestChanges, approvePath, archivePath, deletePath, addComment, resolveComment,
-  }), [paths, auditLog, createPath, regeneratePath, editPath, submitPath, requestChanges, approvePath, archivePath, deletePath, addComment, resolveComment]);
+    createPath, regeneratePath, editPath, submitPath, requestChanges, approvePath, archivePath, deletePath, addComment, resolveComment, refreshPaths, loaded,
+  }), [paths, auditLog, createPath, regeneratePath, editPath, submitPath, requestChanges, approvePath, archivePath, deletePath, addComment, resolveComment, refreshPaths, loaded]);
 }
 
 function newComment(actor, text, itemRef) {

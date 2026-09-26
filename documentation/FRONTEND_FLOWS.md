@@ -94,10 +94,12 @@ Quy tắc phân quyền nằm ở `src/utils/pathWorkflow.js` và được kiể
      - AI được báo mỗi học phần học vào giai đoạn nào, để giao nhiệm vụ làm được trong khoảng thời gian đó.
      - Độ dài được lưu lại. Sinh lại vẫn giữ độ dài cũ; khi sửa, chỉ chuyển học phần được giữa các giai đoạn của độ dài đó.
    - **Tài liệu bắt buộc theo Role Requirement Matrix** (SRS Step 10, 28, chỉ ở chế độ backend):
-     - Khi chọn vị trí, hệ thống tra ma trận. Mọi tài liệu có ít nhất một yêu cầu *Mandatory* được **chọn sẵn và khoá** (biểu tượng ổ khoá, nhãn "Bắt buộc · n yêu cầu"). HR không bỏ chọn được, chỉ chọn thêm tài liệu khác.
+     - Khi chọn vị trí, hệ thống tra ma trận. Mọi tài liệu có ít nhất một yêu cầu *Mandatory* được **chọn sẵn** (nhãn "Bắt buộc · n yêu cầu").
+     - HR bỏ chọn được tài liệu bắt buộc. Tài liệu bị bỏ có viền cam đứt nét, và phía trên danh sách hiện dòng cảnh báo liệt kê các mã đã bỏ, kèm nút **Chọn lại đủ tài liệu bắt buộc**. Nút *Chọn tất cả tài liệu sẵn sàng* cũng chọn lại các tài liệu bắt buộc.
      - Tài liệu ma trận chỉ ghi *Optional* có nhãn "Tuỳ chọn", không tự chọn.
      - Mỗi mã tài liệu được quy về **bản đang hiệu lực**. Bản cũ không thay thế được bản bắt buộc.
-     - Server kiểm tra lại: bỏ sót một tài liệu bắt buộc đã sẵn sàng thì trả `err_mandatory_sources`.
+     - Server kiểm tra lại: bỏ một tài liệu bắt buộc đã sẵn sàng mà request không có `allow_missing_mandatory: true` thì trả `err_mandatory_sources`. Giao diện chỉ gửi cờ này khi HR đã bỏ chọn.
+     - Mã bị bỏ được lưu ở `generation.mandatory_omitted` và nhật ký kiểm toán. Tab *Sinh bằng AI* và kết quả kiểm định (`reason_mandatory_sources_missing`) báo cho Reviewer. Sinh lại giữ nguyên quyết định bỏ và ghi rõ trong hộp thoại.
      - Tài liệu bắt buộc chưa có trong kho hoặc chưa xử lý xong: vẫn sinh được, nhưng có cảnh báo trên màn hình, và Reviewer thấy `reason_mandatory_sources_missing`.
    - Chọn tài liệu nguồn. Chỉ chọn được tài liệu đã xử lý xong; nút *Chọn tất cả tài liệu sẵn sàng* chọn nhanh.
    - Nguồn có cờ injection được cảnh báo; chunk bị gắn cờ sẽ bị loại khỏi lộ trình.
@@ -186,6 +188,7 @@ Quy tắc phân quyền nằm ở `src/utils/pathWorkflow.js` và được kiể
 | `/employee/dashboard` | Nhân viên | Tổng quan học tập, tiếp tục học |
 | `/employee/paths`, `/employee/paths/:id` | Nhân viên | Lộ trình được giao, giai đoạn và trạng thái khoá |
 | `/employee/paths/:id/modules/:moduleId` | Nhân viên | Bài học, tài liệu gốc, nhiệm vụ, bài kiểm tra |
+| `/employee/explore` | Nhân viên | Khám phá lộ trình của phòng ban: xem trước dàn ý, tự đăng ký lộ trình không bắt buộc (cần backend) |
 | `/employee/documents` | Nhân viên | Thư viện tài liệu liên quan |
 | `/employee/profile` | Nhân viên | Hồ sơ, tiến độ, lịch sử điểm, đổi vị trí (demo) |
 
@@ -407,6 +410,17 @@ Có `VITE_API_URL` thì `DocumentsContext`, `PathsContext` và `useAuth` gọi A
 - **Mở tài liệu gốc:** file được tải kèm token rồi mới mở.
 
 Chi tiết backend xem `backend/README.md`.
+
+### 8.12 Gán lộ trình và tiến độ lưu ở server (26/09/2026)
+
+Thiết kế đầy đủ: [DESIGN_PATH_ASSIGNMENT.md](DESIGN_PATH_ASSIGNMENT.md). Đã làm bước 1–2:
+- Có backend: mỗi lần giao lộ trình là một bản ghi ở server (`enrollments`). Nhân viên chỉ thấy lộ trình đã gán cho mình; "Lộ trình của tôi" hiện hạn hoàn thành, quá hạn tô đỏ.
+- Reviewer phát hành lộ trình Hội nhập → server gán cho nhân viên thuộc phòng ban/vị trí đích **chưa hoàn thành hội nhập** (Q1). Khớp nhiều lộ trình thì được gán tất cả (Q2). Nhân viên mới đăng ký qua link mời được gán ngay.
+- Hạn = ngày vào làm + độ dài lộ trình (7/30/90 ngày).
+- Tiến độ (bài đã đọc, nhiệm vụ, bài kiểm tra) lưu ở server, không còn ở `localStorage`; server chấm bài và đổi trạng thái `assigned` → `in_progress` → `completed`. Chế độ không có backend giữ nguyên như trước.
+- Thu hồi lộ trình: bản ghi đang học chuyển `withdrawn`, bản ghi đã xong giữ nguyên.
+- Trang chủ nhân viên: mục *Lộ trình đang học* với thanh tiến độ, nút *Bắt đầu học* / *Tiếp tục học*, hạn và nhãn quá hạn, xếp theo hạn gần nhất.
+- Menu *Khám phá lộ trình*: mọi lộ trình của phòng ban (kể cả của các vị trí trong phòng), *Xem trước* dàn ý và *Đăng ký tham gia*; lộ trình tự chọn không có hạn, gắn nhãn *Tự chọn*.
 
 ### 8.11 Mời nhân viên mới (26/09/2026)
 

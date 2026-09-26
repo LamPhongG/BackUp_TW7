@@ -113,11 +113,6 @@ def import_csv(db: Session, text: str) -> ImportReport:
     return report
 
 
-def next_requirement_id(db: Session) -> str:
-    numbers = [int(r[1:]) for r in db.scalars(select(RoleRequirement.id)) if r[1:].isdigit()]
-    return f"R{(max(numbers, default=0) + 1):03d}"
-
-
 def requirements_for(db: Session, job_position_id: str) -> list[RoleRequirement]:
     return list(db.scalars(select(RoleRequirement).where(RoleRequirement.job_position_id == job_position_id)
                            .order_by(RoleRequirement.id)))

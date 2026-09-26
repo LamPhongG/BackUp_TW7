@@ -24,6 +24,7 @@ import AuditLog from "./pages/shared/AuditLog";
 
 import EmployeeDashboard from "./pages/employee/Dashboard";
 import MyPaths from "./pages/employee/MyPaths";
+import Explore from "./pages/employee/Explore";
 import PathView from "./pages/employee/PathView";
 import ModuleView from "./pages/employee/ModuleView";
 import EmployeeDocuments from "./pages/employee/Documents";
@@ -109,6 +110,7 @@ export default function App() {
                     <Route path="paths" element={<MyPaths />} />
                     <Route path="paths/:id" element={<PathView />} />
                     <Route path="paths/:id/modules/:moduleId" element={<ModuleView />} />
+                    <Route path="explore" element={<Explore />} />
                     <Route path="documents" element={<EmployeeDocuments />} />
                     <Route path="profile" element={<Profile />} />
                   </Route>

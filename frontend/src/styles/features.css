@@ -267,7 +267,8 @@
 .glass-chip:hover{background:rgba(255,255,255,.3)}
 /* Tạo lộ trình: tài liệu bắt buộc theo ma trận, độ dài lộ trình */
 .notice--info{background:var(--blue-bg);color:#1f5fae;align-items:center}
-.source-select button.is-locked{cursor:default;border-color:#b9b2ff}
+.source-select button.is-mandatory{border-color:#b9b2ff}
+.source-select button.is-omitted{border-color:var(--orange);border-style:dashed;background:#fff8ed}
 .source-tag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:700;vertical-align:1px}
 .source-tag--mandatory{background:var(--red-bg);color:#b3263e}
 .source-tag--optional{background:var(--green-bg);color:#0f7a4d}
@@ -371,3 +372,13 @@
 .invite-revoke{color:#c43d55}
 .invite-form label:nth-child(n+3),.invite-form .modal-actions{grid-column:1/-1}
 @media(max-width:760px){.invite-stats{grid-template-columns:1fr}}
+
+/* Khám phá lộ trình của phòng ban */
+.explore-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.explore-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.explore-stage{margin:14px 0 0}
+.explore-stage h4{display:flex;align-items:center;gap:6px;margin:0 0 8px;font-size:14px;color:#4d45b8}
+.explore-module{display:grid;gap:2px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
+.explore-module ul{margin:6px 0 0;padding-left:18px;font-size:13.5px;color:#505a6d}
+.learning-due{font-size:13px;color:var(--muted)}
+.learning-due.is-overdue{color:#c43d55;font-weight:600}

@@ -10,7 +10,7 @@ _codes = itertools.count(100)
 
 
 def unique_code() -> str:
-    """Codes outside the company catalog (DOC-01…20), so each test owns its document family."""
+    """Codes outside the company catalog (DOC-01…28), so each test owns its document family."""
     return f"DOC-{next(_codes)}"
 
 

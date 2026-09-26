@@ -71,6 +71,8 @@ const docs = readdirSync(here)
     const code = file.slice(0, 6);
     return { file, doc, version, code, name: `${file.replace(/(_v[\d.]+)?\.md$/, "")}_v${version}` };
   })
+  // Sources with `format: docx | md | txt` are built by build_other_formats.py.
+  .filter(d => (d.doc.meta.format || "pdf") === "pdf")
   .filter(d => !only.size || only.has(d.code) || only.has(`${d.code}_v${d.version}`));
 const browser = await puppeteer.launch({ executablePath: chrome, headless: true });
 try {

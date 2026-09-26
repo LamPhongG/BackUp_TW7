@@ -87,6 +87,33 @@ def test_leaving_out_a_ready_mandatory_document_is_refused(client, hr_headers, d
     assert {s["code"] for s in accepted.json()["sources"]} == {code, extra["code"]}
 
 
+def test_hr_may_leave_out_a_mandatory_document_when_confirmed(client, hr_headers, db, position):
+    code = unique_code()
+    upload_ready_pdf(client, hr_headers, code=code, title_en=f"Policy {code}")
+    extra = upload_ready_pdf(client, hr_headers)
+    _require(db, position, code)
+
+    res = _create(client, hr_headers, position, [extra["id"]], allow_missing_mandatory=True)
+
+    assert res.status_code == 201, res.text
+    path = res.json()
+    assert path["generation"]["mandatory_omitted"] == [code]
+    assert "mandatory_unavailable" not in path["generation"]
+    checks = client.get(f"/api/paths/{path['id']}/checks", headers=hr_headers).json()
+    assert {"key": "reason_mandatory_sources_missing", "vars": {"codes": code}} in checks["reasons"]
+    assert checks["final_status"] != "verified"
+    log = client.get("/api/audit-logs", headers=hr_headers, params={"path_id": path["id"]}).json()["items"]
+    assert log[0]["details"]["mandatory_omitted"] == code
+
+    # Regenerating keeps HR's decision only when it is confirmed again.
+    same = {"source_document_ids": [extra["id"]]}
+    refused = client.post(f"/api/paths/{path['id']}/regenerate", headers=hr_headers, json=same)
+    kept = client.post(f"/api/paths/{path['id']}/regenerate", headers=hr_headers, json=same | {"allow_missing_mandatory": True})
+    assert (refused.status_code, refused.json()["code"]) == (422, "err_mandatory_sources")
+    assert kept.status_code == 200, kept.text
+    assert kept.json()["generation"]["mandatory_omitted"] == [code]
+
+
 def test_an_outdated_version_does_not_satisfy_a_mandatory_document(client, hr_headers, db, position):
     code = unique_code()
     old = upload_ready_pdf(client, hr_headers, code=code, title_en=f"Policy {code}", version="1.0")

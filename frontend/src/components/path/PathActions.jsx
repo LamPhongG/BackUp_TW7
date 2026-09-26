@@ -101,6 +101,8 @@ function RegenerateModal({ path, onClose }) {
   // Dùng phiên bản đang hiệu lực của cùng mã tài liệu — tài liệu mới cập nhật sẽ được lấy vào
   const docs = activeDocuments.filter(d => codes.has(d.code) && processed[d.id]);
   const role = JOB_ROLES.find(r => r.id === path.target.role_id);
+  // Lần sinh trước HR đã chủ động bỏ tài liệu bắt buộc: sinh lại giữ nguyên quyết định đó
+  const omitted = path.generation?.mandatory_omitted || [];
   return (
     <Modal open title={t("action_regenerate")} onClose={busy ? () => {} : onClose} width={busy && backendEnabled() ? "720px" : undefined}>
       {busy && backendEnabled() ? (
@@ -109,13 +111,14 @@ function RegenerateModal({ path, onClose }) {
         <>
           <p>{t("regenerate_desc", { n: docs.length })}</p>
           {path.status === "changes_requested" && <p className="cell-sub">{t("regenerate_keep_comments")}</p>}
+          {omitted.length > 0 && <p className="cell-sub text-warning">{t("regenerate_keeps_omitted", { list: omitted.join(", ") })}</p>}
         </>
       )}
       {errorBox}
       <div className="modal-actions">
         <Button variant="secondary" onClick={onClose}>{t("cancel")}</Button>
         <Button disabled={busy || docs.length === 0} icon={busy ? <Loader2 size={15} className="spin" /> : <RefreshCw size={15} />}
-          onClick={() => { setJob(null); run(() => regeneratePath(path.id, { role, sourceDocs: docs, processed, onProgress: setJob }), onClose); }}>
+          onClick={() => { setJob(null); run(() => regeneratePath(path.id, { role, sourceDocs: docs, processed, allowMissingMandatory: omitted.length > 0, onProgress: setJob }), onClose); }}>
           {t("action_regenerate")}
         </Button>
       </div>

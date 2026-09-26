@@ -1,4 +1,4 @@
-// Sinh BẢN NHÁP lộ trình từ cấu trúc tài liệu khi chưa nối Gemini (engine = "local-draft").
+// Sinh BẢN NHÁP lộ trình từ cấu trúc tài liệu ở chế độ không có backend (engine = "local-draft").
 // Không bịa nội dung: bài học là nguyên văn các mục trong tài liệu, câu hỏi và nhiệm vụ được
 // dựng từ câu có thật trong tài liệu, mọi mục đều kèm source_reference trỏ về chunk gốc.
 // Khi có backend, Pipeline 1 (Gemini) trả về cùng cấu trúc này.
@@ -68,7 +68,7 @@ function groupSections(chunks) {
 
 // Nhiệm vụ dựng từ câu quy định: luật không biết bằng chứng cụ thể mà chính sách yêu cầu,
 // nên tiêu chí trỏ về chính câu trích thay vì bịa ra sản phẩm đầu ra
-export function completionCriteria(code, section) {
+function completionCriteria(code, section) {
   return {
     completion_criteria: `Đã thực hiện đúng yêu cầu trong câu trích (${code} · ${section}) ít nhất một lần trong công việc thực tế.`,
     completion_criteriaEn: `Carried out the quoted requirement (${code} · ${section}) correctly at least once in real work.`,

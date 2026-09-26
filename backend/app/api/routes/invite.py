@@ -15,6 +15,7 @@ from app.db.base import new_id, utcnow
 from app.models import Department, JobPosition, User, UserRole
 from app.models.invitation import InvitationToken
 from app.schemas.invite import InviteCreate, InviteOut, InvitePublicOut, SelfRegisterRequest, SelfRegisterResponse
+from app.services import enrollments
 
 router = APIRouter(prefix="/invite", tags=["invite"])
 
@@ -116,6 +117,8 @@ def register(token: str, body: SelfRegisterRequest, db: DbSession) -> SelfRegist
     db.add(user)
     invite.used_at = utcnow()
     invite.registered_user_id = user.id
+    db.flush()
+    enrollments.assign_onboarding_to(db, user)
     db.commit()
 
     email.send_welcome(

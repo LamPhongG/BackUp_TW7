@@ -121,6 +121,8 @@ class PathCreate(BaseModel):
     language: Literal["vi", "en"] = "vi"
     # Onboarding length; omitted means the full 90-day path. Ignored for promotion paths.
     duration_days: Literal[7, 30, 90] | None = None
+    # HR deliberately left out mandatory matrix documents: generate anyway and warn the Reviewer.
+    allow_missing_mandatory: bool = False
     # Omit to let the server generate (Gemini, or the rule-based draft without an API key).
     content: PathContent | None = None
 
@@ -129,6 +131,7 @@ class PathRegenerate(BaseModel):
     source_document_ids: list[str] = Field(min_length=1, max_length=50)
     prompt: str | None = Field(default=None, max_length=4000)
     language: Literal["vi", "en"] = "vi"
+    allow_missing_mandatory: bool = False
     content: PathContent | None = None
 
 

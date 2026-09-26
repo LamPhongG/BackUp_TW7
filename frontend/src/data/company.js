@@ -48,7 +48,7 @@ export const DOCUMENT_CATEGORIES = [
   "Test Case",
 ];
 
-// Danh mục 20 tài liệu tri thức cần có trong kho (hồ sơ công ty).
+// Danh mục 28 tài liệu tri thức cần có trong kho (hồ sơ công ty).
 // `family` gom các phiên bản của cùng một tài liệu để quản lý version (SRS Step 8).
 export const DOCUMENT_CATALOG = [
   { code: "DOC-01", family: "employee-handbook",        titleEn: "Employee Handbook",                    title: "Sổ tay nhân viên",                          category: "Handbook",         department: "Company-wide" },
@@ -71,6 +71,14 @@ export const DOCUMENT_CATALOG = [
   { code: "DOC-18", family: "adversarial-prompt-injection", titleEn: "Adversarial Prompt Injection Test", title: "Tài liệu tấn công Prompt Injection (test)", category: "Test Case",        department: "Company-wide" },
   { code: "DOC-19", family: "outdated-compliance-rules", titleEn: "Outdated Compliance Rules",           title: "Quy định tuân thủ cũ (đã bị thay thế)",     category: "Compliance",       department: "Company-wide" },
   { code: "DOC-20", family: "department-exceptions",    titleEn: "Department-Specific Exceptions",       title: "Ngoại lệ đặc thù theo phòng ban",           category: "Policy",           department: "Company-wide" },
+  { code: "DOC-21", family: "brand-content-guidelines", titleEn: "Brand & Content Guidelines", title: "Hướng dẫn thương hiệu và nội dung", category: "Policy", department: "Marketing" },
+  { code: "DOC-22", family: "sop-digital-campaign-operations", titleEn: "SOP – Digital Campaign Operations", title: "Quy trình vận hành chiến dịch marketing số", category: "SOP", department: "Marketing" },
+  { code: "DOC-23", family: "sop-partner-school-session-delivery", titleEn: "SOP – Partner-School Session Delivery", title: "Quy trình tổ chức buổi đào tạo tại trường đối tác", category: "SOP", department: "Operations" },
+  { code: "DOC-24", family: "vendor-procurement-procedure", titleEn: "Vendor & Procurement Procedure", title: "Quy trình mua hàng và quản lý nhà cung cấp", category: "Process Manual", department: "Operations" },
+  { code: "DOC-25", family: "data-governance-reporting-standards", titleEn: "Data Governance & Reporting Standards", title: "Chuẩn quản trị dữ liệu và báo cáo", category: "Policy", department: "Data" },
+  { code: "DOC-26", family: "metric-definitions", titleEn: "Metric Definitions", title: "Danh mục định nghĩa chỉ số", category: "Process Manual", department: "Data" },
+  { code: "DOC-27", family: "support-service-standards", titleEn: "Customer Support Service Standards & Knowledge Base", title: "Chuẩn dịch vụ chăm sóc khách hàng và cơ sở tri thức", category: "SOP", department: "Customer Support" },
+  { code: "DOC-28", family: "sop-budget-and-month-end-close", titleEn: "SOP – Budget Planning & Month-End Close", title: "Quy trình lập ngân sách và khoá sổ cuối tháng", category: "SOP", department: "Finance" },
 ];
 
 // Quy tắc tải lên (SRS Step 4–5). PDF & DOCX là bắt buộc, TXT/MD/CSV là bổ sung.

@@ -1,9 +1,11 @@
 import copy
 
 import pytest
+from sqlalchemy import select
 
 from app.db.base import new_id
-from app.models import LearningPath, PathAssignment, PathStatus
+from app.models import LearningPath, PathAssignment, PathStatus, User, UserRole
+from app.services import enrollments
 from tests.factories import mandatory_source_ids, path_content, upload_ready_pdf
 
 
@@ -35,13 +37,16 @@ def draft(client, hr_headers, create_body):
 
 
 def _set_status(db, path_id: str, status: PathStatus, departments=(), positions=()):
-    """Stand-in for the Reviewer approve / request-changes endpoints, which are not built yet."""
+    """Moves a path without the approve checks; publishing assigns it the way `approve` does."""
     path = db.get(LearningPath, path_id)
     path.status = status
     for dept in departments:
         path.assignments.append(PathAssignment(department_code=dept))
     for pos in positions:
         path.assignments.append(PathAssignment(job_position_id=pos))
+    if status is PathStatus.PUBLISHED:
+        reviewer = db.scalar(select(User).where(User.user_role == UserRole.REVIEWER))
+        enrollments.assign_published_path(db, path, reviewer)
     db.commit()
 
 

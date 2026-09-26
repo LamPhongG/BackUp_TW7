@@ -1,29 +1,45 @@
-"""Employee progress on published learning paths."""
-from datetime import datetime
+"""Assignment of a published learning path to one employee, and that employee's progress on it."""
+from datetime import date, datetime
 
-from sqlalchemy import ForeignKey, String, UniqueConstraint
+from sqlalchemy import ForeignKey, Index, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, utcnow
+from app.db.base import Base, str_enum, utcnow
+from app.models.enums import AssignmentSource, EnrollmentStatus
 
 
 class Enrollment(Base):
-    """Progress of one employee on one path.
+    """One path given to one employee (the spec's `Employee_LearningPaths`).
 
-    Lesson and task ids point into `LearningPath.stages`; published paths are read-only, so those ids
-    stay stable for as long as anyone can study the path.
+    The path content is not copied: published paths are read-only, so the lesson and task ids stored here
+    stay valid for as long as anyone can study the path (documentation/DESIGN_PATH_ASSIGNMENT.md §4.1).
     """
 
     __tablename__ = "enrollments"
-    __table_args__ = (UniqueConstraint("user_id", "path_id"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", "path_id"),
+        Index("ix_enrollments_user_status", "user_id", "status"),
+        Index("ix_enrollments_path_status", "path_id", "status"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    path_id: Mapped[str] = mapped_column(ForeignKey("learning_paths.id", ondelete="CASCADE"), index=True)
+    path_id: Mapped[str] = mapped_column(ForeignKey("learning_paths.id", ondelete="CASCADE"))
+    status: Mapped[EnrollmentStatus] = mapped_column(str_enum(EnrollmentStatus, "enrollment_status"),
+                                                     default=EnrollmentStatus.ASSIGNED)
+    source: Mapped[AssignmentSource] = mapped_column(str_enum(AssignmentSource, "assignment_source"))
+    # Null when the system assigned the path (onboarding rule).
+    assigned_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    assigned_at: Mapped[datetime] = mapped_column(default=utcnow)
+    due_date: Mapped[date | None]
+    note: Mapped[str | None] = mapped_column(Text)
     lessons_read: Mapped[list] = mapped_column(default=list)
     tasks_done: Mapped[list] = mapped_column(default=list)
-    started_at: Mapped[datetime] = mapped_column(default=utcnow)
+    # Set by the employee's first lesson, task or quiz, not by the assignment.
+    started_at: Mapped[datetime | None]
     completed_at: Mapped[datetime | None]
+    withdrawn_at: Mapped[datetime | None]
+    withdrawn_reason: Mapped[str | None] = mapped_column(String(255))
 
     quiz_attempts: Mapped[list["QuizAttempt"]] = relationship(
         cascade="all, delete-orphan", passive_deletes=True, order_by="QuizAttempt.submitted_at"

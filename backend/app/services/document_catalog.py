@@ -40,6 +40,14 @@ CATALOG = {e.code: e for e in [
     CatalogEntry("DOC-18", "adversarial-prompt-injection", "Tài liệu tấn công Prompt Injection (test)", "Adversarial Prompt Injection Test", "Test Case", "Company-wide"),
     CatalogEntry("DOC-19", "outdated-compliance-rules", "Quy định tuân thủ cũ (đã bị thay thế)", "Outdated Compliance Rules", "Compliance", "Company-wide"),
     CatalogEntry("DOC-20", "department-exceptions", "Ngoại lệ đặc thù theo phòng ban", "Department-Specific Exceptions", "Policy", "Company-wide"),
+    CatalogEntry("DOC-21", "brand-content-guidelines", "Hướng dẫn thương hiệu và nội dung", "Brand & Content Guidelines", "Policy", "Marketing"),
+    CatalogEntry("DOC-22", "sop-digital-campaign-operations", "Quy trình vận hành chiến dịch marketing số", "SOP – Digital Campaign Operations", "SOP", "Marketing"),
+    CatalogEntry("DOC-23", "sop-partner-school-session-delivery", "Quy trình tổ chức buổi đào tạo tại trường đối tác", "SOP – Partner-School Session Delivery", "SOP", "Operations"),
+    CatalogEntry("DOC-24", "vendor-procurement-procedure", "Quy trình mua hàng và quản lý nhà cung cấp", "Vendor & Procurement Procedure", "Process Manual", "Operations"),
+    CatalogEntry("DOC-25", "data-governance-reporting-standards", "Chuẩn quản trị dữ liệu và báo cáo", "Data Governance & Reporting Standards", "Policy", "Data"),
+    CatalogEntry("DOC-26", "metric-definitions", "Danh mục định nghĩa chỉ số", "Metric Definitions", "Process Manual", "Data"),
+    CatalogEntry("DOC-27", "support-service-standards", "Chuẩn dịch vụ chăm sóc khách hàng và cơ sở tri thức", "Customer Support Service Standards & Knowledge Base", "SOP", "Customer Support"),
+    CatalogEntry("DOC-28", "sop-budget-and-month-end-close", "Quy trình lập ngân sách và khoá sổ cuối tháng", "SOP – Budget Planning & Month-End Close", "SOP", "Finance"),
 ]}
 
 
