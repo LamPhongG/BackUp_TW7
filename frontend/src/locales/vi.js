@@ -506,6 +506,7 @@ export const vi = {
   reason_injection_content: "{n} mẫu prompt injection trong nội dung.",
   reason_flow_errors: "{n} lỗi cấu trúc luồng học.",
   reason_flow_warnings: "{n} cảnh báo về luồng học.",
+  reason_duplicate_content: "{n} câu hỏi/nhiệm vụ có nội dung trùng lặp đáng kể.",
   reason_excluded_chunks: "{n} chunk bị gắn cờ đã bị loại khỏi nguồn.",
 
   // Thao tác

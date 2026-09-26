@@ -506,6 +506,7 @@ export const en = {
   reason_injection_content: "{n} prompt-injection pattern(s) in the content.",
   reason_flow_errors: "{n} structural flow error(s).",
   reason_flow_warnings: "{n} flow warning(s).",
+  reason_duplicate_content: "{n} quiz question(s) or task(s) look substantially duplicated.",
   reason_excluded_chunks: "{n} flagged chunk(s) were excluded from the sources.",
 
   // Workflow actions

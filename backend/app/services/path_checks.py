@@ -6,6 +6,7 @@ Pure Python, no AI (Rules section 3).
 """
 from dataclasses import dataclass, field
 from datetime import date
+from difflib import SequenceMatcher
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -20,6 +21,7 @@ COVERAGE_MANUAL_BELOW = 0.6
 COVERAGE_WARNING_BELOW = 0.85
 CRITICAL_KNOWLEDGE = {"hallucination", "contradiction", "source_missing"}
 WARNING_KNOWLEDGE = {"outdated_source", "pending"}
+DUPLICATE_SIMILARITY_THRESHOLD = 0.85
 
 
 @dataclass
@@ -34,6 +36,7 @@ class CheckResult:
     knowledge: list[dict]
     flow: list[dict]
     injection: list[dict]
+    duplicates: list[dict]
     coverage_score: float | None
     final_status: FinalStatus
     blocking: bool
@@ -51,6 +54,7 @@ class CheckResult:
             "flow_errors": sum(1 for f in self.flow if f["severity"] == "error"),
             "flow_warnings": sum(1 for f in self.flow if f["severity"] == "warning"),
             "injection": len(self.injection),
+            "duplicates": len(self.duplicates),
             "coverage_score": self.coverage_score,
         }
 
@@ -174,6 +178,27 @@ def check_injection(stages: list[dict]) -> list[dict]:
     return scan_chunks(pseudo)
 
 
+def check_duplicates(stages: list[dict], threshold: float = DUPLICATE_SIMILARITY_THRESHOLD) -> list[dict]:
+    """Câu hỏi quiz / nhiệm vụ trùng lặp ngữ nghĩa giữa các module, kể cả khác stage (SRS Step 35).
+
+    So bằng difflib.SequenceMatcher (thư viện chuẩn) trên chữ đã chuẩn hoá — đủ tốt cho câu ngắn,
+    không cần thêm dependency ngoài (Jaccard/Levenshtein cho kết quả tương đương ở quy mô này).
+    """
+    duplicates: list[dict] = []
+    for kind, text_key in (("quiz", "question"), ("task", "title")):
+        items = [(e["id"], normalize_for_match(e["item"].get(text_key) or ""))
+                 for e in _items(stages) if e["kind"] == kind]
+        items = [(item_id, text) for item_id, text in items if text]
+        for i in range(len(items)):
+            id_a, text_a = items[i]
+            for id_b, text_b in items[i + 1:]:
+                similarity = SequenceMatcher(None, text_a, text_b).ratio()
+                if similarity >= threshold:
+                    duplicates.append({"kind": kind, "item_id_a": id_a, "item_id_b": id_b,
+                                       "similarity": round(similarity, 3)})
+    return duplicates
+
+
 def _coverage_score(coverage: dict | None) -> float | None:
     score = coverage.get("score") if isinstance(coverage, dict) else None
     return float(score) if isinstance(score, (int, float)) and 0 <= score <= 1 else None
@@ -183,6 +208,7 @@ def run_checks(path: LearningPath, docs: list[_Doc], chunks_by_doc: dict[str, li
     knowledge = check_knowledge(path.stages, docs, chunks_by_doc)
     flow = check_flow(path.purpose.value, path.stages)
     injection = check_injection(path.stages)
+    duplicates = check_duplicates(path.stages)
     score = _coverage_score(path.coverage)
 
     critical = sum(1 for k in knowledge if k["status"] in CRITICAL_KNOWLEDGE)
@@ -208,6 +234,8 @@ def run_checks(path: LearningPath, docs: list[_Doc], chunks_by_doc: dict[str, li
         warnings.append({"key": "reason_knowledge_warning", "vars": {"n": warn_knowledge}})
     if flow_warnings:
         warnings.append({"key": "reason_flow_warnings", "vars": {"n": flow_warnings}})
+    if duplicates:
+        warnings.append({"key": "reason_duplicate_content", "vars": {"n": len(duplicates)}})
     if path.excluded_chunks:
         warnings.append({"key": "reason_excluded_chunks", "vars": {"n": len(path.excluded_chunks)}})
 
@@ -217,7 +245,7 @@ def run_checks(path: LearningPath, docs: list[_Doc], chunks_by_doc: dict[str, li
         final, reasons = FinalStatus.VERIFIED_WARNING, warnings
     else:
         final, reasons = FinalStatus.VERIFIED, [{"key": "reason_all_verified"}]
-    return CheckResult(knowledge, flow, injection, score, final, bool(blocking), reasons)
+    return CheckResult(knowledge, flow, injection, duplicates, score, final, bool(blocking), reasons)
 
 
 def check_path(db: Session, path: LearningPath) -> CheckResult:

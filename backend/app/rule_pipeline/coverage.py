@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Document, ProcessingStatus
 from app.rule_pipeline.matrix import ROLE_REQUIREMENT_MATRIX
+from app.rule_pipeline.precedence import sort_by_precedence
 from app.services.documents import compute_lifecycle
 
 # Các category được coi là bắt buộc (ground-truth) cho hội nhập. Loại trừ "FAQ" (khuyến nghị, không
@@ -36,7 +37,10 @@ def required_documents(db: Session, department_code: str, today: date | None = N
     # compute_lifecycle xác định phiên bản nào đang active theo family — tái dùng logic đã có ở
     # services/path_checks.py để tránh hai nơi tự tính lifecycle khác nhau.
     lifecycle = compute_lifecycle(list(rows), today)
-    return [d for d in rows if lifecycle.get(d.id, (None, None))[0] == "active" and d.category in MANDATORY_CATEGORIES]
+    mandatory = [d for d in rows if lifecycle.get(d.id, (None, None))[0] == "active" and d.category in MANDATORY_CATEGORIES]
+    # Sắp theo phân cấp ưu tiên (SRS Step 34): tài liệu có thẩm quyền cao hơn (Handbook/Policy >
+    # SOP > FAQ) luôn đứng trước trong requiredDocs/topics trả về từ compute_coverage().
+    return sort_by_precedence(mandatory)
 
 
 def cited_codes(stages: list[dict]) -> set[str]:
