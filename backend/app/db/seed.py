@@ -75,7 +75,7 @@ DEMO_USERS = [
     {"email": "marketing.emp@fourangrybirds.vn", "name": "Marketing Employee", "user_role": UserRole.EMPLOYEE, "job_title": None, "department_code": "Marketing", "job_position_id": "marketing-exec", "employee_code": "EMP-0206", "experience_level": PathLevel.BEGINNER, "location": "Hanoi", "joining_date": date(2026, 8, 1), "training_status": TrainingStatus.NOT_STARTED},
     {"email": "branch.mgr@fourangrybirds.vn", "name": "Branch Manager", "user_role": UserRole.EMPLOYEE, "job_title": None, "department_code": "Branch Management", "job_position_id": "branch-manager", "employee_code": "EMP-0207", "experience_level": PathLevel.BEGINNER, "location": "Hanoi", "joining_date": date(2026, 8, 1), "training_status": TrainingStatus.NOT_STARTED},
     {"email": "data.analyst@fourangrybirds.vn", "name": "Data Analyst", "user_role": UserRole.EMPLOYEE, "job_title": None, "department_code": "Data", "job_position_id": "data-analyst", "employee_code": "EMP-0208", "experience_level": PathLevel.BEGINNER, "location": "Hanoi", "joining_date": date(2026, 8, 1), "training_status": TrainingStatus.NOT_STARTED},
-    {"email": "team.lead@fourangrybirds.vn", "name": "Tech Lead", "user_role": UserRole.EMPLOYEE, "job_title": None, "department_code": "Engineering", "job_position_id": "team-leader", "employee_code": "EMP-0209", "experience_level": PathLevel.ADVANCED, "location": "Hanoi", "joining_date": date(2026, 8, 1), "training_status": TrainingStatus.NOT_STARTED},
+    {"email": "team.lead@fourangrybirds.vn", "name": "Tech Lead", "user_role": UserRole.EMPLOYEE, "job_title": None, "department_code": "Engineering", "job_position_id": "team-leader", "employee_code": "EMP-0209", "experience_level": PathLevel.ADVANCED, "location": "Hanoi", "joining_date": date(2026, 8, 1), "training_status": TrainingStatus.COMPLETED},
 ]
 
 ROLE_MATRIX_CSV = BACKEND_DIR.parent / "role_matrix" / "role_matrix.csv"
@@ -109,17 +109,29 @@ def seed_demo_users(db: Session) -> None:
 
 
 def seed_demo_certificate(db: Session) -> None:
-    from app.models import LearningPath, Enrollment, EnrollmentStatus, EnrollmentSource
+    from app.models import LearningPath, Enrollment, EnrollmentStatus, AssignmentSource, PathStatus, PathPurpose, PathLevel
     from datetime import datetime, timezone
     
     # Check if a path exists, if not create one
     path = db.scalar(select(LearningPath).limit(1))
-    admin_id = db.scalar(select(User.id).where(User.user_role == UserRole.ADMIN))
     if not path:
+        creator_id = db.scalar(select(User.id).where(User.user_role == UserRole.ADMIN)) or db.scalar(select(User.id).limit(1))
+        dept = db.scalar(select(Department.code).limit(1)) or "Sales"
+        pos = db.scalar(select(JobPosition.id).limit(1)) or "sales-exec"
         path = LearningPath(
-            id="demo-path-999", title="Generative AI For Business", purpose="onboarding",
-            target_roles=[], status="published", is_company_wide=True, mandatory_document_ids=[],
-            stages=[], created_by_id=admin_id or "admin-1", created_at=datetime.now(timezone.utc)
+            id="demo-path-999",
+            title="Hội nhập — Generative AI For Business",
+            title_en="Onboarding — Generative AI For Business",
+            purpose=PathPurpose.ONBOARDING,
+            level=PathLevel.BEGINNER,
+            target_department_code=dept,
+            target_job_position_id=pos,
+            created_by_id=creator_id,
+            prompt_version="v1.1",
+            engine="local-draft",
+            status=PathStatus.PUBLISHED,
+            stages=[],
+            created_at=datetime.now(timezone.utc)
         )
         db.add(path)
         db.flush()
@@ -131,7 +143,7 @@ def seed_demo_certificate(db: Session) -> None:
         if not enr:
             enr = Enrollment(
                 user_id=sales_id, path_id=path.id, status=EnrollmentStatus.COMPLETED,
-                source=EnrollmentSource.SELF, assigned_at=now, started_at=now, completed_at=now,
+                source=AssignmentSource.SELF, assigned_at=now, started_at=now, completed_at=now,
                 lessons_read=[], tasks_done=[]
             )
             db.add(enr)
