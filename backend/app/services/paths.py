@@ -11,7 +11,6 @@ from app.genai_pipeline.client import get_llm_client
 from app.genai_pipeline.generator import generate_content
 from app.genai_pipeline.local_draft import NoContentError
 from app.genai_pipeline.types import GenerationRequest, SourceDoc
-from app.rule_pipeline.matrix import calculate_role_coverage
 from app.models import (
     Department,
     Document,
@@ -30,6 +29,7 @@ from app.models import (
     User,
     UserRole,
 )
+from app.rule_pipeline import compute_coverage
 from app.schemas.paths import (
     MIN_REASON_LENGTH,
     Actor,
@@ -111,41 +111,12 @@ def create(db: Session, actor: User, body: PathCreate) -> LearningPath:
         created_by_id=actor.id,
     )
     _apply_content(path, content)
+    # Pipeline 2 độc lập tự tính coverage — không tin vào giá trị content.coverage do client/AI gửi.
+    path.coverage = compute_coverage(db, path.stages, path.target_department_code, path.target_job_position_id)
     path.sources = _source_rows(docs)
     db.add(path)
-    db.flush()
-
-    # Autonomous Dual-Pipeline Verification (SRS Section 1.2 & Step 47-49)
-    # Pipeline 2 performs immediate verification:
-    checks = check_path(db, path)
-    if checks.final_status == FinalStatus.VERIFIED and not checks.blocking:
-        # Happy Path: 100% verified, no hallucination, no prompt injection, no contradiction
-        # Auto-pass and publish directly to employees!
-        path.status = PathStatus.PUBLISHED
-        path.published_at = utcnow()
-        path.approved_by_id = actor.id
-        path.approval_final_status = FinalStatus.VERIFIED
-        path.approval_reason = "Tự động phát hành: Pipeline 2 (Python Ground-Truth Engine) xác thực hợp lệ 100% không lỗi."
-        path.assignments = [
-            PathAssignment(department_code=position.department_code),
-            PathAssignment(job_position_id=position.id),
-        ]
-        audit.record(
-            db, actor, "auto_publish", path, status_before=None, status_after=PathStatus.PUBLISHED,
-            final_status=FinalStatus.VERIFIED, reason=path.approval_reason,
-            details={"engine": path.engine, "coverage": path.coverage.get("score") if path.coverage else None, "note": "Auto-passed to employees"}
-        )
-    else:
-        # Flagged Path: Has warnings, errors, contradictions, hallucinations, or low coverage
-        # Route directly to Reviewer's Manual Review Queue (SRS Page 33, item xliv)
-        path.status = PathStatus.IN_REVIEW
-        path.approval_final_status = checks.final_status
-        audit.record(
-            db, actor, "route_for_review", path, status_before=None, status_after=PathStatus.IN_REVIEW,
-            final_status=checks.final_status,
-            details={"engine": path.engine, "reasons": checks.reasons, "note": "Flagged content routed to Reviewer Queue"}
-        )
-
+    audit.record(db, actor, "generate", path, status_before=None, status_after=PathStatus.DRAFT,
+                 details={"engine": path.engine, "sources": ", ".join(d.code for d in docs)})
     db.commit()
     return path
 
@@ -160,6 +131,7 @@ def regenerate(db: Session, actor: User, path: LearningPath, body: PathRegenerat
                                         docs, path.prompt, body.language)
     check_stage_keys(path.purpose, [s.key for s in content.stages])
     _apply_content(path, content)
+    path.coverage = compute_coverage(db, path.stages, path.target_department_code, path.target_job_position_id)
     path.sources = _source_rows(docs)
     audit.record(db, actor, "regenerate", path, status_before=path.status, status_after=path.status,
                  details={"engine": path.engine})
@@ -171,6 +143,8 @@ def edit(db: Session, actor: User, path: LearningPath, body: PathEdit) -> Learni
     ensure_allowed(actor, "edit", path)
     check_stage_keys(path.purpose, [s.key for s in body.stages])
     path.stages = _dump_stages(body.stages)
+    # HR chỉnh tay có thể thêm/bớt trích dẫn → phải tính lại coverage, không giữ giá trị cũ.
+    path.coverage = compute_coverage(db, path.stages, path.target_department_code, path.target_job_position_id)
     audit.record(db, actor, "edit", path, status_before=path.status, status_after=path.status, details=body.details)
     db.commit()
     return path
@@ -330,20 +304,18 @@ def _generate(db: Session, path_id: str, purpose: PathPurpose, level: PathLevel,
         result = generate_content(req, sources, get_llm_client())
     except NoContentError:
         raise AppError(422, "err_no_content", "None of the selected documents has usable text") from None
-    stages_raw = _dump_stages(result.stages)
-    coverage = calculate_role_coverage(position.id, stages_raw, [d.code for d in docs])
-    return PathContent(stages=result.stages, excluded_chunks=result.excluded_chunks, coverage=coverage,
+    return PathContent(stages=result.stages, excluded_chunks=result.excluded_chunks, coverage=None,
                        engine=result.engine, model=result.model, prompt_version=result.prompt_version,
                        generation=result.report)
 
 
-def _dump_stages(stages: list[Any]) -> list[dict]:
-    return [s.model_dump(mode="json") if hasattr(s, "model_dump") else s for s in stages]
+def _dump_stages(stages: list[Stage]) -> list[dict]:
+    return [s.model_dump(mode="json") for s in stages]
 
 
 def _apply_content(path: LearningPath, content: PathContent) -> None:
     path.stages = _dump_stages(content.stages)
-    path.excluded_chunks = [c.model_dump(mode="json") if hasattr(c, "model_dump") else c for c in content.excluded_chunks]
+    path.excluded_chunks = [c.model_dump(mode="json") for c in content.excluded_chunks]
     path.coverage = content.coverage
     path.engine = content.engine
     path.model = content.model

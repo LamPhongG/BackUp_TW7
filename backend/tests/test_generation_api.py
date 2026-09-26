@@ -94,6 +94,10 @@ def test_sources_with_only_flagged_text_cannot_generate(client, hr_headers):
 
 @pytest.fixture
 def in_review(client, hr_headers, fake_gemini, expense_doc):
+    # Thêm một tài liệu Finance bắt buộc nhưng không đưa vào nguồn sinh nội dung, để Pipeline 2
+    # luôn tính coverage < 100% một cách tất định — không phụ thuộc DB test đã tích lũy gì từ
+    # những test khác chạy trước đó.
+    upload_ready_pdf(client, hr_headers, category="Policy", department_code="Finance")
     path = _generate(client, hr_headers, [expense_doc["id"]]).json()
     res = client.post(f"/api/paths/{path['id']}/submit", headers=hr_headers, json={"note": "Ready for review"})
     assert res.json()["status"] == "in_review"
@@ -117,21 +121,23 @@ def test_reviewer_requests_changes_and_hr_resubmits(client, hr_headers, reviewer
 def test_publish_needs_reason_when_not_fully_verified(client, reviewer_headers, employee_headers, in_review):
     url = f"/api/paths/{in_review['id']}/approve"
 
-    no_target = client.post(url, headers=reviewer_headers, json={"reason": "Coverage pending from Pipeline 2"})
+    no_target = client.post(url, headers=reviewer_headers, json={"reason": "Missing one mandatory Finance document"})
     no_reason = client.post(url, headers=reviewer_headers, json={"departments": ["Finance"]})
-    bad_target = client.post(url, headers=reviewer_headers, json={"departments": ["Mars"], "reason": "Coverage pending"})
+    bad_target = client.post(url, headers=reviewer_headers, json={"departments": ["Mars"], "reason": "Coverage gap"})
     assert (no_target.status_code, no_target.json()["code"]) == (422, "err_publish_target")
     assert (no_reason.status_code, no_reason.json()["code"]) == (422, "err_reason_required")
     assert bad_target.status_code == 422
 
     res = client.post(url, headers=reviewer_headers,
-                      json={"departments": ["Finance"], "job_positions": ["support-engineer"], "reason": "Coverage pending from Pipeline 2"})
+                      json={"departments": ["Finance"], "job_positions": ["support-engineer"],
+                            "reason": "Missing one mandatory Finance document"})
 
     assert res.status_code == 200, res.text
     path = res.json()
     assert path["status"] == "published"
     assert path["published_to"] == {"departments": ["Finance"], "job_positions": ["support-engineer"]}
-    assert path["approval"]["final_status"] == "verified_warning"
+    # Coverage < 100% (một tài liệu Finance bắt buộc chưa được trích dẫn) → cần lý do mới publish được.
+    assert path["approval"]["final_status"] == "manual_review"
     assert path["approval"]["by"]["name"] == "Sarah Chen"
     # Alex (support-engineer, Engineering) is targeted by position.
     assert in_review["id"] in {p["id"] for p in client.get("/api/paths", headers=employee_headers).json()}
