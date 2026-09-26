@@ -1,6 +1,6 @@
 # Tài liệu mẫu — Phase 2 (DOC-11 → DOC-20)
 
-> Cập nhật: 25/09/2026 · Người soạn: Phạm Tấn Tài (có AI hỗ trợ, xem `AI_USAGE.md`)
+> Cập nhật: 26/09/2026 (thêm 10 phiên bản mới, mục 6) · Người soạn: Phạm Tấn Tài (có AI hỗ trợ, xem `AI_USAGE.md`)
 > Bổ sung cho bộ DOC-01 → DOC-10 của Duyên (nhánh `feat/le-thi-kieu-duyen`, file `README.md` cùng thư mục).
 > File này tên `README_PHASE2.md` để không xung đột với `README.md` của Duyên khi merge.
 
@@ -26,7 +26,9 @@ Bộ tài liệu hoàn thành danh mục 20 tài liệu trong `frontend/src/data
 | DOC-19 | `DOC-19_outdated-compliance-rules_v1.0.pdf` | 3 | **Test:** quy định tuân thủ năm 2021, đã hết hạn | Test "nguồn lỗi thời" (mục 5) |
 | DOC-20 | `DOC-20_department-exceptions_v1.0.pdf` | 4 | Danh sách ngoại lệ theo phòng ban, kèm luật ưu tiên | Test độ phức tạp khi quy định thay đổi theo phòng ban |
 
-Bản nguồn (Markdown, sửa được) nằm ở `source/`. Cách build lại PDF xem mục 7.
+Ngoài 10 file v1.0 trên còn **10 file phiên bản mới** của DOC-11, 12, 13, 14, 15, 16, 20 (mục 6).
+
+Bản nguồn (Markdown, sửa được) nằm ở `source/`. Cách build lại PDF xem mục 8.
 
 ## 2. Tải lên hệ thống
 
@@ -34,8 +36,10 @@ Tên file có hậu tố `_v1.0`, nên giao diện tự điền mã, phiên bả
 
 | Mã | Phiên bản | Hiệu lực | Hết hạn | Trạng thái vòng đời mong đợi |
 | :--- | :---: | :--- | :--- | :--- |
-| DOC-11 … DOC-18, DOC-20 | 1.0 | 2026-01-01 | — | `active` |
+| DOC-11 … DOC-18, DOC-20 | 1.0 | 2026-01-01 | — | `active` (thành `obsolete` khi đã tải bản mới ở mục 6) |
 | DOC-19 | 1.0 | **2021-01-01** | **2023-12-31** | `expired` |
+
+Các file phiên bản mới cần nhập ngày hiệu lực theo bảng ở mục 6.
 
 **Kết quả chạy toàn bộ 20 tài liệu (25/09):** tải cả DOC-01…20 qua API vào một DB mới, mỗi tài liệu một định dạng. DOC-01, 02, 07 dùng PDF; DOC-05 dùng DOCX; DOC-03, 04, 06, 08, 09, 10 dùng `.md`; DOC-11…20 dùng PDF.
 
@@ -106,23 +110,81 @@ Các mục còn lại (§1–3, §5, §7, §9, §12–15) là nội dung hợp l
 
 Khi tải lên với ngày hết hạn 2023-12-31, tài liệu có trạng thái `expired`. Mọi mục trích dẫn DOC-19 trong một lộ trình phải bị kiểm định đánh dấu `outdated_source`.
 
-## 6. Ma trận vai trò — đề xuất thay R040 và R048 (nhờ Duyên cập nhật CSV)
+## 6. Mười thay đổi phiên bản chính sách
 
-| ID | Role | Process / Policy requirement | Mandatory | Priority | Source | Assessment |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| R040 | Operations Coordinator | Hold the partner-school kickoff call within 5 business days of contract signature and confirm a signed data-processing agreement before exchanging learner data | Mandatory | High | DOC-12 §6.1 | Scenario quiz: a new school signs on Monday — what must happen by when |
-| R048 | Marketing Executive | Launch an external campaign only after the four-step approval (brief, approval, brand/claims check, data-processing check) is recorded in the campaign log | Mandatory | High | DOC-13 §4.3 | Scenario quiz: which step is missing before launch |
+Bộ dữ liệu phải có ít nhất 10 lần thay đổi phiên bản chính sách. 10 file dưới đây còn là dữ liệu test cho 3 việc:
+- vòng đời phiên bản (`active` / `obsolete` / `upcoming`),
+- chọn đúng bản đang hiệu lực khi sinh lộ trình,
+- phát hiện lộ trình đang trích bản cũ.
 
-Nhân tiện: CSV đang ghi vai trò là `Team Leader/Tech Lead`, còn hệ thống dùng `Team Leader / Tech Lead` (có khoảng trắng). Nên sửa để Coverage khớp tên.
+**Cách soạn:**
+- Mỗi bản mới là một tài liệu đầy đủ, vẫn dài 3–5 trang. Cùng mã với bản cũ, số phiên bản cao hơn, nên hệ thống xếp vào cùng nhóm tài liệu (`family`).
+- Front matter có thêm `supersedes` (bản bị thay thế).
+- Cuối tài liệu có mục **Revision History**. Mỗi dòng ghi phiên bản, ngày hiệu lực, mục bị đổi và nội dung đổi kèm giá trị cũ "(was …)". Dòng mới nhất nằm trên cùng.
+- Một thay đổi kéo theo tài liệu khác thì các tài liệu đó phát hành **cùng ngày**, để các bản đang hiệu lực không mâu thuẫn nhau:
+  - DOC-11 v1.1 → DOC-15 v1.1 và DOC-16 v1.1 (cùng 2026-04-01).
+  - DOC-12 v2.0 → DOC-20 v1.1 (cùng 2026-07-01).
+- Không sửa DOC-01…10 (của Duyên) và các tài liệu test DOC-17, 18, 19. Đã kiểm tra: DOC-01…10 không nhắc tới giá trị nào bị đổi.
 
-## 7. Build lại PDF
+| # | File | Hiệu lực | Thay thế | Thay đổi (cũ → mới) |
+| :---: | :--- | :--- | :--- | :--- |
+| 1 | `DOC-11_sop-employee-onboarding_v1.1.pdf` | 2026-04-01 | v1.0 | §4.1 chuẩn bị trước ngày nhận việc 5 → **7** ngày làm việc · §7.2, §13 hạn nộp đánh giá thử việc ngày 55 → **ngày 50** · §11 nhắc việc khi trễ 3 → **2** ngày |
+| 2 | `DOC-11_sop-employee-onboarding_v1.2.pdf` | 2026-09-01 | v1.1 | §8 chương trình buddy `[OPTIONAL]` → **`[MANDATORY]`**, ghi lại từng buổi gặp · §6.2 thêm đào tạo bắt buộc cho **Data Analyst** (Anonymised Data Handling) |
+| 3 | `DOC-12_branch-operations-manual_v1.1.pdf` | 2026-03-01 | v1.0 | §6.1, §9 gọi kickoff với trường đối tác 5 → **3** ngày làm việc · §6.2, §9 báo cáo đi thực địa 2 → **1** ngày |
+| 4 | `DOC-12_branch-operations-manual_v2.0.pdf` | 2026-07-01 | v1.1 | §3.1 hạn mức duyệt đơn mua hàng 50.000.000 → **100.000.000** VND · **mục mới §6.5** kết thúc hợp tác với trường đối tác `[MANDATORY]`: xoá dữ liệu học viên trong 30 ngày |
+| 5 | `DOC-13_jd-sales-marketing_v1.1.pdf` | 2026-05-01 | v1.0 | §4.2 chuyển lead cho Sales 2 → **1** ngày · §4.3 chiến dịch cần Branch Manager duyệt từ 100.000.000 → **50.000.000** VND · §4.6 quảng cáo thường xuyên 20.000.000 → **30.000.000** VND/tháng |
+| 6 | `DOC-14_jd-engineering-support_v1.1.pdf` | 2026-06-01 | v1.0 | §3.2 cập nhật ticket Tier 2 1 → **2** lần/ngày · §6.2 xoá bản trích có dữ liệu cá nhân 30 → **14** ngày |
+| 7 | `DOC-15_jd-hr-finance_v1.1.pdf` | 2026-04-01 | v1.0 | §3.2 đồng bộ với DOC-11 v1.1 (7 ngày, ngày 50) · §4.3 đổi tài khoản ngân hàng nhà cung cấp cần **thêm Finance Manager duyệt** |
+| 8 | `DOC-16_general-faqs_v1.1.pdf` | 2026-04-01 | v1.0 | §3 đồng bộ ngày 50 · §8 ngân sách học tập 5.000.000 → **7.000.000** VND/năm |
+| 9 | `DOC-20_department-exceptions_v1.1.pdf` | 2026-07-01 | v1.0 | §4 trực on-call phản hồi 30 → **15** phút · §9 đồng bộ với DOC-12 v2.0 (100.000.000 VND); hạn mức duyệt từ xa cho văn phòng Đà Nẵng 20.000.000 → **30.000.000** VND |
+| 10 | `DOC-20_department-exceptions_v1.2.pdf` | **2027-01-01** | v1.1 | §3 gia hạn ca mở rộng của Customer Support đến 31/12/2027, ca thứ Bảy 09:00–13:00 → **08:00–12:00** · §6 tiếp khách không cần duyệt trước 2.000.000 → **3.000.000** VND/buổi, gia hạn đến 31/12/2027 |
+
+Cộng với DOC-02 → DOC-01 v2.0 của Duyên, bộ dữ liệu có **11 lần đổi phiên bản** và 23 dòng thay đổi trong các mục Revision History.
+
+**Tải lên:** tên file có hậu tố `_v1.1`, `_v2.0`… nên giao diện tự điền mã và phiên bản. **Ngày hiệu lực mặc định là hôm nay**, cần nhập đúng cột *Hiệu lực*.
+
+**Trạng thái mong đợi vào ngày 26/09/2026** khi đã tải cả bản cũ và bản mới:
+
+| Tài liệu | `active` | `obsolete` (bị thay bởi bản `active`) | `upcoming` |
+| :--- | :--- | :--- | :--- |
+| DOC-11 | v1.2 | v1.0, v1.1 | — |
+| DOC-12 | v2.0 | v1.0, v1.1 | — |
+| DOC-13, 14, 15, 16 | v1.1 | v1.0 | — |
+| DOC-20 | v1.1 | v1.0 | v1.2 (từ 01/01/2027 thành `active`, v1.1 thành `obsolete`) |
+
+**Test tự động:** `backend/tests/test_sample_versions.py` tải 20 PDF của 7 tài liệu này qua API. Test kiểm tra:
+- mỗi file 3–5 trang và xử lý xong;
+- các phiên bản cùng một tài liệu nằm chung nhóm;
+- vòng đời ở hai ngày cố định: 26/09/2026 và 01/01/2027;
+- chunk của điều khoản bị đổi có đúng giá trị theo từng phiên bản và đúng heading;
+- mục Revision History được nhận là heading, các dòng trong bảng không bị nhận nhầm.
+
+**Kịch bản test gợi ý cho luồng HR:**
+- Sinh lộ trình Operations Coordinator khi mới có DOC-12 v1.0, rồi tải DOC-12 v1.1.
+- Lộ trình đó đang dạy "kickoff trong 5 ngày" (§6.1), trong khi bản đang hiệu lực đã đổi thành 3 ngày. Hệ thống phải phát hiện được lộ trình này đang dùng bản cũ.
+
+## 7. Ma trận vai trò (đã cập nhật 26/09)
+
+`role_matrix/role_matrix.csv` đã được mở rộng lên **203 dòng / 156 yêu cầu khác nhau**. Chi tiết xem [`role_matrix/README.md`](../role_matrix/README.md).
+
+- R040 và R048 đã thay bằng yêu cầu thật: DOC-12 §6.1 (kickoff trong **3** ngày theo v1.1, trước đây đề xuất 5 ngày) và DOC-13 §4.3.
+- Có thêm 2 cột:
+  - `Source_Version`: yêu cầu được viết theo phiên bản nào;
+  - `Scope`: áp dụng toàn công ty hay theo chức vụ.
+- Tên vai trò `Team Leader/Tech Lead` giữ nguyên. Bộ import của backend tự chuẩn hoá khoảng trắng quanh dấu `/`, nên vẫn khớp với `Team Leader / Tech Lead`.
+
+## 8. Build lại PDF
 
 ```powershell
 cd sample_documents/source
 npm install            # marked + puppeteer-core (node_modules đã có trong .gitignore)
-node build_pdfs.mjs            # build cả 10 file
-node build_pdfs.mjs DOC-17     # build một file
+node build_pdfs.mjs                 # build cả 20 file
+node build_pdfs.mjs DOC-17          # mọi phiên bản của một tài liệu
+node build_pdfs.mjs DOC-12_v2.0     # đúng một phiên bản
 ```
+
+- Bản mới của một tài liệu là file nguồn riêng tên `DOC-XX_<family>_v<phiên bản>.md`. Số phiên bản trong tên file phải khớp `version` trong front matter.
+- Build lại một file đã commit sẽ đổi mã băm của PDF. Hệ thống sẽ coi đó là file khác, nên chỉ build lại file nào thật sự có sửa nội dung.
 
 - Cần Chrome. Nếu Chrome không nằm ở đường dẫn mặc định `C:/Program Files/Google/Chrome/Application/chrome.exe` thì đặt biến `CHROME_PATH`.
 - PDF cố ý **không có header/footer** (số trang, tên tài liệu), vì chữ ở đó sẽ lọt vào chunk của mọi trang.

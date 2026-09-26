@@ -1,9 +1,11 @@
 // Render every DOC-*.md in this folder to ../DOC-XX_<family>_v<version>.pdf with headless Chrome.
+// A later version of a document is its own source file, named DOC-XX_<family>_v<version>.md.
 //
 //   cd sample_documents/source
 //   npm install
-//   node build_pdfs.mjs                 # all documents
-//   node build_pdfs.mjs DOC-12 DOC-18   # only these
+//   node build_pdfs.mjs                        # all documents
+//   node build_pdfs.mjs DOC-12 DOC-18          # every version of these
+//   node build_pdfs.mjs DOC-12_v2.0            # one version only
 //
 // Chrome path: CHROME_PATH, else the default Windows install location.
 // No running header/footer on purpose: its text would be extracted into every page's chunks.
@@ -61,13 +63,20 @@ function html({ meta, body }) {
   </body></html>`;
 }
 
-const files = readdirSync(here).filter(f => /^DOC-\d+_.+\.md$/.test(f) && (!only.size || only.has(f.slice(0, 6))));
+const docs = readdirSync(here)
+  .filter(f => /^DOC-\d+_.+\.md$/.test(f))
+  .map(file => {
+    const doc = parse(readFileSync(path.join(here, file), "utf8"));
+    const version = doc.meta.version || "1.0";
+    const code = file.slice(0, 6);
+    return { file, doc, version, code, name: `${file.replace(/(_v[\d.]+)?\.md$/, "")}_v${version}` };
+  })
+  .filter(d => !only.size || only.has(d.code) || only.has(`${d.code}_v${d.version}`));
 const browser = await puppeteer.launch({ executablePath: chrome, headless: true });
 try {
   const page = await browser.newPage();
-  for (const file of files) {
-    const doc = parse(readFileSync(path.join(here, file), "utf8"));
-    const out = path.join(outDir, `${file.replace(/\.md$/, "")}_v${doc.meta.version || "1.0"}.pdf`);
+  for (const { doc, name } of docs) {
+    const out = path.join(outDir, `${name}.pdf`);
     await page.setContent(html(doc), { waitUntil: "load" });
     await page.pdf({ path: out, format: "A4", printBackground: true, preferCSSPageSize: true });
     console.log("wrote", path.relative(outDir, out));
