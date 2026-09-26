@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from typing import Literal
+from pydantic import BaseModel, Field
 
 
 class SourceCitation(BaseModel):
@@ -9,12 +10,24 @@ class SourceCitation(BaseModel):
     exact_quote: str
 
 
+class RubricCriterionSchema(BaseModel):
+    """Structured rubric criterion for practical assessments (SRS Step 24)."""
+    criterion: str
+    weight: float = Field(default=1.0, description="Relative weight or percentage for scoring")
+    expected_performance: str = Field(description="Benchmark of successful execution")
+    pass_condition: str = Field(description="Specific threshold required to pass")
+
+
 class QuizQuestionSchema(BaseModel):
     question_id: str
     question_text: str
     options: list[str]
     correct_answer: str
     explanation: str
+    difficulty: Literal["Beginner", "Intermediate", "Advanced"] = Field(
+        default="Intermediate",
+        description="Difficulty level based on role and experience (SRS Step 25)",
+    )
     source_citation: SourceCitation
 
 
@@ -23,6 +36,10 @@ class TaskSchema(BaseModel):
     title: str
     description: str
     estimated_minutes: int
+    difficulty: Literal["Beginner", "Intermediate", "Advanced"] = Field(
+        default="Intermediate",
+        description="Task difficulty level (SRS Step 25)",
+    )
     source_citation: SourceCitation
 
 
@@ -31,8 +48,16 @@ class ModuleSchema(BaseModel):
     title: str
     description: str
     order_index: int
-    tasks: list[TaskSchema]
-    quizzes: list[QuizQuestionSchema]
+    difficulty: Literal["Beginner", "Intermediate", "Advanced"] = Field(
+        default="Intermediate",
+        description="Overall module difficulty (SRS Step 25)",
+    )
+    tasks: list[TaskSchema] = Field(default_factory=list)
+    quizzes: list[QuizQuestionSchema] = Field(default_factory=list)
+    rubric: list[RubricCriterionSchema] = Field(
+        default_factory=list,
+        description="Assessment rubrics for practical or scenario evaluations (SRS Step 24)",
+    )
     source_citation: SourceCitation
 
 
