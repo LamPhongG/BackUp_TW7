@@ -11,7 +11,7 @@ compute_coverage) chỉ so khớp theo tập mã tài liệu (membership), khôn
 """
 from types import SimpleNamespace
 
-from app.rule_pipeline.coverage import compute_coverage, required_documents, score_requirements
+from app.rule_pipeline.coverage import compute_coverage, keyword_topics, required_documents, score_requirements
 from tests.factories import make_pdf, make_scanned_pdf, policy_text, unique_code, upload
 
 
@@ -30,6 +30,12 @@ def _stages(*doc_codes: str) -> list[dict]:
     """Cây stages tối giản: mỗi doc_code trở thành một lesson trích dẫn nó."""
     lessons = [{"id": f"L{i}", "source_reference": {"doc": code}} for i, code in enumerate(doc_codes)]
     return [{"key": "day1", "modules": [{"id": "M1", "lessons": lessons, "tasks": [], "quiz": []}]}]
+
+
+def _module_text_stages(*titles: str) -> list[dict]:
+    """Cây stages với tiêu đề module thật, không trích dẫn tài liệu — dùng để dò từ khóa chủ đề."""
+    modules = [{"id": f"M{i}", "title": title, "lessons": [], "tasks": [], "quiz": []} for i, title in enumerate(titles)]
+    return [{"key": "day1", "modules": modules}]
 
 
 # --- score_requirements(): hàm thuần túy, không đụng DB -------------------------------------
@@ -115,3 +121,45 @@ def test_compute_coverage_reflects_what_the_stages_cite(client, hr_headers, db):
     assert result["score"] < 1.0
     assert by_code[covered["code"]] is True
     assert by_code[missing["code"]] is False
+
+
+# --- keyword_topics(): làm giàu topics bằng dữ liệu từ khóa đã soạn sẵn (matrix.py) ----------
+# score/requiredDocs không đổi (vẫn tính động từ DB) — chỉ topics được thay thế khi role_id có
+# trong ROLE_REQUIREMENT_MATRIX, nên các test này không cần lo dữ liệu tồn dư giữa các test.
+
+def test_keyword_topics_returns_none_for_unknown_role():
+    # Role lạ (do evaluator thêm vào — SRS "Hidden Role") không được soạn từ khóa sẵn: phải trả None
+    # để compute_coverage() tự rơi về danh sách theo tài liệu bắt buộc, không báo sai coverage.
+    assert keyword_topics("astronaut", "deployment security support text") is None
+    assert keyword_topics(None, "deployment") is None
+
+
+def test_keyword_topics_finds_real_matched_keyword():
+    topics = keyword_topics("support-engineer", "module: deployment workflow training")
+    by_id = {t["id"]: t for t in topics}
+
+    assert by_id["deployment-sop"]["covered"] is True
+    assert by_id["deployment-sop"]["matchedKeyword"] == "deployment"
+    # Chủ đề không xuất hiện từ khóa nào trong corpus → chưa phủ, không có matchedKeyword.
+    assert by_id["info-sec"]["covered"] is False
+    assert by_id["info-sec"]["matchedKeyword"] is None
+
+
+def test_compute_coverage_enriches_topics_for_known_role(db):
+    stages = _module_text_stages("Deployment Workflow Training")
+
+    result = compute_coverage(db, stages, "Engineering", role_id="support-engineer")
+
+    topic_ids = {t["id"] for t in result["topics"]}
+    assert topic_ids == {"deployment-sop", "info-sec", "technical-support"}
+    matched = next(t for t in result["topics"] if t["id"] == "deployment-sop")
+    assert matched["matchedKeyword"] == "deployment"
+
+
+def test_compute_coverage_falls_back_to_doc_topics_for_unknown_role(client, hr_headers, db):
+    doc = _doc(client, hr_headers, "Marketing", category="Handbook")
+
+    result = compute_coverage(db, _stages(doc["code"]), "Marketing", role_id="astronaut")
+
+    by_id = {t["id"]: t for t in result["topics"]}
+    assert by_id[doc["code"]] == {"id": doc["code"], "label": doc["title_en"], "covered": True, "matchedKeyword": None}

@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Document, ProcessingStatus
+from app.rule_pipeline.matrix import ROLE_REQUIREMENT_MATRIX
 from app.services.documents import compute_lifecycle
 
 # Các category được coi là bắt buộc (ground-truth) cho hội nhập. Loại trừ "FAQ" (khuyến nghị, không
@@ -67,7 +68,9 @@ def score_requirements(required: list[Document], cited: set[str]) -> dict:
         "score": score,
         "requiredDocs": [{"code": d.code, "covered": covered}
                          for d, covered in zip(required, covered_flags, strict=True)],
-        # Hiện mỗi tài liệu bắt buộc tương ứng đúng 1 topic (chưa có đặc tả tách từ khóa chi tiết hơn).
+        # Mặc định: mỗi tài liệu bắt buộc tương ứng đúng 1 topic, chưa có matchedKeyword thật.
+        # compute_coverage() thay thế danh sách này bằng keyword_topics() khi role có trong
+        # ROLE_REQUIREMENT_MATRIX — đây chỉ là phương án dự phòng cho role chưa được soạn (role mới/ẩn).
         "topics": [
             {"id": d.code, "label": d.title_en, "covered": covered, "matchedKeyword": None}
             for d, covered in zip(required, covered_flags, strict=True)
@@ -75,8 +78,58 @@ def score_requirements(required: list[Document], cited: set[str]) -> dict:
     }
 
 
-def compute_coverage(db: Session, stages: list[dict], department_code: str) -> dict:
-    """Coverage Score theo Role Requirement Matrix: trả về `{score, requiredDocs, topics}`."""
+def _text_corpus(stages: list[dict]) -> str:
+    """Gộp toàn bộ chữ hiển thị được (tiêu đề module, bài học, nhiệm vụ, câu hỏi) thành 1 chuỗi thường
+    hoá, dùng để dò từ khóa chủ đề — không đọc source_reference vì đó là việc của cited_codes()."""
+    fragments: list[str] = []
+    for stage in stages:
+        for module in stage.get("modules", []):
+            fragments.append(str(module.get("title", "")))
+            fragments.append(str(module.get("description", "")))
+            for lesson in module.get("lessons", []):
+                fragments.append(str(lesson.get("title", "")))
+            for task in module.get("tasks", []):
+                fragments.append(str(task.get("title", "")))
+            for quiz in module.get("quiz", []):
+                fragments.append(str(quiz.get("question", "")))
+    return " ".join(fragments).lower()
+
+
+def keyword_topics(role_id: str | None, corpus: str) -> list[dict] | None:
+    """Chủ đề năng lực đã soạn sẵn theo job position (ROLE_REQUIREMENT_MATRIX ở matrix.py), có
+    matchedKeyword thực sự tìm được trong nội dung sinh ra — không còn luôn là None như bản mặc định.
+
+    Trả None khi role_id không có trong ma trận (role mới do evaluator thêm vào — SRS "Hidden Role"),
+    để compute_coverage() tự rơi về danh sách theo tài liệu bắt buộc thay vì báo sai lệch coverage.
+    """
+    entry = ROLE_REQUIREMENT_MATRIX.get(role_id) if role_id else None
+    if not entry:
+        return None
+
+    topics: list[dict] = []
+    for topic in entry.get("topics", []):
+        matched = next((kw for kw in topic["keywords"] if kw.lower() in corpus), None)
+        topics.append({
+            "id": topic["id"],
+            "label": topic["label"],
+            "covered": matched is not None,
+            "matchedKeyword": matched,
+        })
+    return topics
+
+
+def compute_coverage(db: Session, stages: list[dict], department_code: str, role_id: str | None = None) -> dict:
+    """Coverage Score theo Role Requirement Matrix: trả về `{score, requiredDocs, topics}`.
+
+    `score`/`requiredDocs` luôn tính động từ tài liệu đang có trong DB (required_documents), không
+    phụ thuộc `role_id` — để không "mù" trước role mới trong bài kiểm tra ẩn (Hidden Role). `role_id`
+    chỉ dùng để làm giàu `topics` bằng dữ liệu từ khóa đã soạn sẵn, khi có.
+    """
     required = required_documents(db, department_code)
     cited = cited_codes(stages)
-    return score_requirements(required, cited)
+    result = score_requirements(required, cited)
+
+    enriched_topics = keyword_topics(role_id, _text_corpus(stages))
+    if enriched_topics is not None:
+        result["topics"] = enriched_topics
+    return result
