@@ -298,7 +298,7 @@ def test_generation_is_briefed_with_the_positions_matrix(client, hr_headers, db,
     path = _create(client, hr_headers, position, [doc["id"]]).json()
 
     prompt = next(c["prompt"] for c in fake_gemini.calls if c["doc"] == code and c["schema"] == "ModuleDraft")
-    assert f"- {req_id} [Mandatory, High priority, §2]" in prompt
+    assert f"- {req_id} [Mandatory, High priority, \u00a72]" in prompt
     assert path["generation"]["requirements"]["taught"] == [req_id]
     module = next(m for s in path["stages"] for m in s["modules"] if m["doc_code"] == code)
     assert module["requirement_ids"] == [req_id]

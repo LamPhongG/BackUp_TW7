@@ -6,6 +6,8 @@ Pure Python, no AI (Rules section 3).
 """
 from dataclasses import dataclass, field
 from datetime import date
+import difflib
+import re
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -40,6 +42,7 @@ class CheckResult:
     blocking: bool
     reasons: list[dict] = field(default_factory=list)
     mandatory_missing: list[str] = field(default_factory=list)
+    duplicates: list[dict] = field(default_factory=list)
 
     def summary(self) -> dict:
         counts: dict[str, int] = {}
@@ -53,6 +56,7 @@ class CheckResult:
             "flow_errors": sum(1 for f in self.flow if f["severity"] == "error"),
             "flow_warnings": sum(1 for f in self.flow if f["severity"] == "warning"),
             "injection": len(self.injection),
+            "duplicates": len(self.duplicates),
             "coverage_score": self.coverage_score,
             "mandatory_missing": self.mandatory_missing,
         }
@@ -207,6 +211,7 @@ def run_checks(path: LearningPath, docs: list[_Doc], chunks_by_doc: dict[str, li
     knowledge = check_knowledge(path.stages, docs, chunks_by_doc)
     flow = check_flow(path.purpose.value, path.stages)
     injection = check_injection(path.stages)
+    duplicates = check_duplicates(path.stages)
     score = _coverage_score(path.coverage)
 
     critical = sum(1 for k in knowledge if k["status"] in CRITICAL_KNOWLEDGE)
@@ -232,11 +237,13 @@ def run_checks(path: LearningPath, docs: list[_Doc], chunks_by_doc: dict[str, li
         warnings.append({"key": "reason_knowledge_warning", "vars": {"n": warn_knowledge}})
     if flow_warnings:
         warnings.append({"key": "reason_flow_warnings", "vars": {"n": flow_warnings}})
+    if duplicates:
+        warnings.append({"key": "reason_duplicates_found", "vars": {"n": len(duplicates)}})
     if path.excluded_chunks:
         warnings.append({"key": "reason_excluded_chunks", "vars": {"n": len(path.excluded_chunks)}})
     if mandatory_missing:
         # Not blocking: the document may not exist yet. The Reviewer decides, and must give a reason to publish.
-        warnings.append({"key": "reason_mandatory_sources_missing", "vars": {"codes": ", ".join(mandatory_missing)}})
+        manual.append({"key": "reason_mandatory_sources_missing", "vars": {"codes": ", ".join(mandatory_missing)}})
 
     if blocking or manual:
         final, reasons = FinalStatus.MANUAL_REVIEW, [*blocking, *manual, *warnings]
@@ -244,7 +251,7 @@ def run_checks(path: LearningPath, docs: list[_Doc], chunks_by_doc: dict[str, li
         final, reasons = FinalStatus.VERIFIED_WARNING, warnings
     else:
         final, reasons = FinalStatus.VERIFIED, [{"key": "reason_all_verified"}]
-    return CheckResult(knowledge, flow, injection, score, final, bool(blocking), reasons, list(mandatory_missing or []))
+    return CheckResult(knowledge, flow, injection, score, final, bool(blocking), reasons, list(mandatory_missing or []), duplicates)
 
 
 def check_path(db: Session, path: LearningPath) -> CheckResult:
@@ -263,3 +270,40 @@ def check_path(db: Session, path: LearningPath) -> CheckResult:
     omitted, unavailable = role_matrix.missing_mandatory_sources(db, path.target_job_position_id,
                                                                   {s.document_id for s in path.sources})
     return run_checks(path, docs, chunks_by_doc, sorted({*omitted, *unavailable}))
+
+
+def check_duplicates(stages: list[dict], threshold: float = 0.85) -> list[dict]:
+    """Detect near-duplicate quiz questions and tasks across modules/stages (SRS Step 35)."""
+    quiz_items = []
+    task_items = []
+
+    for stage in stages:
+        for m in stage.get("modules", []):
+            for q in m.get("quiz", []):
+                q_id = q.get("id")
+                q_text = (q.get("question") or "").strip()
+                if q_id and q_text:
+                    quiz_items.append((q_id, q_text))
+            for t in m.get("tasks", []):
+                t_id = t.get("id")
+                t_text = (t.get("title") or "").strip()
+                if t_id and t_text:
+                    task_items.append((t_id, t_text))
+
+    duplicates = []
+    for kind, items in (("quiz", quiz_items), ("task", task_items)):
+        for i in range(len(items)):
+            for j in range(i + 1, len(items)):
+                id_a, text_a = items[i]
+                id_b, text_b = items[j]
+                norm_a = re.sub(r"\s+", " ", text_a.lower().strip())
+                norm_b = re.sub(r"\s+", " ", text_b.lower().strip())
+                sim = difflib.SequenceMatcher(None, norm_a, norm_b).ratio()
+                if sim >= threshold:
+                    duplicates.append({
+                        "kind": kind,
+                        "item_id_a": id_a,
+                        "item_id_b": id_b,
+                        "similarity": round(sim, 3),
+                    })
+    return duplicates

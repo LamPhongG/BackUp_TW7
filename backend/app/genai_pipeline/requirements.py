@@ -31,7 +31,7 @@ def matching(requirements: list[dict], doc_code: str | None, section: str | None
         if req["source_doc_code"] != doc_code:
             continue
         wanted = req["source_section"]
-        if wanted is None or (section and (section == wanted or section.startswith(wanted + "."))):
+        if section is None or wanted is None or section == wanted or section.startswith(wanted + "."):
             out.append(req)
     return out
 
@@ -41,11 +41,11 @@ def format_for_prompt(requirements: list[dict]) -> str:
         return "(none listed for this document; teach its most important obligations for the role)"
     lines = []
     for r in requirements:
-        where = f"§{r['source_section']}" if r["source_section"] else "whole document"
+        where = f"\u00a7{r['source_section']}" if r["source_section"] else "whole document"
         kind = "Mandatory" if r["mandatory"] else "Optional"
         line = f"- {r['id']} [{kind}, {r['priority']} priority, {where}]: {r['text']}"
         if r.get("assessment"):
-            line += f" — assessed by: {r['assessment']}"
+            line += f" \u2014 assessed by: {r['assessment']}"
         lines.append(line)
     return "\n".join(lines)
 

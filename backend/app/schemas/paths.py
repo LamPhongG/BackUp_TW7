@@ -331,7 +331,7 @@ class PathChecksOut(BaseModel):
     flow_errors: int
     flow_warnings: int
     injection: int
-    duplicates: int
+    duplicates: int = 0
     coverage_score: float | None
     mandatory_missing: list[str] = []
     items: list[dict]

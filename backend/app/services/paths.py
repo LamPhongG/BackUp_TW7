@@ -102,7 +102,7 @@ def create(db: Session, actor: User, body: PathCreate, progress: Progress | None
     gaps = _check_mandatory_sources(db, position.id, docs, body.allow_missing_mandatory)
     emit("sources", count=len(docs), codes=[d.code for d in docs], mandatory_unavailable=gaps.unavailable,
          mandatory_omitted=gaps.omitted)
-    duration = (body.duration_days or DEFAULT_ONBOARDING_DAYS) if body.purpose is PathPurpose.ONBOARDING else None
+    duration = (body.duration_days or DEFAULT_ONBOARDING_DAYS) if body.purpose == PathPurpose.ONBOARDING else None
     path_id = new_id("LP")
     content = body.content or _generate(db, path_id, body.purpose, body.level, position, docs, prompt, body.language,
                                         duration, emit)
