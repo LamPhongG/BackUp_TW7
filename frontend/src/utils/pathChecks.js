@@ -81,13 +81,29 @@ export function checkFlow(path) {
   if (modules.length === 0) issues.push({ severity: "error", key: "flow_no_modules" });
 
   const docSeen = new Map();
+  // Dạy trước rồi mới kiểm tra: tập chunk nhân viên đã được học tính đến học phần hiện tại, theo thứ tự học
+  const taught = new Set();
   for (const { m } of modules) {
+    for (const l of m.lessons) [...(l.source_chunks || []), l.source_reference?.chunk_id].forEach(c => c && taught.add(c));
     const title = m.titleEn || m.title;
     if (m.kind !== "assessment" && m.lessons.length === 0) issues.push({ severity: "error", key: "flow_module_empty", vars: { module: title }, module_id: m.id });
     if (m.kind !== "assessment" && m.quiz.length === 0) issues.push({ severity: "warning", key: "flow_no_quiz", vars: { module: title }, module_id: m.id });
     for (const q of m.quiz) {
       if (!Array.isArray(q.options) || q.options.length < 2 || q.answer == null || q.answer < 0 || q.answer >= q.options.length) {
         issues.push({ severity: "error", key: "flow_quiz_invalid", vars: { module: title }, module_id: m.id });
+      }
+    }
+    // Không có tiêu chí hoàn thành thì không ai xác nhận được nhiệm vụ đã làm xong;
+    // nhiệm vụ thiếu nguồn đã bị nhóm kiến thức bắt (source_missing)
+    for (const task of m.tasks) {
+      if (!String(task.completion_criteria || "").trim()) {
+        issues.push({ severity: "error", key: "flow_task_no_criteria", vars: { module: title, task: task.id }, module_id: m.id });
+      }
+    }
+    for (const item of [...m.tasks, ...m.quiz]) {
+      const chunkId = item.source_reference?.chunk_id;
+      if (chunkId && !taught.has(chunkId)) {
+        issues.push({ severity: "error", key: "flow_untaught_item", vars: { module: title, item: item.id }, module_id: m.id });
       }
     }
     if (m.doc_code) {
@@ -128,7 +144,7 @@ function checkInjection(path) {
   const pseudo = knowledgeItems(path).map(e => ({
     chunk_id: e.id,
     page: e.source_reference?.page ?? null,
-    content: e.kind === "lesson" ? `${e.item.title}\n${e.item.content}` : e.kind === "task" ? e.item.title : [e.item.question, ...(e.item.options || [])].join("\n"),
+    content: e.kind === "lesson" ? `${e.item.title}\n${e.item.content}` : e.kind === "task" ? `${e.item.title}\n${e.item.completion_criteria || ""}` : [e.item.question, ...(e.item.options || [])].join("\n"),
   }));
   return scanChunks(pseudo);
 }

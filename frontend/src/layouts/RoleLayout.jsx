@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Outlet, NavLink, Navigate, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, RouteIcon, FileText, UserRound, ShieldCheck, History, WandSparkles, Layers3,
-  Menu, ChevronDown, LogOut, Sparkles
+  Menu, ChevronDown, LogOut, Sparkles, Link2
 } from "../components/Icons";
 import { useAuth, HOME_PATH } from "../hooks/useAuth";
 import { useLanguage, LanguageToggle } from "../contexts/LanguageContext";
@@ -23,6 +23,7 @@ function navFor(role, paths) {
       ["menu_documents", "/hr/documents", FileText],
       ["menu_create_path", "/hr/paths/new", WandSparkles],
       ["menu_paths", "/hr/paths", Layers3, paths.filter(p => p.status === "changes_requested").length],
+      ["menu_invites", "/hr/invites", Link2],
       ["menu_audit_log", "/hr/audit-log", History],
     ];
   }

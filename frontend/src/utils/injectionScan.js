@@ -1,5 +1,5 @@
 // Sàng lọc Prompt Injection trong nội dung tài liệu (Rules mục 5).
-// Backend (src/security/injection_filter.py) là lớp chặn chính thức trước khi gọi Gemini;
+// Backend (backend/app/core/injection_filter.py) là lớp chặn chính thức trước khi gọi Gemini;
 // bản này chạy ở trình duyệt để HR thấy cảnh báo ngay khi tải lên, và dùng chung
 // định dạng cờ với backend: { chunk_id, page, rule_id, severity, match, excerpt }.
 

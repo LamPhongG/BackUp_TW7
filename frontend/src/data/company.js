@@ -76,8 +76,13 @@ export const DOCUMENT_CATALOG = [
 // Quy tắc tải lên (SRS Step 4–5). PDF & DOCX là bắt buộc, TXT/MD/CSV là bổ sung.
 export const UPLOAD_RULES = {
   allowedExtensions: ["pdf", "docx", "txt", "md", "csv"],
+  // Cách viết khác của cùng định dạng; quy về một tên để trích xuất, xem trước và trích dẫn chỉ xử lý một loại
+  extensionAliases: { markdown: "md" },
   maxSizeMB: 20,
 };
+
+// Mọi đuôi file được nhận khi chọn file (kể cả tên gọi khác)
+export const ACCEPTED_EXTENSIONS = [...UPLOAD_RULES.allowedExtensions, ...Object.keys(UPLOAD_RULES.extensionAliases)];
 
 // Mục đích lộ trình: nhân viên mới hội nhập, hoặc bồi dưỡng khi thăng chức / chuyển vị trí
 export const PATH_PURPOSES = ["onboarding", "promotion"];
@@ -89,6 +94,20 @@ export const STAGE_TEMPLATES = {
   onboarding: ["day1", "week1", "week2", "day30", "day60", "day90"],
   promotion: ["foundation", "deep", "practice", "assessment"],
 };
+
+// Độ dài lộ trình hội nhập HR chọn (SRS Step 13) → các mốc được giữ, luôn là phần đầu của mẫu đầy đủ.
+// Lộ trình thăng chức chia theo giai đoạn năng lực nên không có độ dài.
+export const ONBOARDING_DURATIONS = {
+  7: ["day1", "week1"],
+  30: ["day1", "week1", "week2", "day30"],
+  90: STAGE_TEMPLATES.onboarding,
+};
+export const DEFAULT_ONBOARDING_DAYS = 90;
+
+export function stageTemplate(purpose, durationDays) {
+  if (purpose === "onboarding") return ONBOARDING_DURATIONS[durationDays || DEFAULT_ONBOARDING_DAYS];
+  return STAGE_TEMPLATES[purpose] || STAGE_TEMPLATES.onboarding;
+}
 
 // Tầng kiến thức của tài liệu: nền tảng công ty học trước, nghiệp vụ phòng ban học sau
 export function docTier(doc) {

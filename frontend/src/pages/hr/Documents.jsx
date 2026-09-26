@@ -6,7 +6,7 @@ import { ProcessingCell, ChunksModal } from "../../components/DocumentProcessing
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useDocuments, openStoredFile } from "../../contexts/DocumentsContext";
 import { useAuth } from "../../hooks/useAuth";
-import { company, DOCUMENT_CATALOG, DOCUMENT_CATEGORIES, DEPARTMENTS, UPLOAD_RULES } from "../../data/company";
+import { ACCEPTED_EXTENSIONS, company, DOCUMENT_CATALOG, DOCUMENT_CATEGORIES, DEPARTMENTS, UPLOAD_RULES } from "../../data/company";
 import { buildDraft, findCatalogEntry, formatFileSize, hashFile, inspectContent, validateDraft } from "../../utils/documentValidation";
 import { formatLocalDate, todayISO } from "../../utils/helpers";
 
@@ -351,7 +351,7 @@ function UploadModal({ onClose, onSaved }) {
           ref={inputRef}
           type="file"
           multiple
-          accept={UPLOAD_RULES.allowedExtensions.map(e => `.${e}`).join(",")}
+          accept={ACCEPTED_EXTENSIONS.map(e => `.${e}`).join(",")}
           onChange={e => { if (e.target.files?.length) addFiles(e.target.files); e.target.value = ""; }}
           style={{ display: "none" }}
         />

@@ -1,13 +1,15 @@
 // Kiểm tra tài liệu tải lên (SRS Step 5) và vòng đời phiên bản (SRS Step 8)
 // Mọi lỗi/cảnh báo trả về dạng { key, vars } để giao diện dịch bằng t()
-import { DOCUMENT_CATALOG, UPLOAD_RULES } from "../data/company";
+import { ACCEPTED_EXTENSIONS, DOCUMENT_CATALOG, UPLOAD_RULES } from "../data/company";
 
 const CODE_PATTERN = /^DOC-\d{2,}$/;
 const VERSION_PATTERN = /^\d+(\.\d+){0,2}$/;
 
-function getExtension(fileName = "") {
+// "Policy.markdown" → "md": tên gọi khác được quy về đuôi chuẩn
+export function getExtension(fileName = "") {
   const dot = fileName.lastIndexOf(".");
-  return dot === -1 ? "" : fileName.slice(dot + 1).toLowerCase();
+  const ext = dot === -1 ? "" : fileName.slice(dot + 1).toLowerCase();
+  return UPLOAD_RULES.extensionAliases[ext] || ext;
 }
 
 export function normalizeVersion(value = "") {
@@ -125,7 +127,7 @@ export function validateDraft(draft, { existing, batch, today }) {
   const family = familyOf({ code, titleEn: draft.titleEn });
 
   if (!allowedExtensions.includes(draft.ext)) {
-    errors.push({ key: "err_file_type", vars: { ext: draft.ext || "?", list: allowedExtensions.map(e => `.${e}`).join(", ") } });
+    errors.push({ key: "err_file_type", vars: { ext: draft.ext || "?", list: ACCEPTED_EXTENSIONS.map(e => `.${e}`).join(", ") } });
   }
   if (draft.file.size > maxSizeMB * 1024 * 1024) errors.push({ key: "err_file_too_large", vars: { max: maxSizeMB } });
   if (draft.contentIssues) errors.push(...draft.contentIssues);

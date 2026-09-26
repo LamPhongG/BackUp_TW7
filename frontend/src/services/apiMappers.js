@@ -65,6 +65,7 @@ export function mapPath(p) {
     titleEn: p.title_en,
     purpose: p.purpose,
     level: p.level,
+    duration_days: p.duration_days ?? null,
     target: { role_id: p.target.job_position_id, department: p.target.department_code },
     sources: p.sources.map(s => ({ id: s.document_id, code: s.code, version: s.version, title: s.title, titleEn: s.title_en })),
     prompt: p.prompt,

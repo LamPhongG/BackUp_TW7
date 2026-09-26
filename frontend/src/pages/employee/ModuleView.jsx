@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, BookOpen, CheckSquare, ClipboardCheck, Check, ExternalLink, Clock3, LockKeyhole, CircleCheck, CircleAlert, ArrowRight } from "../../components/Icons";
+import { ArrowLeft, BookOpen, CheckSquare, ClipboardCheck, Check, ExternalLink, Clock3, LockKeyhole, CircleCheck, CircleAlert, ArrowRight, Target } from "../../components/Icons";
 import { Card, Badge, Button, ProgressBar, EmptyState, Toast } from "../../components/UI";
 import Citation from "../../components/Citation";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -67,6 +67,13 @@ export default function ModuleView() {
         </div>
       )}
 
+      {module.learning_objectives?.length > 0 && (
+        <section className="learn-section">
+          <h2><Target size={18} /> {t("learning_objectives")}</h2>
+          <Card><ul className="objective-list">{module.learning_objectives.map((o, i) => <li key={i}>{o}</li>)}</ul></Card>
+        </section>
+      )}
+
       {module.lessons.length > 0 && (
         <section className="learn-section">
           <h2><BookOpen size={18} /> {t("lessons")} <span className="cell-sub">{mp.lessonsDone}/{module.lessons.length}</span></h2>
@@ -106,6 +113,7 @@ export default function ModuleView() {
                     <input type="checkbox" checked={done} onChange={() => toggleTask(path, task.id)} />
                     <span style={{ textDecoration: done ? "line-through" : "none" }}>{pick(task, "title")}</span>
                   </label>
+                  {task.completion_criteria && <p className="task-criteria"><b>{t("completion_criteria")}:</b> {pick(task, "completion_criteria")}</p>}
                   <span className="cell-sub">{task.source_reference.doc} · {task.source_reference.section}</span>
                 </div>
               );

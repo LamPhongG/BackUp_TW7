@@ -44,8 +44,9 @@ export function CoverageScore({ score }) {
   );
 }
 
-export function EngineBadge({ engine }) {
+/** fallback: Gemini đã nối nhưng học phần này phải dùng bản nháp (hết quota, quá tải…) — khác với "chưa nối Gemini" */
+export function EngineBadge({ engine, fallback = false }) {
   const { t } = useLanguage();
   if (engine === "gemini") return <Badge tone="blue">{t("engine_gemini")}</Badge>;
-  return <Badge tone="orange">{t("engine_local_draft")}</Badge>;
+  return <Badge tone="orange">{t(fallback ? "engine_fallback" : "engine_local_draft")}</Badge>;
 }

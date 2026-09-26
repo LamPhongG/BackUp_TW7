@@ -3,6 +3,7 @@ import { useAuth } from "../hooks/useAuth";
 import { newId, readJson, STORAGE_KEYS, writeJson } from "../services/localStore";
 import { sanitizeAuditLog, sanitizePaths } from "../services/sanitize";
 import { generateContent } from "../services/pipelineService";
+import { DEFAULT_ONBOARDING_DAYS } from "../data/company";
 import { approvalRule, can, validReason } from "../utils/pathWorkflow";
 import { MIN_REASON_LENGTH } from "../utils/pathChecks";
 import { apiRequest, backendEnabled } from "../services/apiClient";
@@ -82,10 +83,12 @@ function useBrowserPaths() {
 
   const logBase = (p) => ({ path_id: p.id, path_title: p.titleEn, revision: p.revision });
 
-  const createPath = useCallback(async ({ role, level, purpose, sourceDocs, processed, prompt }) => {
+  const createPath = useCallback(async ({ role, level, purpose, durationDays, sourceDocs, processed, prompt }) => {
     if (actor?.role !== "hr") throw new PathError("err_action_not_allowed");
     const id = newId("LP");
-    const content = await generateContent({ id, role, level, purpose, sourceDocs, processed, prompt });
+    // Giống server: độ dài chỉ áp dụng cho lộ trình hội nhập
+    const duration = purpose === "onboarding" ? durationDays || DEFAULT_ONBOARDING_DAYS : null;
+    const content = await generateContent({ id, role, level, purpose, durationDays: duration, sourceDocs, processed, prompt });
     const now = new Date().toISOString();
     const [vi, en] = TITLES[purpose] || TITLES.onboarding;
     const path = {
@@ -93,6 +96,7 @@ function useBrowserPaths() {
       title: `${vi} — ${role.name}`,
       titleEn: `${en} — ${role.nameEn}`,
       purpose, level,
+      duration_days: duration,
       target: { role_id: role.id, department: role.department },
       sources: sourceDocs.map(d => ({ id: d.id, code: d.code, version: d.version, title: d.title, titleEn: d.titleEn })),
       prompt,
@@ -113,7 +117,7 @@ function useBrowserPaths() {
   const regeneratePath = useCallback(async (id, { role, sourceDocs, processed, prompt }) => {
     const path = get(id);
     guard("regenerate", path);
-    const content = await generateContent({ id, role, level: path.level, purpose: path.purpose, sourceDocs, processed, prompt: prompt ?? path.prompt });
+    const content = await generateContent({ id, role, level: path.level, purpose: path.purpose, durationDays: path.duration_days, sourceDocs, processed, prompt: prompt ?? path.prompt });
     const current = get(id);
     const updated = {
       ...current,
@@ -207,6 +211,8 @@ function useBrowserPaths() {
 }
 
 // Lỗi nghiệp vụ của backend mang khoá dịch (err_...) → PathError để trang hiển thị như lỗi ở chế độ trình duyệt
+const JOB_POLL_MS = 700;
+
 function asPathError(e) {
   return e?.code ? new PathError(e.code, e.vars) : e;
 }
@@ -257,15 +263,35 @@ function useBackendPaths() {
     return updated;
   }, [reloadAudit]);
 
-  const createPath = useCallback(({ role, level, purpose, sourceDocs, prompt }) => call("/paths", {
-    method: "POST",
-    body: { job_position_id: role.id, level, purpose, source_document_ids: sourceDocs.map(d => d.id), prompt, language: lang },
-  }), [call, lang]);
+  /**
+   * Sinh bằng job chạy nền: server trả job ngay, giao diện hỏi lại mỗi JOB_POLL_MS và nhận từng bước thật
+   * (kiểm tra nguồn → phân tích → dàn ý → từng học phần → ma trận → lưu) qua onProgress(job).
+   */
+  const runJob = useCallback(async (startPath, body, onProgress) => {
+    let job;
+    try {
+      job = await apiRequest(startPath, { method: "POST", body });
+      onProgress?.(job);
+      while (job.status === "running") {
+        await new Promise(resolve => setTimeout(resolve, JOB_POLL_MS));
+        job = await apiRequest(`/paths/jobs/${job.id}`);
+        onProgress?.(job);
+      }
+    } catch (e) {
+      throw asPathError(e);
+    }
+    if (job.status === "failed") throw asPathError(job.error);
+    return call(`/paths/${job.path_id}`);
+  }, [call]);
 
-  const regeneratePath = useCallback((id, { sourceDocs, prompt }) => call(`/paths/${id}/regenerate`, {
-    method: "POST",
-    body: { source_document_ids: sourceDocs.map(d => d.id), prompt, language: lang },
-  }), [call, lang]);
+  const createPath = useCallback(({ role, level, purpose, durationDays, sourceDocs, prompt, onProgress }) => runJob("/paths/jobs", {
+    job_position_id: role.id, level, purpose, source_document_ids: sourceDocs.map(d => d.id), prompt, language: lang,
+    duration_days: purpose === "onboarding" ? durationDays : null,
+  }, onProgress), [runJob, lang]);
+
+  const regeneratePath = useCallback((id, { sourceDocs, prompt, onProgress }) => runJob(`/paths/${id}/regenerate/jobs`, {
+    source_document_ids: sourceDocs.map(d => d.id), prompt, language: lang,
+  }, onProgress), [runJob, lang]);
 
   const editPath = useCallback((id, mutate, details) => {
     const path = latest.current.find(p => p.id === id);

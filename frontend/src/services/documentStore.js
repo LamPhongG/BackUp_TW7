@@ -1,6 +1,6 @@
 // Kho tài liệu phía trình duyệt (IndexedDB)
 // Metadata, nội dung file và kết quả chunk lưu ở 3 object store riêng để việc liệt kê không phải đọc blob.
-// Khi có backend, thay module này bằng các lời gọi API cùng chữ ký hàm.
+// Chỉ dùng khi không có backend; chế độ backend nằm ở useBackendDocuments (contexts/DocumentsContext.jsx).
 const DB_NAME = "skillsprint-ai";
 const DB_VERSION = 2;
 const META_STORE = "documents";

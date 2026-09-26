@@ -2,7 +2,7 @@
 // Không bịa nội dung: bài học là nguyên văn các mục trong tài liệu, câu hỏi và nhiệm vụ được
 // dựng từ câu có thật trong tài liệu, mọi mục đều kèm source_reference trỏ về chunk gốc.
 // Khi có backend, Pipeline 1 (Gemini) trả về cùng cấu trúc này.
-import { docTier, STAGE_TEMPLATES } from "../data/company";
+import { docTier, stageTemplate } from "../data/company";
 
 const QUIZ_PER_MODULE = { Beginner: 3, Intermediate: 4, Advanced: 5 };
 const TASKS_PER_MODULE = { Beginner: 1, Intermediate: 2, Advanced: 3 };
@@ -66,6 +66,15 @@ function groupSections(chunks) {
   return sections;
 }
 
+// Nhiệm vụ dựng từ câu quy định: luật không biết bằng chứng cụ thể mà chính sách yêu cầu,
+// nên tiêu chí trỏ về chính câu trích thay vì bịa ra sản phẩm đầu ra
+export function completionCriteria(code, section) {
+  return {
+    completion_criteria: `Đã thực hiện đúng yêu cầu trong câu trích (${code} · ${section}) ít nhất một lần trong công việc thực tế.`,
+    completion_criteriaEn: `Carried out the quoted requirement (${code} · ${section}) correctly at least once in real work.`,
+  };
+}
+
 function assignStage(purpose, tier, day30Count) {
   if (purpose === "promotion") return tier <= 2 ? "foundation" : tier === 3 ? "deep" : "practice";
   if (tier === 0) return "day1";
@@ -80,13 +89,14 @@ function assignStage(purpose, tier, day30Count) {
  * @param {string} p.id                 id của lộ trình (các id con được suy ra từ id này)
  * @param {string} p.level              Beginner | Intermediate | Advanced
  * @param {"onboarding"|"promotion"} p.purpose
+ * @param {7|30|90} [p.durationDays]  độ dài lộ trình hội nhập; mốc vượt quá độ dài dồn vào giai đoạn cuối
  * @param {Array}  p.docs               tài liệu nguồn đang hiệu lực ({ id, code, version, title, titleEn, category, department })
  * @param {object} p.chunksByDocId      id tài liệu → chunk
  * @param {object} p.flagsByDocId       id tài liệu → cờ injection; chunk bị gắn cờ không được đưa vào lộ trình
  * @returns {{stages, excluded_chunks}}
  * @throws {Error} "NO_CONTENT" khi không tài liệu nào có nội dung đã trích xuất
  */
-export function generatePathContent({ id, level, purpose, docs, chunksByDocId, flagsByDocId = {} }) {
+export function generatePathContent({ id, level, purpose, durationDays, docs, chunksByDocId, flagsByDocId = {} }) {
   const ordered = [...docs].sort((a, b) => docTier(a) - docTier(b) || a.code.localeCompare(b.code));
 
   const excluded = [];
@@ -176,7 +186,7 @@ export function generatePathContent({ id, level, purpose, docs, chunksByDocId, f
       for (const s of lesson.sentences) {
         if (tasks.length >= (TASKS_PER_MODULE[level] ?? 2)) break;
         if (OBLIGATION.test(s) && !tasks.some(t => t.title === s)) {
-          tasks.push({ id: `${m.id}-T${tasks.length + 1}`, title: s, source_reference: ref(lesson, s) });
+          tasks.push({ id: `${m.id}-T${tasks.length + 1}`, title: s, ...completionCriteria(m.doc.code, section(lesson)), source_reference: ref(lesson, s) });
         }
       }
     }
@@ -195,13 +205,14 @@ export function generatePathContent({ id, level, purpose, docs, chunksByDocId, f
     };
   });
 
-  const template = STAGE_TEMPLATES[purpose] || STAGE_TEMPLATES.onboarding;
+  const template = stageTemplate(purpose, durationDays);
   const stageMap = Object.fromEntries(template.map(k => [k, []]));
   let day30 = 0;
   for (const m of built) {
-    const key = assignStage(purpose, m.tier, day30);
-    if (key === "day30") day30++;
-    stageMap[key].push(m);
+    const natural = assignStage(purpose, m.tier, day30);
+    if (natural === "day30") day30++;
+    // Lộ trình ngắn vẫn dạy đủ mọi nguồn, chỉ dồn sớm hơn vào giai đoạn cuối của độ dài đã chọn
+    stageMap[template.includes(natural) ? natural : template[template.length - 1]].push(m);
   }
 
   // Bài đánh giá cuối: mỗi học phần góp câu hỏi đầu tiên, đặt ở giai đoạn cuối cùng

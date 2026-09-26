@@ -9,9 +9,11 @@ import AuthLayout from "./layouts/AuthLayout";
 import RoleLayout from "./layouts/RoleLayout";
 
 import Login from "./pages/auth/Login";
+import SelfRegister from "./pages/auth/SelfRegister";
 
 import HrDashboard from "./pages/hr/Dashboard";
 import HrDocuments from "./pages/hr/Documents";
+import HrInvites from "./pages/hr/Invites";
 import CreatePath from "./pages/hr/CreatePath";
 
 import ReviewerDashboard from "./pages/reviewer/Dashboard";
@@ -78,12 +80,14 @@ export default function App() {
                 <Routes>
                   <Route element={<AuthLayout />}>
                     <Route path="/login" element={<Login />} />
+                    <Route path="/register/:token" element={<SelfRegister />} />
                   </Route>
 
                   <Route path="/hr" element={<RoleLayout role="hr" />}>
                     <Route index element={<Navigate to="/hr/dashboard" replace />} />
                     <Route path="dashboard" element={<HrDashboard />} />
                     <Route path="documents" element={<HrDocuments />} />
+                    <Route path="invites" element={<HrInvites />} />
                     <Route path="paths" element={<HrPaths />} />
                     <Route path="paths/new" element={<CreatePath />} />
                     <Route path="paths/:id" element={<PathDetail basePath="/hr/paths" />} />

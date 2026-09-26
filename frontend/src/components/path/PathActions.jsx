@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Send, RefreshCw, Trash2, CircleCheck, CircleAlert, MessageSquare, Archive, Loader2 } from "../Icons";
 import { Button, Modal } from "../UI";
 import { FinalStatusBadge } from "./Badges";
+import GenerationProgress from "./GenerationProgress";
+import { backendEnabled } from "../../services/apiClient";
 import { ReasonField } from "./ReasonField";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { usePaths, PathError } from "../../contexts/PathsContext";
@@ -94,19 +96,26 @@ function RegenerateModal({ path, onClose }) {
   const { regeneratePath } = usePaths();
   const { activeDocuments, processed } = useDocuments();
   const { run, busy, errorBox } = useRunner();
+  const [job, setJob] = useState(null);
   const codes = new Set(path.sources.map(s => s.code));
   // Dùng phiên bản đang hiệu lực của cùng mã tài liệu — tài liệu mới cập nhật sẽ được lấy vào
   const docs = activeDocuments.filter(d => codes.has(d.code) && processed[d.id]);
   const role = JOB_ROLES.find(r => r.id === path.target.role_id);
   return (
-    <Modal open title={t("action_regenerate")} onClose={onClose}>
-      <p>{t("regenerate_desc", { n: docs.length })}</p>
-      {path.status === "changes_requested" && <p className="cell-sub">{t("regenerate_keep_comments")}</p>}
+    <Modal open title={t("action_regenerate")} onClose={busy ? () => {} : onClose} width={busy && backendEnabled() ? "720px" : undefined}>
+      {busy && backendEnabled() ? (
+        <GenerationProgress compact job={job} subtitle={t("gp_sources_count", { n: docs.length })} />
+      ) : (
+        <>
+          <p>{t("regenerate_desc", { n: docs.length })}</p>
+          {path.status === "changes_requested" && <p className="cell-sub">{t("regenerate_keep_comments")}</p>}
+        </>
+      )}
       {errorBox}
       <div className="modal-actions">
         <Button variant="secondary" onClick={onClose}>{t("cancel")}</Button>
         <Button disabled={busy || docs.length === 0} icon={busy ? <Loader2 size={15} className="spin" /> : <RefreshCw size={15} />}
-          onClick={() => run(() => regeneratePath(path.id, { role, sourceDocs: docs, processed }), onClose)}>
+          onClick={() => { setJob(null); run(() => regeneratePath(path.id, { role, sourceDocs: docs, processed, onProgress: setJob }), onClose); }}>
           {t("action_regenerate")}
         </Button>
       </div>
