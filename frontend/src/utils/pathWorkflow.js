@@ -11,9 +11,9 @@ import { MIN_REASON_LENGTH } from "./pathChecks";
 const ACTIONS = {
   hr: {
     edit: ["draft", "changes_requested"],
-    regenerate: ["draft", "changes_requested", "in_review"],
+    regenerate: ["draft", "changes_requested"],
     submit: ["draft", "changes_requested"],
-    delete: ["draft", "in_review"],
+    delete: ["draft"],
     archive: ["published"],
     comment: ["draft", "in_review", "changes_requested", "published"],
   },

@@ -1,7 +1,7 @@
 # SkillSprint AI — Dual-Pipeline AI Document Verification System
 
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Test Suite](https://img.shields.io/badge/tests-54%2F54%20passed-success.svg)](tests/)
+[![Test Suite](https://img.shields.io/badge/tests-64%2F64%20passed-success.svg)](tests/)
 [![Architecture](https://img.shields.io/badge/architecture-Dual--Pipeline-indigo.svg)](#core-architecture-dual-pipeline)
 [![Track](https://img.shields.io/badge/TechWiz%207-Generative%20AI%20Powerplay-orange.svg)](https://techwiz.fpt.edu.vn/)
 
@@ -73,12 +73,14 @@ flowchart TD
 
 ## 🛠️ Tech Stack & Requirements
 
-- **Runtime:** Python 3.10+ (Tested on Python 3.10, 3.11, 3.12, 3.14)
+- **Runtime:** Python 3.10+ (Tested on Python 3.10, 3.11, 3.12, 3.13, 3.14)
 - **Document Ingestion:** PyMuPDF (`fitz`), `python-docx`
 - **Generative AI:** Google Gemini Pro (`gemini-flash-lite-latest` / `gemini-pro`)
 - **Data Validation & Schemas:** Pydantic v2, Pydantic-Settings
+- **Rule Engine (Pipeline 2):** `src/python_validation/` — CSV-driven Role Requirement Matrix,
+  Coverage Scorer, Prerequisite Checker (pure Python, zero AI SDK imports)
 - **Security & Integrity:** Regex-based Injection Filter, SHA-256 Document Hashing
-- **Testing & QA:** Pytest (54 automated tests, 100% pass rate)
+- **Testing & QA:** Pytest + Coverage (64 automated tests, 100% pass rate, 90% line coverage)
 
 ---
 
@@ -126,19 +128,25 @@ APP_PORT=8000
 
 ## 🧪 Running the Verification Test Suites
 
-### 1. Run Complete Automated Test Suite (54 Tests)
+### 1. Run Complete Automated Test Suite (64 Tests)
 ```bash
 pytest tests/ -v
 ```
 Output:
 ```text
-======================== 54 passed, 1 warning in 1.10s ========================
+======================== 64 passed, 5 warnings in 0.80s ========================
 - Ingestion & Chunker Pipeline: 14 passed
 - Hardened Reader Edge Cases: 4 passed
 - GenAI & Prompt Schemas: 13 passed
 - Comparison Engine: 11 passed
 - Adversarial & Security Traps: 11 passed
+- Role Requirement Matrix & Coverage Scorer (Pipeline 2): 10 passed
 - Autonomous Hidden Test: 1 passed
+```
+
+### 1b. Run With Coverage (≥ 90% required)
+```bash
+pytest tests/ --cov=src --cov-report=term-missing
 ```
 
 ### 2. Run Adversarial & Security Trap Tests
@@ -200,12 +208,19 @@ TechWiz7-FourAngryBirds-SkillSprint-AI/
 │   ├── contradiction_checks/        # Cross-clause policy contradiction detector
 │   ├── security/                    # Prompt injection regex scanner
 │   │   └── injection_filter.py      # Shields against SYSTEM OVERRIDE / jailbreaks
+│   ├── python_validation/           # Phase 2: Pipeline 2 rule engine (pure Python, no AI SDK)
+│   │   ├── coverage_scorer.py       # Reads role_matrix.csv, computes Coverage Score
+│   │   └── prerequisite_checker.py  # Module-order-vs-prerequisite validator
+│   ├── role_matrix/
+│   │   └── role_matrix.csv          # Role Requirement Matrix: role, topic, mandatory, priority,
+│   │                                 #   max_total_minutes, prerequisite_of
 │   └── schemas/                     # Shared data contracts (ComparisonReport)
-├── tests/                           # Complete test suite (54 test cases)
+├── tests/                           # Complete test suite (64 test cases)
 │   ├── test_document_processing.py  # Ingestion & edge case unit tests
 │   ├── test_genai_pipeline.py       # LLM schema & prompt registry tests
 │   ├── test_comparison_engine.py    # Comparison & verdict classifier tests
 │   ├── test_adversarial.py          # 11 security & trap tests
+│   ├── test_rule_engine.py          # Coverage Scorer & Prerequisite Checker tests
 │   └── test_hidden_pipeline.py      # Autonomous hidden test pipeline test
 ├── AI_USAGE.md                      # AI transparency log across all phases
 ├── requirements.txt                 # Pinned dependencies
@@ -261,10 +276,11 @@ All accounts use the universal password: **`Demo@123`** *(You can click on the p
 2. **Step 2 — Document Ingestion & Injection Defense:** Log in as `hr@fourangrybirds.vn`. Go to **Documents** (`/hr/documents`). Inspect the 20 corporate policies. Notice how `DOC-18` (Adversarial Prompt Injection) was detected and flagged, preventing malicious commands from contaminating the LLM.
 3. **Step 3 — Dual-Pipeline Reviewer Control:** Log in as `reviewer@fourangrybirds.vn`. Open **Review Queue** (`/reviewer/queue`). Select an in-review path. Inspect the **Dual Comparison View** comparing GenAI Output vs. Python Ground Truth. Test clicking on citations to verify exact quote grounding. Click **Approve** with mandatory audit justification.
 4. **Step 4 — Employee Grounded Learning:** Log in as `sales.emp@fourangrybirds.vn`. Open the assigned 90-day learning path. Read a lesson and click **"Open Original Source"** — notice the system opens the approved PDF directly to the referenced page. Complete practical tasks and take the grounded quiz.
-5. **Step 5 — Automated Test Verification:** Execute the entire test suite via terminal:
+5. **Step 5 — Automated Test Verification:** Execute the entire test suite via terminal (268 automated tests, 100% pass):
    ```bash
-   pytest tests/ -v
-   cd backend && pytest -v
+   pytest tests/ -v           # Root test suite (64 tests)
+   cd backend && pytest -v    # Backend test suite (125 tests, 95% coverage)
+   cd frontend && npm test    # Frontend test suite (79 tests)
    ```
 
 ---

@@ -454,8 +454,6 @@ export const en = {
   tab_comments: "Discussion",
   tab_history: "History",
   editable_hint: "You can edit, delete or move items. Every change is recorded in the audit log and re-checked immediately.",
-  auto_publish_notice: "Autonomous Dual-Pipeline Verified: The learning path met 100% Ground Truth criteria (Pipeline 2) without adversarial flags and was automatically published for employees.",
-  hr_in_review_notice: "Routed to Manual Review Queue: Pipeline 2 detected warnings or potential adversarial patterns requiring Reviewer evaluation before publishing.",
   changes_requested_notice: "The reviewer sent this path back with {n} open comment(s). Fix the content (or regenerate), mark comments as resolved, then resubmit.",
   reviewer_can_edit_notice: "As reviewer you can correct the content directly, or send it back to HR with comments.",
   modules_count: "{n} modules",
@@ -512,6 +510,7 @@ export const en = {
   reason_injection_content: "{n} prompt-injection pattern(s) in the content.",
   reason_flow_errors: "{n} structural flow error(s).",
   reason_flow_warnings: "{n} flow warning(s).",
+  reason_duplicate_content: "{n} quiz question(s) or task(s) look substantially duplicated.",
   reason_excluded_chunks: "{n} flagged chunk(s) were excluded from the sources.",
 
   // Workflow actions

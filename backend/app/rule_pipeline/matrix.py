@@ -1,7 +1,9 @@
-"""Pipeline 2 — Role Requirement Matrix & Ground Truth Validator.
-
-Independent Python Rule Engine verifying GenAI output against corporate job role standards.
-Complies with SRS Section 1.2 (Pipeline 2), Page 6-9.
+"""Dữ liệu Role Requirement Matrix soạn tay: chủ đề năng lực + từ khóa cho 10 job position (SRS
+Step 2 & 7). Đây chỉ là DỮ LIỆU THAM CHIẾU — được `coverage.py::keyword_topics()` dùng để làm giàu
+trường `matchedKeyword` khi role đã biết. Coverage Score thật (`score`, `requiredDocs`) vẫn tính
+động từ tài liệu đang có trong DB (`coverage.py::required_documents()`), không dựa vào dict tĩnh ở
+đây, để không "mù" trước role mới (SRS "Hidden Role") — dict này không bao giờ bao phủ hết mọi role
+evaluator có thể thêm vào.
 """
 
 from typing import Any
@@ -89,93 +91,3 @@ ROLE_REQUIREMENT_MATRIX: dict[str, dict[str, Any]] = {
         ],
     },
 }
-
-
-def calculate_role_coverage(
-    role_id: str,
-    stages: list[dict],
-    source_codes: list[str],
-) -> dict[str, Any]:
-    """Calculate Mandatory Requirement Coverage Score (Pipeline 2).
-
-    Autonomous Python Ground Truth validation:
-    - 40% weight on Mandatory Document Prerequisites
-    - 60% weight on Core Role Topics Covered in Learning Modules
-    - Passing threshold: 85%
-    """
-    matrix = ROLE_REQUIREMENT_MATRIX.get(role_id)
-    if not matrix:
-        return {
-            "score": 1.0,
-            "requiredDocs": [],
-            "topics": [{"id": "general", "label": "General Knowledge", "covered": True, "matchedKeyword": "general"}],
-            "missingRequirementsCount": 0,
-            "prerequisitesMet": True,
-            "ruleEngine": "Pipeline 2 (Python Ground Truth)",
-        }
-
-    # 1. Check Required Documents Coverage
-    required_docs_status = []
-    covered_docs_count = 0
-    upper_sources = {c.upper().strip() for c in source_codes}
-    for doc_code in matrix["required_docs"]:
-        is_cov = (doc_code.upper() in upper_sources)
-        if is_cov:
-            covered_docs_count += 1
-        required_docs_status.append({"code": doc_code, "covered": is_cov})
-
-    docs_ratio = (covered_docs_count / len(matrix["required_docs"])) if matrix["required_docs"] else 1.0
-
-    # 2. Check Topic Coverage across all stages/modules/tasks
-    all_text_fragments: list[str] = []
-    for stage in stages:
-        if isinstance(stage, dict):
-            for mod in stage.get("modules", []):
-                all_text_fragments.append(str(mod.get("title", "")).lower())
-                all_text_fragments.append(str(mod.get("description", "")).lower())
-                for task in mod.get("tasks", []):
-                    all_text_fragments.append(str(task.get("title", "")).lower())
-                for q in mod.get("quiz", []):
-                    all_text_fragments.append(str(q.get("question", "")).lower())
-                for lesson in mod.get("lessons", []):
-                    all_text_fragments.append(str(lesson.get("title", "")).lower())
-
-    corpus = " ".join(all_text_fragments)
-
-    topics_status = []
-    covered_topics_count = 0
-    for topic_item in matrix["topics"]:
-        matched_kw = None
-        for kw in topic_item["keywords"]:
-            if kw.lower() in corpus:
-                matched_kw = kw
-                break
-
-        is_covered = (matched_kw is not None)
-        if is_covered:
-            covered_topics_count += 1
-
-        topics_status.append({
-            "id": topic_item["id"],
-            "label": topic_item["label"],
-            "covered": is_covered,
-            "matchedKeyword": matched_kw,
-        })
-
-    topics_ratio = (covered_topics_count / len(matrix["topics"])) if matrix["topics"] else 1.0
-
-    # Calculate final score: 40% document coverage + 60% topic coverage
-    raw_score = 0.4 * docs_ratio + 0.6 * topics_ratio
-    final_score = round(raw_score, 2) if all_text_fragments else 0.0
-
-    missing_docs = len(matrix["required_docs"]) - covered_docs_count
-    missing_topics = len(matrix["topics"]) - covered_topics_count
-
-    return {
-        "score": final_score,
-        "requiredDocs": required_docs_status,
-        "topics": topics_status,
-        "missingRequirementsCount": max(0, missing_docs + missing_topics),
-        "prerequisitesMet": missing_docs == 0,
-        "ruleEngine": "Pipeline 2 (Python Ground Truth)",
-    }

@@ -28,6 +28,8 @@ from src.genai_pipeline.response_schemas import (
     SourceCitation,
     TaskSchema,
 )
+from src.python_validation.coverage_scorer import build_rule_data, calculate_coverage_score, load_role_matrix
+from src.python_validation.prerequisite_checker import check_prerequisites
 from hidden_test_ready.generator import create_unseen_policy_pdf
 
 
@@ -128,12 +130,9 @@ def run_pipeline_on_unseen_doc(
             ],
         )
 
-    # 3. Dual-Pipeline Rule Engine Verification
-    rule_data = {
-        "role": target_role,
-        "required_topics": ["VPN", "Encryption"],
-        "max_total_minutes": 240,
-    }
+    # 3. Dual-Pipeline Rule Engine Verification (Pipeline 2 thật, không còn hard-code rule_data)
+    matrix_rows = load_role_matrix()
+    rule_data = build_rule_data(target_role, matrix_rows)
     engine = ComparisonEngine()
     report = engine.compare(plan=plan, rule_data=rule_data, doc_chunks=chunks)
 
@@ -151,6 +150,9 @@ def run_pipeline_on_unseen_doc(
         "contradictions_detected": len(report.contradictions),
         "security_threats_detected": len(report.security_threats),
         "summary": report.summary,
+        "role_coverage_score": calculate_coverage_score(plan, matrix_rows, target_role),
+        "prerequisite_errors": check_prerequisites(plan, matrix_rows, target_role),
+        "is_new_role": rule_data["is_new_role"],
     }
 
     report_file = Path(__file__).parent / "hidden_test_report.json"
@@ -176,7 +178,9 @@ if __name__ == "__main__":
     print(f"[5] Match Score        : {summary['match_score']:.0%}")
     print(f"[6] Hallucinations     : {summary['hallucinations_detected']}")
     print(f"[7] Threats Neutralized: {summary['security_threats_detected']}")
-    print(f"[8] Summary            : {summary['summary']}")
+    print(f"[8] Role Coverage Score: {summary['role_coverage_score']:.0%} (Pipeline 2, src/python_validation)")
+    print(f"[9] Prerequisite Errors: {len(summary['prerequisite_errors'])}")
+    print(f"[10] Summary           : {summary['summary']}")
     print(f"\nSaved report artifact to: hidden_test_ready/hidden_test_report.json")
 
     if summary["status"] in ("VERIFIED", "VERIFIED_WITH_WARNING"):

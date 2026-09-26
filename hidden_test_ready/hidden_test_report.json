@@ -10,5 +10,8 @@
   "hallucinations_detected": 0,
   "contradictions_detected": 0,
   "security_threats_detected": 0,
-  "summary": "Fully verified across both pipelines. Match score is 100.0%."
+  "summary": "Fully verified across both pipelines. Match score is 100.0%.",
+  "role_coverage_score": 1.0,
+  "prerequisite_errors": [],
+  "is_new_role": false
 }

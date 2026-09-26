@@ -151,6 +151,12 @@ def test_regenerate_replaces_content_and_sources(client, hr_headers, draft):
 
 
 def test_submit_moves_to_review_with_note(client, hr_headers, reviewer_headers, draft):
+    # Thêm một tài liệu Engineering bắt buộc nhưng không được trích dẫn, rồi "edit" lại đúng nội
+    # dung cũ để Pipeline 2 tính lại coverage — đảm bảo coverage < 100% một cách tất định, không
+    # phụ thuộc các test khác đã upload gì trước đó trong cùng phiên chạy test.
+    upload_ready_pdf(client, hr_headers, category="SOP", department_code="Engineering")
+    client.patch(f"/api/paths/{draft['id']}", headers=hr_headers, json={"stages": draft["stages"]})
+
     res = client.post(f"/api/paths/{draft['id']}/submit", headers=hr_headers,
                       json={"note": "Please check stage 1", "final_status": "verified_warning"})
 
@@ -162,10 +168,10 @@ def test_submit_moves_to_review_with_note(client, hr_headers, reviewer_headers, 
     assert path["comments"][0]["author"]["role"] == "hr"
     assert set(path["allowed_actions"]) == {"comment"}
 
-    # The verdict is the server's own (coverage from Pipeline 2 is pending → warning), not the client's.
+    # Kết quả là phán quyết của server (coverage từ Pipeline 2 chưa đạt 100%), không phải giá trị client gửi lên.
     log = _audit(client, reviewer_headers, draft["id"])[0]
     assert (log["action"], log["status_before"], log["status_after"], log["final_status"]) == (
-        "submit", "draft", "in_review", "verified_warning")
+        "submit", "draft", "in_review", "manual_review")
     assert client.get(f"/api/paths/{draft['id']}", headers=reviewer_headers).status_code == 200
 
 
