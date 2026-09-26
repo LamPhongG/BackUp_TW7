@@ -448,8 +448,6 @@ export const en = {
   tab_comments: "Discussion",
   tab_history: "History",
   editable_hint: "You can edit, delete or move items. Every change is recorded in the audit log and re-checked immediately.",
-  auto_publish_notice: "Autonomous Dual-Pipeline Verified: The learning path met 100% Ground Truth criteria (Pipeline 2) without adversarial flags and was automatically published for employees.",
-  hr_in_review_notice: "Routed to Manual Review Queue: Pipeline 2 detected warnings or potential adversarial patterns requiring Reviewer evaluation before publishing.",
   changes_requested_notice: "The reviewer sent this path back with {n} open comment(s). Fix the content (or regenerate), mark comments as resolved, then resubmit.",
   reviewer_can_edit_notice: "As reviewer you can correct the content directly, or send it back to HR with comments.",
   modules_count: "{n} modules",
