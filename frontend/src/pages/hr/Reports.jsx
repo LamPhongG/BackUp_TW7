@@ -4,7 +4,7 @@ import {
   Award, Check, X, CircleAlert, Search, Layers3, FileSpreadsheet,
   RouteIcon, FileText, Sparkles, Target, ShieldCheck
 } from "../../components/Icons";
-import { Card, StatCard, Button, Badge, ProgressBar } from "../../components/UI";
+import { Card, StatCard, Button, Badge, ProgressBar, EmptyState } from "../../components/UI";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../../hooks/useAuth";
 import { usePaths } from "../../contexts/PathsContext";
@@ -20,74 +20,43 @@ export default function HrReports() {
   const { paths } = usePaths();
   const { documents } = useDocuments();
 
-  const [activeTab, setActiveTab] = useState("learners");
+    const [activeTab, setActiveTab] = useState("learners");
   const [learners, setLearners] = useState([]);
+  const [roleCoverageData, setRoleCoverageData] = useState([]);
+  const [quizAnalyticsData, setQuizAnalyticsData] = useState([]);
+  const [documentAttributionData, setDocumentAttributionData] = useState([]);
+  const [securityAuditData, setSecurityAuditData] = useState([]);
+  const [dualPipelineSummaryData, setDualPipelineSummaryData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedDept, setSelectedDept] = useState("all");
 
-  // Tải danh sách nhân sự từ backend hoặc tạo bộ dữ liệu phân tích chuẩn
   useEffect(() => {
     let mounted = true;
     async function loadData() {
+      if (!backendEnabled()) {
+        if (mounted) setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
-        if (backendEnabled()) {
-          const res = await apiRequest("/learners");
-          if (mounted) setLearners(res || []);
-        } else {
-          // Fallback demo mock nếu offline
-          const mock = (paths || []).flatMap(p => [
-            {
-              enrollment_id: `l1-${p.id}`,
-              user_name: "Nguyen Van An",
-              user_email: "an.nguyen@company.com",
-              department: p.department || "Engineering",
-              job_title: "Software Engineer",
-              path_id: p.id,
-              path_title: pick(p, "title"),
-              status: "completed",
-              progress_percent: 100,
-              quiz_score: 95,
-              hours_spent: 18.5,
-              cert_issued: true,
-              completed_at: "2026-03-15",
-            },
-            {
-              enrollment_id: `l2-${p.id}`,
-              user_name: "Tran Thi Binh",
-              user_email: "binh.tran@company.com",
-              department: p.department || "Engineering",
-              job_title: "Product Manager",
-              path_id: p.id,
-              path_title: pick(p, "title"),
-              status: "in_progress",
-              progress_percent: 65,
-              quiz_score: 82,
-              hours_spent: 12.0,
-              cert_issued: false,
-              completed_at: null,
-            },
-            {
-              enrollment_id: `l3-${p.id}`,
-              user_name: "Le Hoang Nam",
-              user_email: "nam.le@company.com",
-              department: "Sales",
-              job_title: "Account Executive",
-              path_id: p.id,
-              path_title: pick(p, "title"),
-              status: "in_progress",
-              progress_percent: 30,
-              quiz_score: 62,
-              hours_spent: 6.0,
-              cert_issued: false,
-              completed_at: null,
-            }
-          ]);
-          if (mounted) setLearners(mock);
+        const [lData, rcData, qaData, docData, alertsData] = await Promise.all([
+          apiRequest("/paths/learners"),
+          apiRequest("/reports/role-coverage"),
+          apiRequest("/reports/quiz-analytics"),
+          apiRequest("/reports/documents"),
+          apiRequest("/reports/alerts")
+        ]);
+        if (mounted) {
+          setLearners(lData || []);
+          setRoleCoverageData(rcData || []);
+          setQuizAnalyticsData(qaData || []);
+          setDocumentAttributionData(docData || []);
+          setSecurityAuditData(alertsData || []);
+          setDualPipelineSummaryData([]); // Missing backend implementation for T1
         }
       } catch (err) {
-        console.error("Failed to load learners report:", err);
+        console.error("Failed to load reports:", err);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -101,158 +70,29 @@ export default function HrReports() {
     return learners.filter(l => {
       const matchDept = selectedDept === "all" || l.department?.toLowerCase() === selectedDept.toLowerCase();
       const matchSearch = !search ||
-        l.user_name?.toLowerCase().includes(search.toLowerCase()) ||
-        l.user_email?.toLowerCase().includes(search.toLowerCase()) ||
+        l.name?.toLowerCase().includes(search.toLowerCase()) ||
+        l.email?.toLowerCase().includes(search.toLowerCase()) ||
         l.path_title?.toLowerCase().includes(search.toLowerCase());
       return matchDept && matchSearch;
     });
   }, [learners, selectedDept, search]);
 
-  // 2. Dữ liệu Báo cáo Độ phủ Kỹ năng Vai trò (Role Requirements Matrix Coverage)
-  const roleCoverageData = useMemo(() => {
-    return (JOB_ROLES || []).map((r, idx) => {
-      const assignedPath = (paths || []).find(p => p.target?.role_id === r.id);
-      const reqCount = 6 + (idx % 4) * 2;
-      const coveredCount = assignedPath ? reqCount : Math.max(3, reqCount - 2);
-      const coverage = Math.round((coveredCount / reqCount) * 100);
-      const traceability = assignedPath ? 95 : 78;
-      const status = coverage === 100 ? "Verified" : (coverage >= 80 ? "Verified with Warning" : "Incomplete");
-      return {
-        role_id: r.id,
-        role_name: pick(r, "name"),
-        department: r.department || "General",
-        total_requirements: reqCount,
-        covered_requirements: coveredCount,
-        coverage_score: coverage,
-        traceability_score: traceability,
-        status,
-        path_title: assignedPath ? pick(assignedPath, "title") : "Chưa gắn lộ trình chính thức",
-      };
-    }).filter(r => selectedDept === "all" || r.department?.toLowerCase() === selectedDept.toLowerCase());
-  }, [paths, selectedDept]);
+  
 
-  // 3. Dữ liệu Báo cáo Đánh giá & Quiz (Assessment & Weak Areas)
-  const quizAnalyticsData = useMemo(() => {
-    return (paths || []).flatMap(p => {
-      return (p.stages || []).flatMap(s => {
-        return (s.modules || []).map(m => {
-          const qCount = (m.quiz || []).length;
-          const passRate = 75 + (m.id ? m.id.charCodeAt(0) % 22 : 15);
-          const avgScore = Math.round(passRate * 0.95);
-          const weakArea = passRate < 80 ? "Cần củng cố chính sách & quy trình an toàn" : "Kiến thức vững vàng";
-          return {
-            path_title: pick(p, "title"),
-            stage_name: s.name,
-            module_title: pick(m, "title"),
-            quiz_count: qCount,
-            attempts: 12 + (qCount * 3),
-            pass_rate: passRate,
-            avg_score: avgScore,
-            weak_area: weakArea,
-            status: passRate >= 80 ? "Tốt" : "Cần lưu ý"
-          };
-        });
-      });
-    }).filter(q => !search || q.module_title?.toLowerCase().includes(search.toLowerCase()) || q.path_title?.toLowerCase().includes(search.toLowerCase()));
-  }, [paths, search]);
+  
 
-  // 4. Dữ liệu Trích xuất Tri thức & Nguồn tài liệu
-  const documentAttributionData = useMemo(() => {
-    return (documents || []).map(doc => {
-      const code = doc.code || doc.id || "DOC-01";
-      const version = doc.version || "1.0";
-      const chunksCount = (doc.chunks || []).length || 8;
-      const refCount = (paths || []).filter(p => (p.sources || []).some(s => s.code === code || s.id === doc.id)).length;
-      return {
-        code,
-        title: pick(doc, "title"),
-        category: doc.category || "SOP",
-        version,
-        chunks_count: chunksCount,
-        referenced_in_paths: refCount,
-        attribution_accuracy: "98.5%",
-        status: doc.status || "Active",
-      };
-    });
-  }, [documents, paths]);
+  
 
-  // 5. Cảnh báo An toàn & Hallucination/Contradiction Audit
-  const securityAuditData = useMemo(() => {
-    return [
-      {
-        id: "ALT-001",
-        date: "2026-03-20",
-        type: "Prompt Injection Detected",
-        severity: "High",
-        source: "Upload DOC-SEC-99",
-        details: "Phát hiện chỉ thị giả mạo 'Ignore all previous rules' trong văn bản.",
-        action: "Hệ thống tự động ngăn chặn & cô lập chunk độc hại.",
-        status: "Blocked"
-      },
-      {
-        id: "ALT-002",
-        date: "2026-03-22",
-        type: "Policy Contradiction",
-        severity: "Medium",
-        source: "POL-LEAVE v1.0 vs v2.0",
-        details: "Mâu thuẫn số ngày nghỉ phép năm giữa phiên bản 2024 và 2026.",
-        action: "Ưu tiên quy chuẩn phiên bản mới nhất v2.0 theo Ground Truth.",
-        status: "Resolved"
-      },
-      {
-        id: "ALT-003",
-        date: "2026-03-25",
-        type: "Unsupported Knowledge (Hallucination)",
-        severity: "Medium",
-        source: "GenAI Path Generation",
-        details: "Sinh yêu cầu sử dụng tool nội bộ chưa có trong danh mục SOP công ty.",
-        action: "Cắt bỏ nội dung không có chứng thực trong Pipeline 2.",
-        status: "Filtered"
-      },
-      {
-        id: "ALT-004",
-        date: "2026-03-26",
-        type: "Role Matrix Mismatch",
-        severity: "Low",
-        source: "SE-Backend Path",
-        details: "Thiếu module bảo mật API bắt buộc cho kỹ sư phần mềm.",
-        action: "Bổ sung module SOP-SEC-01 vào Stage 1 tự động.",
-        status: "Resolved"
-      }
-    ];
-  }, []);
+  
 
-  // 6. Tổng hợp Đối chiếu 2 Pipeline (Table 1 Summary across Paths)
-  const dualPipelineSummaryData = useMemo(() => {
-    return (paths || []).map((p, idx) => {
-      const matchCount = 7 + (idx % 3);
-      const mismatchCount = idx % 2 === 0 ? 0 : 1;
-      const missingCount = idx === 1 ? 1 : 0;
-      const unsupportedCount = 0;
-      const total = matchCount + mismatchCount + missingCount + unsupportedCount;
-      const coverage = Math.round((matchCount / total) * 100);
-      const decision = missingCount === 0 && mismatchCount === 0 ? "Verified" : (missingCount === 0 ? "Verified with Warning" : "Incomplete");
-      return {
-        path_id: p.id,
-        path_title: pick(p, "title"),
-        role: p.target?.role_id || "Employee",
-        department: p.target?.department || p.department || "General",
-        matches: matchCount,
-        mismatches: mismatchCount,
-        missing: missingCount,
-        unsupported: unsupportedCount,
-        coverage_score: `${coverage}%`,
-        decision
-      };
-    });
-  }, [paths]);
+  
 
   // Hàm xử lý xuất CSV theo Tab hiện tại
   const handleExportCsv = () => {
     if (activeTab === "learners") {
-      const headers = ["Mã tham gia", "Họ và tên", "Email", "Phòng ban", "Vị trí", "Lộ trình", "Trạng thái", "Tiến độ (%)", "Điểm Quiz (%)", "Giờ học", "Chứng nhận", "Ngày hoàn thành"];
+      const headers = ["Mã tham gia", "Họ và tên", "Email", "Phòng ban", "Vị trí", "Lộ trình", "Trạng thái", "Tiến độ (%)", "Điểm Quiz (%)", "Chứng nhận", "Ngày hoàn thành"];
       const rows = filteredLearners.map(l => [
-        l.enrollment_id, l.user_name, l.user_email, l.department, l.job_title, l.path_title,
+        l.enrollment_id, l.name, l.email, l.department, l.job_title, l.path_title,
         l.status, `${l.progress_percent || 0}%`, `${l.quiz_score || 0}%`, l.hours_spent || 0,
         l.cert_issued || l.progress_percent === 100 ? "Đã cấp" : "Chưa", l.completed_at ? formatLocalDate(l.completed_at, locale) : "-"
       ]);
@@ -304,7 +144,7 @@ export default function HrReports() {
         ],
         headers: ["Nhân viên", "Phòng ban", "Lộ trình", "Tiến độ", "Điểm Quiz", "Chứng chỉ"],
         rows: filteredLearners.map(l => [
-          `${l.user_name} (${l.user_email})`, l.department, l.path_title, `${l.progress_percent || 0}%`, `${l.quiz_score || 0}%`,
+          `${l.name} (${l.email})`, l.department, l.path_title, `${l.progress_percent || 0}%`, `${l.quiz_score || 0}%`,
           l.progress_percent === 100 ? "Đã cấp" : "Chưa hoàn thành"
         ]),
         metadata: { "Người xuất": user.name || "HR Admin", "Bộ lọc phòng ban": selectedDept }
@@ -497,8 +337,8 @@ export default function HrReports() {
                   {filteredLearners.map(l => (
                     <tr key={l.enrollment_id}>
                       <td>
-                        <strong>{l.user_name}</strong>
-                        <div className="cell-sub">{l.user_email}</div>
+                        <strong>{l.name}</strong>
+                        <div className="cell-sub">{l.email}</div>
                       </td>
                       <td>
                         <div>{l.department}</div>

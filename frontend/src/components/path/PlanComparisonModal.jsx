@@ -34,7 +34,7 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
     tasksCount: (pathA.stages || []).reduce((acc, s) => acc + (s.modules || []).reduce((n, m) => n + (m.tasks || []).length, 0), 0),
     quizzesCount: (pathA.stages || []).reduce((acc, s) => acc + (s.modules || []).reduce((n, m) => n + (m.quiz || []).length, 0), 0),
     sourcesCount: (pathA.sources || []).length,
-    coverage: pathA.coverage_score || 95,
+    coverage: pathA.coverage?.score != null ? Math.round(pathA.coverage.score * 100) : null,
   };
 
   const statsB = {
@@ -44,7 +44,7 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
     tasksCount: (pathB.stages || []).reduce((acc, s) => acc + (s.modules || []).reduce((n, m) => n + (m.tasks || []).length, 0), 0),
     quizzesCount: (pathB.stages || []).reduce((acc, s) => acc + (s.modules || []).reduce((n, m) => n + (m.quiz || []).length, 0), 0),
     sourcesCount: (pathB.sources || []).length,
-    coverage: pathB.coverage_score || 90,
+    coverage: pathB.coverage?.score != null ? Math.round(pathB.coverage.score * 100) : null,
   };
 
   const roleA = JOB_ROLES.find(r => r.id === pathA.target?.role_id);
@@ -146,9 +146,9 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
           <div className="card" style={{ padding: 12, textAlign: "center" }}>
             <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Coverage Score</div>
             <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4 }}>
-              <span style={{ color: "#3b82f6" }}>{statsA.coverage}%</span> vs <span style={{ color: "#8b5cf6" }}>{statsB.coverage}%</span>
+              <span style={{ color: "#3b82f6" }}>{statsA.coverage != null ? `${statsA.coverage}%` : "Chưa tính"}</span> vs <span style={{ color: "#8b5cf6" }}>{statsB.coverage != null ? `${statsB.coverage}%` : "Chưa tính"}</span>
             </div>
-            <div style={{ fontSize: 11, marginTop: 2 }}>{diffLabel(statsA.coverage, statsB.coverage, "%")}</div>
+            <div style={{ fontSize: 11, marginTop: 2 }}>{statsA.coverage != null && statsB.coverage != null ? diffLabel(statsA.coverage, statsB.coverage, "%") : ""}</div>
           </div>
         </div>
 

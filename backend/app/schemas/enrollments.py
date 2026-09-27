@@ -92,6 +92,8 @@ class GlobalLearnerOut(BaseModel):
     percent: int
     started_at: datetime | None
     completed_at: datetime | None
+    best_quiz_percent: int | None
+    certificate: bool
 
     @classmethod
     def from_row(cls, user: User, path: LearningPath, v: EnrollmentView) -> "GlobalLearnerOut":
@@ -99,6 +101,18 @@ class GlobalLearnerOut(BaseModel):
         title = user.job_title
         if not title and user.job_position:
             title = user.job_position.name
+            
+        best_quiz_percent = None
+        if e.quiz_attempts:
+            module_scores = {}
+            for a in e.quiz_attempts:
+                if a.total > 0:
+                    pct = int(a.score / a.total * 100)
+                    if a.module_id not in module_scores or pct > module_scores[a.module_id]:
+                        module_scores[a.module_id] = pct
+            if module_scores:
+                best_quiz_percent = int(sum(module_scores.values()) / len(module_scores))
+
         return cls(
             enrollment_id=str(e.id),
             user_id=user.id,
@@ -117,6 +131,8 @@ class GlobalLearnerOut(BaseModel):
             percent=v.progress.percent,
             started_at=e.started_at,
             completed_at=e.completed_at,
+            best_quiz_percent=best_quiz_percent,
+            certificate=(e.status == EnrollmentStatus.COMPLETED)
         )
 
 

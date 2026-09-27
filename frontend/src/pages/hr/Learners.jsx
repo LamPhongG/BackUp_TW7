@@ -4,7 +4,7 @@ import {
   Users, Award, Search, RouteIcon, BookOpen, CheckSquare,
   ArrowUpRight, Download, Clock, ShieldCheck, CircleAlert
 } from "../../components/Icons";
-import { Card, SectionHeader, StatCard, Button, Badge, ProgressBar } from "../../components/UI";
+import { Card, SectionHeader, StatCard, Button, Badge, ProgressBar, EmptyState } from "../../components/UI";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../../hooks/useAuth";
 import { usePaths } from "../../contexts/PathsContext";
@@ -30,49 +30,10 @@ export default function HrLearners() {
     setLoading(true);
     try {
       if (backendEnabled()) {
-        const data = await apiRequest("/learners");
+        const data = await apiRequest("/paths/learners");
         setLearners(data || []);
       } else {
-        // Fallback demo mock nếu không có backend
-        const mockLearners = (paths || []).flatMap(p => [
-          {
-            enrollment_id: `mock-1-${p.id}`,
-            user_id: 1,
-            user_name: "Nguyen Van An",
-            user_email: "an.nguyen@company.com",
-            department: p.department || "Engineering",
-            job_title: "Software Engineer",
-            path_id: p.id,
-            path_title: pick(p, "title"),
-            source: "assigned",
-            status: "completed",
-            enrolled_at: "2026-03-01T08:00:00Z",
-            started_at: "2026-03-02T09:00:00Z",
-            completed_at: "2026-03-15T14:30:00Z",
-            due_date: "2026-03-20T00:00:00Z",
-            is_overdue: false,
-            progress_percent: 100,
-          },
-          {
-            enrollment_id: `mock-2-${p.id}`,
-            user_id: 2,
-            user_name: "Tran Thi Binh",
-            user_email: "binh.tran@company.com",
-            department: p.department || "Design",
-            job_title: "UI/UX Designer",
-            path_id: p.id,
-            path_title: pick(p, "title"),
-            source: "assigned",
-            status: "in_progress",
-            enrolled_at: "2026-03-10T08:00:00Z",
-            started_at: "2026-03-11T10:00:00Z",
-            completed_at: null,
-            due_date: "2026-03-25T00:00:00Z",
-            is_overdue: false,
-            progress_percent: 65,
-          }
-        ]);
-        setLearners(mockLearners);
+        setLearners([]);
       }
     } catch (err) {
       console.error("Failed to fetch learners:", err);
@@ -136,7 +97,11 @@ export default function HrLearners() {
           <p>{t("learners_desc")}</p>
         </div>
       </div>
-
+      
+      {!backendEnabled() ? (
+        <EmptyState title={t("reports_need_backend")} description="" />
+      ) : (
+        <>
       <div className="stat-grid">
         <StatCard label={t("stat_total_learners")} value={stats.total} icon={Users} tone="purple" />
         <StatCard label={t("stat_completed_learners")} value={stats.completed} icon={Award} tone="green" />
@@ -320,6 +285,8 @@ export default function HrLearners() {
           </div>
         )}
       </Card>
+      </>
+      )}
 
       {selectedCert && (
         <CertificateModal
