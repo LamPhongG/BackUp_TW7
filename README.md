@@ -15,6 +15,8 @@ SkillSprint AI turns a company's internal documents (policies, SOPs, handbooks, 
 | `sample_documents/` | Sample company documents DOC-01…DOC-28 (PDF, DOCX, MD, TXT, CSV), RD-01…RD-10, adversarial CTX samples |
 | `hidden_test_ready/` | Automated test harness for unseen evaluator documents |
 | `documentation/` | Functional flows, project report outline, team work breakdown, signs of AI-generated writing |
+| `sample_documents/` | Sample company documents DOC-11…DOC-20 as PDF, with Markdown sources and test answer keys ([sample_documents/README_PHASE2.md](sample_documents/README_PHASE2.md)) |
+| `documentation/` | Functional flows ([FRONTEND_FLOWS.md](documentation/FRONTEND_FLOWS.md)), the team work breakdown, signs of AI-generated writing ([AI_WRITING_SIGNS.html](documentation/AI_WRITING_SIGNS.html)), the proposed design for path assignment and progress tracking ([DESIGN_PATH_ASSIGNMENT.md](documentation/DESIGN_PATH_ASSIGNMENT.md)), and the proposed validation gate between HR and Reviewer ([DESIGN_VALIDATION_GATE.md](documentation/DESIGN_VALIDATION_GATE.md)) |
 | `Rules/` | Team coding and writing rules |
 | `AI_USAGE.md` | Declaration of every AI-assisted change |
 

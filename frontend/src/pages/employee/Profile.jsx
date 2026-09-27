@@ -29,7 +29,7 @@ export default function Profile() {
           <dl className="meta-list">
             <dt><BriefcaseBusiness size={14} /> {t("role_position")}</dt><dd>{pick(job, "name")}</dd>
             <dt><Building2 size={14} /> {t("department")}</dt><dd>{tv(user.department)}</dd>
-            <dt><Mail size={14} /> Email</dt><dd>alex.morgan@fourangrybirds.vn</dd>
+            <dt><Mail size={14} /> Email</dt><dd>{user.email}</dd>
           </dl>
         </Card>
         {/* Có backend thì vị trí là dữ liệu thật trong DB, không đổi thử ở đây */}

@@ -1,4 +1,4 @@
-import { Component } from "react";
+import React, { Component } from "react";
 import { useLocation } from "react-router-dom";
 import { en } from "../locales/en";
 import { vi } from "../locales/vi";
@@ -66,3 +66,4 @@ export default function ErrorBoundary({ children, inline = false }) {
   const { pathname } = useLocation();
   return <Boundary key={pathname} inline={inline}>{children}</Boundary>;
 }
+

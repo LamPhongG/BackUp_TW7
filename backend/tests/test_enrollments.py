@@ -8,6 +8,7 @@ from uuid import uuid4
 
 import pytest
 
+from app.db import seed
 from tests.conftest import login
 from tests.factories import mandatory_source_ids, path_content, upload_ready_pdf
 
@@ -67,7 +68,10 @@ def test_onboarding_goes_to_employees_who_have_not_finished_onboarding(
     # Decision Q1: Minh is in Engineering but finished onboarding in 2023.
     assert path["id"] not in _mine(client, minh_headers)
     assert client.get(f"/api/paths/{path['id']}", headers=minh_headers).status_code == 404
-    assert set(_learners(client, hr_headers, path["id"])) == {"Alex Morgan"}
+    # Every Engineering employee who has not finished onboarding gets it (the seed also has "Tech Lead"), Minh does not.
+    learners = _learners(client, hr_headers, path["id"])
+    assert "Alex Morgan" in learners and "Tech Lead" in learners
+    assert "Minh Nguyen" not in learners
 
 
 def test_employee_matching_two_onboarding_paths_gets_both(client, hr_headers, reviewer_headers, employee_headers):
@@ -82,7 +86,8 @@ def test_employee_matching_two_onboarding_paths_gets_both(client, hr_headers, re
     assert mine[by_position["id"]]["source"] == "auto_position"
     # One path targeting both the department and the position is still one record.
     assert mine[both_targets["id"]]["source"] == "auto_position"
-    assert len(_learners(client, hr_headers, both_targets["id"])) == 1
+    rows = client.get(f"/api/paths/{both_targets['id']}/enrollments", headers=hr_headers).json()
+    assert [r["name"] for r in rows].count("Alex Morgan") == 1
 
 
 def test_company_wide_onboarding_reaches_every_new_employee(
@@ -245,3 +250,18 @@ def test_all_learners_endpoint(client, hr_headers, reviewer_headers, employee_he
     learners = res.json()
     assert any(l["name"] == "Alex Morgan" and l["path_id"] == path["id"] for l in learners)
     assert client.get("/api/learners", headers=employee_headers).status_code == 403
+def test_demo_certificate_seed_uses_only_a_path_published_to_sales(client, hr_headers, reviewer_headers, db):
+    sales_headers = login(client, "sales.emp@fourangrybirds.vn")
+    elsewhere = _publish(client, hr_headers, reviewer_headers, departments=["Engineering"])
+    _publish(client, hr_headers, reviewer_headers, position="sales-exec", departments=["Sales"])
+    seed.run(db)
+
+    mine = _mine(client, sales_headers)
+    # A path published to another department is never borrowed for the Sales demo account.
+    assert elsewhere["id"] not in mine
+    completed = [r for r in mine.values() if r["status"] == "completed"]
+    assert len(completed) == 1
+    assert completed[0]["progress"]["percent"] == 100
+
+    seed.run(db)
+    assert _mine(client, sales_headers)[completed[0]["path_id"]]["completed_at"] == completed[0]["completed_at"]

@@ -5,14 +5,28 @@ Values mirror frontend/src/data/company.js and the demo logins in frontend/src/h
 """
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import BACKEND_DIR
 from app.core.security import hash_password
-from app.db.base import new_id
+from app.db.base import new_id, utcnow
 from app.db.session import SessionLocal
-from app.models import Department, JobPosition, PathLevel, TrainingStatus, User, UserRole
+from app.models import (
+    AssignmentSource,
+    Department,
+    Enrollment,
+    EnrollmentStatus,
+    JobPosition,
+    LearningPath,
+    PathAssignment,
+    PathLevel,
+    PathStatus,
+    QuizAttempt,
+    TrainingStatus,
+    User,
+    UserRole,
+)
 from app.services.role_matrix import ImportReport, import_csv
 
 DEPARTMENTS = [
@@ -136,6 +150,10 @@ def seed_demo_certificate(db: Session) -> None:
         db.add(path)
         db.flush()
 
+    Only a path the Reviewer actually published to Sales (department or `sales-exec`) qualifies. Faking a path, or
+    picking any row, once marked a Branch Manager path still in review as completed and led to it being published
+    by hand without targets, which crashed the HR dashboard. With no such path yet, nothing is seeded.
+    """
     sales_id = db.scalar(select(User.id).where(User.email == "sales.emp@fourangrybirds.vn"))
     if sales_id:
         enr = db.scalar(select(Enrollment).where(Enrollment.user_id == sales_id, Enrollment.path_id == path.id))

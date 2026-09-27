@@ -114,7 +114,7 @@ export default function CertificateModal({ path, employee, enrollment, onClose }
             
             <div className="cert-footer">
               <div className="cert-signature">
-                <div className="sig-line">SkillSprint Automated System</div>
+                <div className="sig-line" style={{ fontFamily: "cursive", fontSize: "28px", color: "#1e3a8a" }}>RajPham</div>
                 <span>Authorized Signature</span>
               </div>
               <div className="cert-seal">

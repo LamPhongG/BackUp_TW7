@@ -34,7 +34,7 @@ export default function PathActions({ path, checks, role, basePath }) {
           <span>{t("published_by", { name: path.approval.by?.name, date: formatDateTime(path.approval.at, locale) })}</span>
           <FinalStatusBadge status={path.approval.final_status} />
           <span className="cell-sub">
-            {t("published_to_label")}: {[...path.published_to.departments.map(d => tv(d)), ...path.published_to.roles.map(r => pick(JOB_ROLES.find(x => x.id === r), "name"))].join(", ")}
+            {t("published_to_label")}: {[...(path.published_to?.departments ?? []).map(d => tv(d)), ...(path.published_to?.roles ?? []).map(r => pick(JOB_ROLES.find(x => x.id === r), "name"))].join(", ")}
           </span>
           {path.approval.reason && <em>“{path.approval.reason}”</em>}
         </div>
