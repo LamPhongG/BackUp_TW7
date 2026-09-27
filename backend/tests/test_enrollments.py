@@ -236,3 +236,12 @@ def test_employee_joins_an_optional_path_of_their_department(
     assert (again.status_code, again.json()["code"]) == (409, "err_already_enrolled")
     assert other_department.status_code == 404
     assert client.get("/api/explore/paths", headers=hr_headers).status_code == 403
+
+
+def test_all_learners_endpoint(client, hr_headers, reviewer_headers, employee_headers):
+    path = _publish(client, hr_headers, reviewer_headers, positions=["support-engineer"])
+    res = client.get("/api/learners", headers=hr_headers)
+    assert res.status_code == 200
+    learners = res.json()
+    assert any(l["name"] == "Alex Morgan" and l["path_id"] == path["id"] for l in learners)
+    assert client.get("/api/learners", headers=employee_headers).status_code == 403

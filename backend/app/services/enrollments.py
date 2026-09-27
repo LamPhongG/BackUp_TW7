@@ -153,6 +153,18 @@ def path_enrollments(db: Session, path: LearningPath) -> list[tuple[User, Enroll
     return [(u, view(e, path)) for e, u in rows]
 
 
+def all_enrollments(db: Session) -> list[tuple[User, LearningPath, EnrollmentView]]:
+    """Return all enrollments across all learning paths, sorted by assignment date."""
+    rows = db.execute(
+        select(Enrollment, User, LearningPath)
+        .join(User, User.id == Enrollment.user_id)
+        .join(LearningPath, LearningPath.id == Enrollment.path_id)
+        .where(User.is_active.is_(True))
+        .order_by(Enrollment.assigned_at.desc())
+    ).all()
+    return [(u, p, view(e, p)) for e, u, p in rows]
+
+
 def _studying(db: Session, user: User, path_id: str) -> tuple[Enrollment, LearningPath]:
     enrollment = db.scalar(select(Enrollment).where(Enrollment.user_id == user.id, Enrollment.path_id == path_id))
     path = db.get(LearningPath, path_id)

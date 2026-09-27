@@ -122,6 +122,14 @@ def get_path_checks(path_id: str, db: DbSession, user: StaffUser):
     return PathChecksOut(**result.summary(), items=result.knowledge, flow=result.flow)
 
 
+@router.get("/{path_id}/comparison")
+def get_path_dual_comparison(path_id: str, db: DbSession, user: StaffUser):
+    """Dual-Pipeline Comparison report (SRS Step 46, 47, Table 1)."""
+    from app.comparator.engine import compare_path_with_ground_truth
+    path = service.get_visible(db, user, path_id)
+    return compare_path_with_ground_truth(db, path)
+
+
 @router.post("/{path_id}/request-changes", response_model=PathOut)
 def request_changes(path_id: str, body: RequestChanges, db: DbSession, user: ReviewerUser):
     """Send back to HR with feedback (at least 10 characters)."""

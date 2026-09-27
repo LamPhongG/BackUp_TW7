@@ -72,6 +72,54 @@ class LearnerOut(BaseModel):
                    overdue=v.overdue, percent=v.progress.percent, started_at=e.started_at, completed_at=e.completed_at)
 
 
+class GlobalLearnerOut(BaseModel):
+    """Company-wide learner enrollment record for HR and Reviewers."""
+
+    enrollment_id: str
+    user_id: str
+    name: str
+    email: str
+    department_code: str | None
+    job_position_id: str | None
+    job_title: str | None
+    path_id: str
+    path_title: str
+    path_purpose: PathPurpose
+    status: EnrollmentStatus
+    source: AssignmentSource
+    due_date: date | None
+    overdue: bool
+    percent: int
+    started_at: datetime | None
+    completed_at: datetime | None
+
+    @classmethod
+    def from_row(cls, user: User, path: LearningPath, v: EnrollmentView) -> "GlobalLearnerOut":
+        e = v.enrollment
+        title = user.job_title
+        if not title and user.job_position:
+            title = user.job_position.name
+        return cls(
+            enrollment_id=str(e.id),
+            user_id=user.id,
+            name=user.name,
+            email=user.email,
+            department_code=user.department_code,
+            job_position_id=user.job_position_id,
+            job_title=title,
+            path_id=path.id,
+            path_title=path.title,
+            path_purpose=path.purpose,
+            status=e.status,
+            source=e.source,
+            due_date=e.due_date,
+            overdue=v.overdue,
+            percent=v.progress.percent,
+            started_at=e.started_at,
+            completed_at=e.completed_at,
+        )
+
+
 class TaskDone(BaseModel):
     done: bool
 

@@ -44,6 +44,7 @@ export function mapDocument(d) {
     chunkCount: d.chunk_count,
     pageCount: d.page_count,
     injectionFlagCount: d.flag_count,
+    status: d.lifecycle_status || "active",
   };
 }
 

@@ -18,6 +18,8 @@ import HrDashboard from "./pages/hr/Dashboard";
 import HrDocuments from "./pages/hr/Documents";
 import HrInvites from "./pages/hr/Invites";
 import CreatePath from "./pages/hr/CreatePath";
+import HrLearners from "./pages/hr/Learners";
+import HrReports from "./pages/hr/Reports";
 
 import ReviewerDashboard from "./pages/reviewer/Dashboard";
 
@@ -99,6 +101,8 @@ export default function App() {
                     <Route path="dashboard" element={<HrDashboard />} />
                     <Route path="documents" element={<HrDocuments />} />
                     <Route path="invites" element={<HrInvites />} />
+                    <Route path="learners" element={<HrLearners />} />
+                    <Route path="reports" element={<HrReports />} />
                     <Route path="paths" element={<HrPaths />} />
                     <Route path="paths/new" element={<CreatePath />} />
                     <Route path="paths/:id" element={<PathDetail basePath="/hr/paths" />} />

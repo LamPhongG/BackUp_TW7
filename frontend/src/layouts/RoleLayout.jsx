@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Outlet, NavLink, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Compass,
-  LayoutDashboard, RouteIcon, FileText, UserRound, ShieldCheck, History, WandSparkles, Layers3,
-  Menu, ChevronDown, LogOut, Sparkles, Link2
+  LayoutDashboard, RouteIcon, FileText, UserRound, Users, ShieldCheck, History, WandSparkles, Layers3,
+  Menu, ChevronDown, LogOut, Sparkles, Link2, BarChart3
 } from "../components/Icons";
 import { useAuth, HOME_PATH } from "../hooks/useAuth";
 import { useLanguage, LanguageToggle } from "../contexts/LanguageContext";
@@ -31,6 +31,8 @@ function navFor(role, paths) {
       ["menu_documents", "/hr/documents", FileText],
       ["menu_create_path", "/hr/paths/new", WandSparkles],
       ["menu_paths", "/hr/paths", Layers3, paths.filter(p => p.status === "changes_requested").length],
+      ["menu_learners", "/hr/learners", Users],
+      ["menu_reports", "/hr/reports", BarChart3],
       ["menu_invites", "/hr/invites", Link2],
       ["menu_audit_log", "/hr/audit-log", History],
     ];

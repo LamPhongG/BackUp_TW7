@@ -74,7 +74,17 @@ export const LanguageProvider = ({ children }) => {
 
 export const useLanguage = () => {
   const ctx = useContext(LanguageContext);
-  if (!ctx) throw new Error("useLanguage must be used inside <LanguageProvider>");
+  if (!ctx) {
+    const lang = "vi";
+    const t = (key, vars) => {
+      let text = (translations[lang]?.[key] ?? translations[FALLBACK_LANG]?.[key] ?? key);
+      if (vars) text = text.replace(/\{(\w+)\}/g, (match, name) => (vars[name] ?? match));
+      return text;
+    };
+    const tv = val => val || "";
+    const pick = (item, field) => item ? (item[field] || "") : "";
+    return { lang, locale: "vi-VN", t, tv, pick, toggleLanguage: () => {} };
+  }
   return ctx;
 };
 

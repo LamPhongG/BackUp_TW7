@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 
 from app.api.deps import DbSession, require_roles
 from app.models import User, UserRole
-from app.schemas.enrollments import EnrollmentOut, ExplorePathOut, LearnerOut, QuizResult, QuizSubmit, TaskDone
+from app.schemas.enrollments import EnrollmentOut, ExplorePathOut, GlobalLearnerOut, LearnerOut, QuizResult, QuizSubmit, TaskDone
 from app.services import enrollments as service
 from app.services.paths import get_visible
 from app.services.progress import PASS_RATIO
@@ -15,6 +15,12 @@ router = APIRouter(tags=["enrollments"])
 
 Employee = Annotated[User, Depends(require_roles(UserRole.EMPLOYEE))]
 Staff = Annotated[User, Depends(require_roles(UserRole.HR, UserRole.REVIEWER))]
+
+
+@router.get("/learners", response_model=list[GlobalLearnerOut])
+def all_learners(db: DbSession, user: Staff):
+    """Company-wide learner progress across all paths (HR and Reviewer)."""
+    return [GlobalLearnerOut.from_row(u, p, v) for u, p, v in service.all_enrollments(db)]
 
 
 @router.get("/me/enrollments", response_model=list[EnrollmentOut])

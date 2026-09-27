@@ -157,12 +157,56 @@ function QuizBlock({ module, best, onSubmit }) {
   };
 
   if (result) {
+    const scorePercent = result.total > 0 ? Math.round((result.score / result.total) * 100) : 0;
+    const isWeakArea = !result.passed || scorePercent < 70;
+
     return (
       <Card className={`quiz-result-card ${result.passed ? "is-pass" : "is-fail"}`}>
         <div className="card-title-row">
-          <h3>{t("quiz_score", { c: result.score, n: result.total })}</h3>
+          <h3>{t("quiz_score", { c: result.score, n: result.total })} ({scorePercent}%)</h3>
           <Badge tone={result.passed ? "green" : "red"}>{t(result.passed ? "quiz_passed" : "quiz_failed", { n: Math.round(PASS_RATIO * 100) })}</Badge>
         </div>
+
+        {isWeakArea ? (
+          <div style={{
+            margin: "12px 0 16px",
+            padding: "12px 14px",
+            background: "rgba(245, 158, 11, 0.08)",
+            border: "1px solid rgba(245, 158, 11, 0.3)",
+            borderRadius: "var(--radius-md, 8px)"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, color: "#b45309", marginBottom: 6, fontSize: 13.5 }}>
+              <CircleAlert size={16} />
+              Nhận diện Vùng kiến thức cần củng cố (Weak-Area Detected · {scorePercent}%)
+            </div>
+            <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5 }}>
+              Điểm số bài kiểm tra chưa đạt ngưỡng chuẩn vững vàng (≥ 70%). Hệ thống kích hoạt Khuyến nghị học tập thích ứng (Adaptive Recommendations - SRS Step 55 & 56):
+              <ul style={{ margin: "6px 0 0 18px", padding: 0 }}>
+                <li><strong>Ôn lại lý thuyết:</strong> Đọc lại các bài học trong học phần này trước khi thử lại.</li>
+                <li><strong>Đối chiếu quy chuẩn:</strong> Xem kỹ trích dẫn nguồn SOP và giải thích chi tiết ở các câu trả lời sai bên dưới.</li>
+                <li><strong>Làm lại bài kiểm tra:</strong> Nhấn nút <em>"Làm lại bài kiểm tra"</em> bên dưới để cải thiện điểm số và hoàn tất điều kiện học phần.</li>
+              </ul>
+            </div>
+          </div>
+        ) : (
+          <div style={{
+            margin: "12px 0 16px",
+            padding: "10px 14px",
+            background: "rgba(16, 185, 129, 0.08)",
+            border: "1px solid rgba(16, 185, 129, 0.3)",
+            borderRadius: "var(--radius-md, 8px)",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            color: "#065f46",
+            fontWeight: 600,
+            fontSize: 13
+          }}>
+            <CircleCheck size={16} style={{ color: "#10b981" }} />
+            Đạt chuẩn kiến thức xuất sắc ({scorePercent}%). Đủ điều kiện ghi nhận hoàn thành mục tiêu học tập!
+          </div>
+        )}
+
         {module.quiz.map((q, i) => {
           const ok = answers[q.id] === q.answer;
           return (
