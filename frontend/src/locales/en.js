@@ -751,6 +751,7 @@ export const en = {
   err_mandatory_sources: "Mandatory documents from the Role Requirement Matrix are missing: {codes}.",
   flow_task_no_criteria: "Module \"{module}\" has task {task} without completion criteria.",
   reason_mandatory_sources_missing: "The path is missing mandatory documents from the Role Requirement Matrix: {codes}.",
+  reason_duplicates_found: "{n} quiz question(s) or task(s) look substantially duplicated.",
   completion_criteria: "Completion criteria",
   completion_criteria_missing: "No completion criteria yet; validation will block publishing.",
   completion_criteria_hint: "The result, record or approval that proves the task is done",

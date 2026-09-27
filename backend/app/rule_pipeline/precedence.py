@@ -10,8 +10,8 @@ from app.ingestion.validation import compare_versions
 from app.models import Document
 
 # Bậc 1 (cao nhất): chính sách toàn công ty. Bậc 2: quy trình/mô tả theo phòng ban. Bậc 3: FAQ
-# (hướng dẫn không chính thức). Khớp với MANDATORY_CATEGORIES ở coverage.py; category lạ (vd
-# "Test Case") rơi vào bậc thấp nhất, không có tiếng nói khi so ưu tiên.
+# (hướng dẫn không chính thức). Category lạ (vd "Test Case") rơi vào bậc thấp nhất, không có tiếng
+# nói khi so ưu tiên.
 PRECEDENCE_TIER = {
     "Handbook": 1,
     "Policy": 1,

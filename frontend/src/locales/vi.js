@@ -755,6 +755,7 @@ export const vi = {
   err_mandatory_sources: "Thiếu tài liệu bắt buộc theo ma trận yêu cầu: {codes}.",
   flow_task_no_criteria: "Học phần \"{module}\" có nhiệm vụ {task} chưa có tiêu chí hoàn thành.",
   reason_mandatory_sources_missing: "Lộ trình thiếu tài liệu bắt buộc theo ma trận yêu cầu: {codes}.",
+  reason_duplicates_found: "{n} câu hỏi/nhiệm vụ có nội dung trùng lặp đáng kể.",
   completion_criteria: "Tiêu chí hoàn thành",
   completion_criteria_missing: "Chưa có tiêu chí hoàn thành, kiểm định sẽ chặn phát hành.",
   completion_criteria_hint: "Kết quả, hồ sơ hoặc phê duyệt chứng minh nhiệm vụ đã xong",

@@ -124,6 +124,8 @@ def create(db: Session, actor: User, body: PathCreate, progress: Progress | None
         created_by_id=actor.id,
     )
     _apply_content(path, content, gaps)
+    # Pipeline 2 độc lập tự tính coverage — không tin vào giá trị content.coverage do client/AI gửi.
+    path.coverage = role_matrix.compute_coverage(db, path.stages, position.id)
     path.sources = _source_rows(docs)
     db.add(path)
     audit.record(db, actor, "generate", path, status_before=None, status_after=PathStatus.DRAFT,
@@ -148,6 +150,7 @@ def regenerate(db: Session, actor: User, path: LearningPath, body: PathRegenerat
                                         docs, path.prompt, body.language, path.duration_days, emit)
     check_stage_keys(path.purpose, [s.key for s in content.stages], path.duration_days)
     _apply_content(path, content, gaps)
+    path.coverage = role_matrix.compute_coverage(db, path.stages, path.target_job_position_id)
     path.sources = _source_rows(docs)
     audit.record(db, actor, "regenerate", path, status_before=path.status, status_after=path.status,
                  details=_generation_details(path, docs, gaps))
@@ -160,6 +163,8 @@ def edit(db: Session, actor: User, path: LearningPath, body: PathEdit) -> Learni
     ensure_allowed(actor, "edit", path)
     check_stage_keys(path.purpose, [s.key for s in body.stages], path.duration_days)
     path.stages = _dump_stages(body.stages)
+    # HR chỉnh tay có thể thêm/bớt trích dẫn → phải tính lại coverage, không giữ giá trị cũ.
+    path.coverage = role_matrix.compute_coverage(db, path.stages, path.target_job_position_id)
     audit.record(db, actor, "edit", path, status_before=path.status, status_after=path.status, details=body.details)
     db.commit()
     return path

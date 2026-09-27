@@ -4,10 +4,10 @@ The browser runs the same checks for display; the server re-runs them when a pat
 approved, so a publish decision never depends on what the client claims.
 Pure Python, no AI (Rules section 3).
 """
-from dataclasses import dataclass, field
-from datetime import date
 import difflib
 import re
+from dataclasses import dataclass, field
+from datetime import date
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -273,12 +273,19 @@ def check_path(db: Session, path: LearningPath) -> CheckResult:
 
 
 def check_duplicates(stages: list[dict], threshold: float = 0.85) -> list[dict]:
-    """Detect near-duplicate quiz questions and tasks across modules/stages (SRS Step 35)."""
+    """Detect near-duplicate quiz questions and tasks across modules/stages (SRS Step 35).
+
+    Skips "assessment" modules: the final assessment is built by design to recap one question from
+    every earlier module verbatim (see local_draft.py::final_quiz), so it is always a near-duplicate
+    of that module's own quiz — flagging that would mark every generated path as duplicated.
+    """
     quiz_items = []
     task_items = []
 
     for stage in stages:
         for m in stage.get("modules", []):
+            if m.get("kind") == "assessment":
+                continue
             for q in m.get("quiz", []):
                 q_id = q.get("id")
                 q_text = (q.get("question") or "").strip()

@@ -18,6 +18,7 @@ from app.core.errors import AppError
 from app.genai_pipeline.requirements import section_number
 from app.ingestion.validation import VERSION_PATTERN, compare_versions, normalize_version
 from app.models import Document, JobPosition, Priority, ProcessingStatus, RoleRequirement
+from app.rule_pipeline.precedence import precedence_tier
 from app.services.documents import compute_lifecycle
 
 REQUIRED_COLUMNS = ("Requirement_ID", "Role", "Mandatory_Optional", "Priority", "Source_Document", "Source_Section")
@@ -169,6 +170,45 @@ def required_sources(db: Session, job_position_id: str, today: date | None = Non
 
 def _version_key(doc: Document):
     return [int(p) for p in normalize_version(doc.version).split(".")]
+
+
+def cited_codes(stages: list[dict]) -> set[str]:
+    """Every document code cited anywhere (lessons/tasks/quiz) in a generated path's stages."""
+    codes: set[str] = set()
+    for stage in stages:
+        for module in stage.get("modules", []):
+            for key in ("lessons", "tasks", "quiz"):
+                for item in module.get(key, []):
+                    code = (item.get("source_reference") or {}).get("doc")
+                    if code:
+                        codes.add(code)
+    return codes
+
+
+def compute_coverage(db: Session, stages: list[dict], job_position_id: str) -> dict:
+    """Coverage Score (SRS Steps 10, 28-30) computed independently from what Pipeline 1 (GenAI) or
+    the client claims: how much of THIS role's mandatory Role Requirement Matrix is actually cited
+    in the generated stages. `requiredDocs` is document-level (for the coverage bar); `topics` is
+    requirement-level (each RoleRequirement row), for a finer-grained breakdown in the UI.
+
+    A position with no mandatory requirements yet (matrix not filled in for it) counts as fully
+    covered — a missing matrix is a data gap, not a content problem to block HR on.
+    """
+    cited = cited_codes(stages)
+    mandatory_docs = sorted(
+        (e for e in required_sources(db, job_position_id) if e["mandatory"]),
+        key=lambda e: precedence_tier(e["document"]) if e["document"] else 99,
+    )
+    doc_covered = [e["code"] in cited for e in mandatory_docs]
+    score = (sum(doc_covered) / len(mandatory_docs)) if mandatory_docs else 1.0
+
+    mandatory_reqs = [r for r in requirements_for(db, job_position_id) if r.mandatory and r.source_doc_code]
+    return {
+        "score": score,
+        "requiredDocs": [{"code": e["code"], "covered": c} for e, c in zip(mandatory_docs, doc_covered, strict=True)],
+        "topics": [{"id": r.id, "label": requirement_text(r), "covered": r.source_doc_code in cited, "matchedKeyword": None}
+                  for r in mandatory_reqs],
+    }
 
 
 def missing_mandatory_sources(db: Session, job_position_id: str, source_ids: set[str]) -> tuple[list[str], list[str]]:
