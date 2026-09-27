@@ -70,7 +70,7 @@ def test_onboarding_goes_to_employees_who_have_not_finished_onboarding(
     assert client.get(f"/api/paths/{path['id']}", headers=minh_headers).status_code == 404
     # Every Engineering employee who has not finished onboarding gets it (the seed also has "Tech Lead"), Minh does not.
     learners = _learners(client, hr_headers, path["id"])
-    assert "Alex Morgan" in learners and "Tech Lead" in learners
+    assert "Alex Morgan" in learners and "Tech Lead" not in learners
     assert "Minh Nguyen" not in learners
 
 

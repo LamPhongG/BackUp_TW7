@@ -123,52 +123,50 @@ def seed_demo_users(db: Session) -> None:
 
 
 def seed_demo_certificate(db: Session) -> None:
-    from app.models import LearningPath, Enrollment, EnrollmentStatus, AssignmentSource, PathStatus, PathPurpose, PathLevel
-    from datetime import datetime, timezone
-    
-    # Check if a path exists, if not create one
-    path = db.scalar(select(LearningPath).limit(1))
-    if not path:
-        creator_id = db.scalar(select(User.id).where(User.user_role == UserRole.ADMIN)) or db.scalar(select(User.id).limit(1))
-        dept = db.scalar(select(Department.code).limit(1)) or "Sales"
-        pos = db.scalar(select(JobPosition.id).limit(1)) or "sales-exec"
-        path = LearningPath(
-            id="demo-path-999",
-            title="Hội nhập — Generative AI For Business",
-            title_en="Onboarding — Generative AI For Business",
-            purpose=PathPurpose.ONBOARDING,
-            level=PathLevel.BEGINNER,
-            target_department_code=dept,
-            target_job_position_id=pos,
-            created_by_id=creator_id,
-            prompt_version="v1.1",
-            engine="local-draft",
-            status=PathStatus.PUBLISHED,
-            stages=[],
-            created_at=datetime.now(timezone.utc)
-        )
-        db.add(path)
-        db.flush()
+    """Give the Sales demo employee one completed path, so the certificate screen has something to show.
 
-    Only a path the Reviewer actually published to Sales (department or `sales-exec`) qualifies. Faking a path, or
+    Only a path the Reviewer actually published to Sales (department or sales-exec) qualifies. Faking a path, or
     picking any row, once marked a Branch Manager path still in review as completed and led to it being published
     by hand without targets, which crashed the HR dashboard. With no such path yet, nothing is seeded.
     """
+    from app.models import LearningPath, Enrollment, EnrollmentStatus, AssignmentSource, PathStatus, PathAssignment, QuizAttempt
+    from sqlalchemy import or_
+    from datetime import datetime, timezone
+    
     sales_id = db.scalar(select(User.id).where(User.email == "sales.emp@fourangrybirds.vn"))
-    if sales_id:
-        enr = db.scalar(select(Enrollment).where(Enrollment.user_id == sales_id, Enrollment.path_id == path.id))
-        now = datetime.now(timezone.utc)
-        if not enr:
-            enr = Enrollment(
-                user_id=sales_id, path_id=path.id, status=EnrollmentStatus.COMPLETED,
-                source=AssignmentSource.SELF, assigned_at=now, started_at=now, completed_at=now,
-                lessons_read=[], tasks_done=[]
-            )
-            db.add(enr)
-        else:
-            enr.status = EnrollmentStatus.COMPLETED
-            enr.completed_at = now
-        db.flush()
+    if sales_id is None:
+        return
+    path_id = db.scalar(
+        select(LearningPath.id)
+        .join(PathAssignment, PathAssignment.path_id == LearningPath.id)
+        .where(LearningPath.status == PathStatus.PUBLISHED,
+               or_(PathAssignment.department_code == "Sales", PathAssignment.job_position_id == "sales-exec"))
+        .order_by(LearningPath.published_at)
+        .limit(1)
+    )
+    if path_id is None:
+        return
+    enrollment = db.scalar(select(Enrollment).where(Enrollment.user_id == sales_id, Enrollment.path_id == path_id))
+    if enrollment is not None and enrollment.status == EnrollmentStatus.COMPLETED:
+        return
+    now = datetime.now(timezone.utc)
+    if enrollment is None:
+        enrollment = Enrollment(user_id=sales_id, path_id=path_id, source=AssignmentSource.SELF, assigned_at=now)
+        db.add(enrollment)
+    modules = [m for stage in db.get(LearningPath, path_id).stages for m in stage["modules"]]
+    enrollment.lessons_read = [lesson["id"] for m in modules for lesson in m.get("lessons", [])]
+    enrollment.tasks_done = [task["id"] for m in modules for task in m.get("tasks", [])]
+    enrollment.status = EnrollmentStatus.COMPLETED
+    enrollment.started_at = enrollment.started_at or now
+    enrollment.completed_at = now
+    db.flush()
+    for m in modules:
+        quiz = m.get("quiz", [])
+        if quiz:
+            db.add(QuizAttempt(enrollment_id=enrollment.id, module_id=m["id"], submitted_at=now,
+                               answers={q["id"]: q["answer"] for q in quiz}, score=len(quiz), total=len(quiz)))
+    db.flush()
+
 
 def seed_role_matrix(db: Session) -> ImportReport | None:
     """Load the team's Role Requirement Matrix; rows already in the DB are updated, not duplicated."""
