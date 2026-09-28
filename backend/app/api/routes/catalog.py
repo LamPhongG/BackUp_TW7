@@ -11,7 +11,7 @@ from app.services import role_matrix
 
 router = APIRouter(tags=["catalog"])
 
-# Read-only endpoints; Admins oversee them (SRS Step 51) but take no part in the workflow.
+# Endpoints accessible to staff and admin users.
 StaffUser = Annotated[User, Depends(require_roles(UserRole.HR, UserRole.REVIEWER, UserRole.ADMIN))]
 
 

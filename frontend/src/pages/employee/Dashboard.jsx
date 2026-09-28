@@ -13,20 +13,20 @@ import { backendEnabled } from "../../services/apiClient";
 import { formatLocalDate } from "../../utils/helpers";
 import CertificateModal from "../../components/path/CertificateModal";
 
-// "Để sau" được nhớ theo từng tài khoản trên trình duyệt này; đổi mật khẩu xong thì banner tự tắt theo dữ liệu backend
+// "Later" preference stored per user in browser; banner dismisses automatically when password changed
 const reminderKey = id => `skillsprint.pwdReminderDismissed.${id}`;
 function reminderDismissed(id) {
   try { return localStorage.getItem(reminderKey(id)) === "1"; } catch { return false; }
 }
 
-/** Nhắc đổi mật khẩu tạm thời do Admin gửi qua email; nhân viên có thể đổi ngay hoặc để sau */
+/** Prompt employee to change temporary password sent by Admin via email; employee may change now or postpone */
 function TemporaryPasswordBanner({ user }) {
   const { t } = useLanguage();
   const [dismissed, setDismissed] = useState(() => reminderDismissed(user.id));
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const later = () => {
-    try { localStorage.setItem(reminderKey(user.id), "1"); } catch { /* storage bị chặn: chỉ ẩn trong phiên này */ }
+    try { localStorage.setItem(reminderKey(user.id), "1"); } catch { /* storage blocked: dismiss for this session only */ }
     setDismissed(true);
   };
   return (
@@ -75,7 +75,7 @@ export default function EmployeeDashboard() {
   }
   const avg = scores.length ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100) : null;
 
-  // Chưa xong lên trước, rồi theo hạn gần nhất; lộ trình không có hạn (tự chọn) xếp sau
+  // Incomplete paths first, then by closest due date; paths without due date (optional/self-enrolled) last
   const learning = myPaths.map(p => ({ p, e: enrollmentFor(p.id) })).map(x => ({ ...x, prog: pathProgress(x.p, x.e) }))
     .sort((a, b) => (a.prog.complete - b.prog.complete) || (a.e.dueDate || "9999").localeCompare(b.e.dueDate || "9999"));
   const date = iso => formatLocalDate(iso, locale, { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -83,7 +83,7 @@ export default function EmployeeDashboard() {
     <Button variant="secondary" icon={<Compass size={15} />} onClick={() => navigate("/employee/explore")}>{t("explore_more")}</Button>
   );
 
-  // Nhận diện điểm yếu (Weak-Area Detection & Adaptive Recommendations - SRS Step 55 & 56)
+  // Weak-area detection and adaptive recommendations
   const weakModules = useMemo(() => {
     const list = [];
     for (const p of myPaths) {
@@ -206,14 +206,14 @@ export default function EmployeeDashboard() {
                   </div>
                   <div>
                     <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#92400e" }}>
-                      Khuyến nghị học tập thích ứng & Củng cố điểm yếu (SRS Step 55 & 56)
+                      Adaptive Learning Recommendations & Weak-Area Reinforcement
                     </h3>
                     <p style={{ margin: "2px 0 0", fontSize: "0.85rem", color: "var(--muted)" }}>
-                      AI phát hiện {weakModules.length} học phần có kết quả quiz &lt; 70%. Hãy ôn tập lại để củng cố kiến thức:
+                      AI detected {weakModules.length} module{weakModules.length > 1 ? "s" : ""} with quiz scores &lt; 70%. Review the materials to reinforce your knowledge:
                     </p>
                   </div>
                 </div>
-                <Badge tone="orange">{weakModules.length} học phần cần củng cố</Badge>
+                <Badge tone="orange">{weakModules.length} module{weakModules.length > 1 ? "s" : ""} to reinforce</Badge>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -232,12 +232,12 @@ export default function EmployeeDashboard() {
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 13.5 }}>{wm.moduleTitle}</div>
                       <div className="cell-sub" style={{ fontSize: 12 }}>
-                        {wm.pathTitle} · {wm.stageName} · Điểm hiện tại: <strong style={{ color: "#ef4444" }}>{wm.score}/{wm.total} ({wm.percent}%)</strong>
+                        {wm.pathTitle} · {wm.stageName} · Current Score: <strong style={{ color: "#ef4444" }}>{wm.score}/{wm.total} ({wm.percent}%)</strong>
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span className="doc-chip" style={{ fontSize: 11, background: "rgba(245, 158, 11, 0.15)", color: "#b45309" }}>
-                        Ôn lại lý thuyết & làm lại quiz
+                        Review theory & retake quiz
                       </span>
                       <Button
                         size="sm"
@@ -245,7 +245,7 @@ export default function EmployeeDashboard() {
                         icon={<Play size={13} />}
                         onClick={() => navigate(`/employee/paths/${wm.pathId}/modules/${wm.moduleId}`)}
                       >
-                        Ôn tập ngay
+                        Review Now
                       </Button>
                     </div>
                   </div>

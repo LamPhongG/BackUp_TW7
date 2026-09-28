@@ -5,7 +5,7 @@ import { Compass,
   Menu, ChevronDown, LogOut, Sparkles, Link2, BarChart3
 } from "../components/Icons";
 import { useAuth, HOME_PATH } from "../hooks/useAuth";
-import { useLanguage, LanguageToggle } from "../contexts/LanguageContext";
+import { useLanguage } from "../contexts/LanguageContext";
 import { usePaths } from "../contexts/PathsContext";
 import ErrorBoundary from "../components/ErrorBoundary";
 import ChangePasswordModal from "../components/ChangePasswordModal";
@@ -19,7 +19,7 @@ const ROLE_STYLE = {
   hr: { dot: "#f43f5e", avatar: ["#ffe4e6", "#e11d48"] },
 };
 
-// [locale key, đường dẫn, icon, hàm đếm số việc cần làm]
+// [locale key, route path, icon, pending count function]
 function navFor(role, paths) {
   if (role === "admin") {
     return [
@@ -56,7 +56,7 @@ function navFor(role, paths) {
   ];
 }
 
-/** Khung trang cho một vai trò; người chưa đăng nhập hoặc sai vai trò bị chuyển về đúng chỗ */
+/** Layout wrapper for a role; unauthenticated users or role mismatches are redirected */
 export default function RoleLayout({ role }) {
   const [collapsed, setCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -73,7 +73,7 @@ export default function RoleLayout({ role }) {
 
   const nav = navFor(role, paths);
   const style = ROLE_STYLE[role];
-  // Mục menu khớp dài nhất để /hr/paths/new không làm sáng cả mục /hr/paths
+  // Longest matching menu item so /hr/paths/new does not highlight /hr/paths
   const current = [...nav].sort((a, b) => b[1].length - a[1].length).find(([, to]) => location.pathname.startsWith(to));
 
   const handleLogout = () => {
@@ -115,7 +115,6 @@ export default function RoleLayout({ role }) {
             <strong>{current ? t(current[0]) : ""}</strong>
           </div>
           <div className="topbar-actions">
-            <LanguageToggle />
             <div className="profile" onClick={() => setProfileOpen(v => !v)}>
               <div className="avatar" style={{ background: style.avatar[0], color: style.avatar[1] }}>{user.avatar}</div>
               <div className="profile-text">

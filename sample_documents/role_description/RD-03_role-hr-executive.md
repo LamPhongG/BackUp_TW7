@@ -3,7 +3,6 @@ document_id: RD-03
 role_id: hr-exec
 family: role-description-hr-executive
 title_en: Role Description – HR Executive
-title_vi: Mô tả công việc – Nhân viên Nhân sự / Tuyển dụng & Onboarding
 category: Role Description
 department: Human Resources
 version: 1.0

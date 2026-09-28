@@ -7,7 +7,7 @@ import { docs, chunksByDocId } from "./fixtures";
 const generate = (over = {}) => generatePathContent({ id: "LP-T", level: "Intermediate", purpose: "onboarding", docs, chunksByDocId, ...over });
 const stageOf = (path, code) => path.stages.find(s => s.modules.some(m => m.doc_code === code))?.key;
 
-describe("độ dài lộ trình (SRS Step 13)", () => {
+describe("path duration (SRS Step 13)", () => {
   it("keeps the full 90-day template by default", () => {
     const path = generate();
     expect(stageOf(path, "DOC-10")).toBe("day30");
@@ -21,7 +21,7 @@ describe("độ dài lộ trình (SRS Step 13)", () => {
     const path = generate({ durationDays: days });
     expect(path.stages.every(s => template.includes(s.key))).toBe(true);
     expect(stageOf(path, "DOC-10")).toBe(sopStage);
-    // Lộ trình ngắn vẫn dạy đủ mọi nguồn và vẫn kết thúc bằng bài đánh giá tổng hợp
+    // Short path still covers all sources and ends with final assessment
     expect(allModules(path).filter(m => m.doc_code).map(m => m.doc_code).sort()).toEqual(["DOC-01", "DOC-06", "DOC-10"]);
     expect(path.stages.at(-1).key).toBe(template.at(-1));
     expect(path.stages.at(-1).modules.at(-1).kind).toBe("assessment");
@@ -33,7 +33,7 @@ describe("độ dài lộ trình (SRS Step 13)", () => {
   });
 });
 
-describe("nhiệm vụ: tiêu chí hoàn thành + nguồn", () => {
+describe("tasks: completion criteria + source", () => {
   const path = generate();
   const tasks = allModules(path).flatMap(m => m.tasks.map(t => ({ ...t, code: m.doc_code })));
 
@@ -67,7 +67,7 @@ describe("nhiệm vụ: tiêu chí hoàn thành + nguồn", () => {
   });
 });
 
-describe("dạy trước rồi mới kiểm tra", () => {
+describe("teach before test", () => {
   const base = { ...generate(), purpose: "onboarding" };
 
   it("accepts a generated path: every task and question is about a taught chunk", () => {

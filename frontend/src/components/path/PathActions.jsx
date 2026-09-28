@@ -13,7 +13,7 @@ import { DEPARTMENTS, ROLES as JOB_ROLES } from "../../data/company";
 import { approvalRule, can } from "../../utils/pathWorkflow";
 import { formatDateTime } from "../../utils/helpers";
 
-/** Thanh thao tác theo vai trò và trạng thái lộ trình */
+/** Action bar based on user role and path status */
 export default function PathActions({ path, checks, role, basePath }) {
   const { t, tv, pick, locale } = useLanguage();
   const [modal, setModal] = useState(null);
@@ -99,18 +99,18 @@ function RegenerateModal({ path, onClose }) {
   const [job, setJob] = useState(null);
 
   const existingCodes = new Set(path.sources.map(s => s.code));
-  // Tìm các tài liệu bắt buộc còn thiếu từ kết quả coverage của Python
+  // Find missing mandatory documents from backend coverage check
   const missingRequiredCodes = (path.coverage?.requiredDocs || [])
     .filter(d => !d.covered)
     .map(d => d.code);
   const allTargetCodes = new Set([...existingCodes, ...missingRequiredCodes]);
 
-  // Dùng phiên bản đang hiệu lực của cùng mã tài liệu — tài liệu mới cập nhật sẽ được lấy vào
+  // Use active version of document code - updated documents will be picked up
   const docs = activeDocuments.filter(d => allTargetCodes.has(d.code) && processed[d.id]);
   const role = JOB_ROLES.find(r => r.id === path.target.role_id);
   const autoAddedCodes = missingRequiredCodes.filter(c => !existingCodes.has(c));
 
-  // Lần sinh trước HR đã chủ động bỏ tài liệu bắt buộc: sinh lại giữ nguyên quyết định đó
+  // If HR previously omitted mandatory docs: regenerate preserves that choice
   const omitted = path.generation?.mandatory_omitted || [];
   return (
     <Modal open title={t("action_regenerate")} onClose={busy ? () => {} : onClose} width={busy && backendEnabled() ? "720px" : undefined}>
@@ -121,12 +121,12 @@ function RegenerateModal({ path, onClose }) {
           <p>{t("regenerate_desc", { n: docs.length })}</p>
           {autoAddedCodes.length > 0 && (
             <p className="cell-sub" style={{ color: "#6366f1", marginTop: 8, fontWeight: 500 }}>
-              ✦ Tự động bổ sung tài liệu còn thiếu: <strong>{autoAddedCodes.join(", ")}</strong> để đạt 100% độ phủ.
+              ✦ Automatically supplement missing documents: <strong>{autoAddedCodes.join(", ")}</strong> to achieve 100% coverage.
             </p>
           )}
           {path.coverage?.missing?.length > 0 && autoAddedCodes.length === 0 && (
             <p className="cell-sub" style={{ color: "#6366f1", marginTop: 8, fontWeight: 500 }}>
-              ✦ Hệ thống sẽ đưa phản hồi từ Python ({path.coverage.missing.length} yêu cầu chưa đạt) vào prompt để AI tập trung bổ sung.
+              ✦ The system will inject feedback from Python ({path.coverage.missing.length} unfulfilled requirements) into the prompt for targeted AI completion.
             </p>
           )}
           {path.status === "changes_requested" && <p className="cell-sub">{t("regenerate_keep_comments")}</p>}

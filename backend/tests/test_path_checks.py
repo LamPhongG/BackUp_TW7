@@ -1,6 +1,6 @@
-"""Duplicate Detection (SRS Step 35): câu hỏi quiz / nhiệm vụ trùng lặp ngữ nghĩa giữa các module.
+"""Duplicate Detection (SRS Step 35): semantic duplicate quiz questions / tasks across modules.
 
-Hàm thuần túy (check_duplicates), test trực tiếp bằng stages dựng tay — không cần DB/API.
+Pure function (check_duplicates), tested directly with mock stages — no DB/API needed.
 """
 from app.services.path_checks import check_duplicates
 

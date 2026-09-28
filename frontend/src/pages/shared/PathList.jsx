@@ -12,8 +12,8 @@ import { runPathChecks } from "../../utils/pathChecks";
 import { formatDateTime } from "../../utils/helpers";
 
 /**
- * Danh sách lộ trình theo trạng thái. HR xem mọi lộ trình mình tạo; Reviewer dùng cùng trang
- * với bộ lọc mặc định khác (hàng đợi = đang chờ duyệt).
+ * Path list filtered by status. HR views paths they created; Reviewer shares this page
+ * with a different default filter (queue = in_review).
  */
 export default function PathList({ basePath, tabs, defaultTab, eyebrow, title, description, createPath }) {
   const navigate = useNavigate();
@@ -45,7 +45,7 @@ export default function PathList({ basePath, tabs, defaultTab, eyebrow, title, d
         <div style={{ display: "flex", gap: 10 }}>
           {paths.length >= 2 && (
             <Button variant="outline" onClick={() => setCompareOpen(true)} icon={<SlidersHorizontal size={16} />}>
-              {t("menu_plan_comparison") || "So sánh Lộ trình"}
+              {t("menu_plan_comparison") || "Plan Comparison"}
             </Button>
           )}
           {createPath && <Button onClick={() => navigate(createPath)} icon={<WandSparkles size={16} />}>{t("menu_create_path")}</Button>}

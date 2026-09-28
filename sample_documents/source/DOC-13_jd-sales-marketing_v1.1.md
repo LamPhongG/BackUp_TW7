@@ -2,7 +2,6 @@
 document_id: DOC-13
 family: jd-sales-marketing
 title_en: Job Descriptions – Sales & Marketing
-title_vi: Mô tả công việc khối Kinh doanh & Marketing
 category: Role Description
 department: Sales
 version: 1.1

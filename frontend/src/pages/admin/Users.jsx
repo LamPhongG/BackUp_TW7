@@ -437,7 +437,7 @@ export default function AdminUsers() {
         )}
       </Card>
 
-      {/* Modal Thêm tài khoản mới */}
+      {/* Add New User Modal */}
       <Modal
         open={modalMode === "create"}
         title={t("user_add_new")}
@@ -562,7 +562,7 @@ export default function AdminUsers() {
         </form>
       </Modal>
 
-      {/* Modal Chỉnh sửa tài khoản */}
+      {/* Edit User Modal */}
       <Modal
         open={modalMode === "edit"}
         title={t("user_edit")}
@@ -684,7 +684,7 @@ export default function AdminUsers() {
         </form>
       </Modal>
 
-      {/* Modal Khóa tài khoản (Soft Delete) */}
+      {/* Deactivate User Modal (Soft Delete) */}
       <Modal
         open={modalMode === "delete"}
         title={t("user_soft_delete_title")}
@@ -724,7 +724,7 @@ export default function AdminUsers() {
         </div>
       </Modal>
 
-      {/* Modal Kích hoạt lại tài khoản */}
+      {/* Reactivate User Modal */}
       <Modal
         open={modalMode === "restore"}
         title={t("user_restore_title")}

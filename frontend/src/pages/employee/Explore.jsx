@@ -11,8 +11,8 @@ import { formatLocalDate } from "../../utils/helpers";
 const STATUS_KEY = { assigned: "not_started", in_progress: "in_progress", completed: "completed" };
 
 /**
- * Khám phá lộ trình: mọi lộ trình đã phát hành cho phòng ban của nhân viên (kể cả cho các vị trí trong phòng),
- * để xem trước sắp tới sẽ học gì, hoặc tự đăng ký lộ trình không bắt buộc.
+ * Explore learning paths: all published paths for the employee's department (including other roles),
+ * to preview upcoming learning requirements or self-enroll in optional paths.
  */
 export default function Explore() {
   const navigate = useNavigate();

@@ -2,7 +2,6 @@
 document_id: DOC-27
 family: support-service-standards
 title_en: Customer Support Service Standards & Knowledge Base
-title_vi: Chuẩn dịch vụ chăm sóc khách hàng và cơ sở tri thức
 category: SOP
 department: Customer Support
 version: 1.0

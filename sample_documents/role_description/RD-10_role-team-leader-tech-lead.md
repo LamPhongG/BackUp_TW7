@@ -3,7 +3,6 @@ document_id: RD-10
 role_id: team-leader
 family: role-description-team-leader-tech-lead
 title_en: Role Description – Team Leader / Tech Lead
-title_vi: Mô tả công việc – Trưởng nhóm Kỹ thuật / Phát triển sản phẩm
 category: Role Description
 department: Engineering
 version: 1.0

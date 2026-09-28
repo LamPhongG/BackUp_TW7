@@ -46,12 +46,12 @@ MAX_LESSONS = 8
 # Low temperature: the task is faithful restatement, not creativity.
 TEMPERATURE = 0.2
 
-LANGUAGE_NAMES = {"vi": "Vietnamese", "en": "English"}
+LANGUAGE_NAMES = {"vi": "English", "en": "English"}
 PURPOSE_TEXT = {
     "onboarding": "Onboarding a new hire: what they must know and do during their first 90 days.",
     "promotion": "Upskilling an employee who is being promoted into this role: deeper responsibilities and decisions.",
 }
-# Tasks get harder with the level (SRS Step 26-27): understand → apply → decide.
+# Task difficulty scales with level: understand -> apply -> decide.
 TASK_STYLE = {
     "Beginner": "Read, confirm or look up: e.g. read the rule and confirm the deadline with the manager, find the form.",
     "Intermediate": "Practise the procedure in the company's systems or on a routine real case.",
@@ -184,7 +184,7 @@ def _ai_module(req: GenerationRequest, doc: SourceDoc, draft: dict, stage: str, 
     chunks, _ = local_draft.usable_chunks(doc)
     index = ChunkIndex(doc, chunks)
     stats = GroundingStats()
-    system = templates["system"].substitute(language_name=LANGUAGE_NAMES.get(req.language, "Vietnamese"))
+    system = templates["system"].substitute(language_name=LANGUAGE_NAMES.get(req.language, "English"))
     document = format_document(doc, chunks)
     hr = format_hr_instructions(req.hr_prompt)
     section_count = len({c["section_id"] for c in chunks})

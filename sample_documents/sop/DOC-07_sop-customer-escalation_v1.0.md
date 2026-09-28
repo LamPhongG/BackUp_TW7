@@ -2,7 +2,6 @@
 document_id: DOC-07
 family: sop-customer-escalation
 title_en: SOP – Customer Escalation Process
-title_vi: Quy trình xử lý khiếu nại & leo thang sự cố
 category: SOP
 department: Customer Support
 version: 1.0

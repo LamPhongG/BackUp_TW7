@@ -118,7 +118,7 @@ class PathCreate(BaseModel):
     source_document_ids: list[str] = Field(min_length=1, max_length=50)
     prompt: str | None = Field(default=None, max_length=4000)
     # Language of learner-facing text written by the model.
-    language: Literal["vi", "en"] = "vi"
+    language: Literal["vi", "en"] = "en"
     # Onboarding length; omitted means the full 90-day path. Ignored for promotion paths.
     duration_days: Literal[7, 30, 90] | None = None
     # HR deliberately left out mandatory matrix documents: generate anyway and warn the Reviewer.
@@ -130,7 +130,7 @@ class PathCreate(BaseModel):
 class PathRegenerate(BaseModel):
     source_document_ids: list[str] = Field(min_length=1, max_length=50)
     prompt: str | None = Field(default=None, max_length=4000)
-    language: Literal["vi", "en"] = "vi"
+    language: Literal["vi", "en"] = "en"
     allow_missing_mandatory: bool = False
     auto_include_missing: bool = False
     content: PathContent | None = None

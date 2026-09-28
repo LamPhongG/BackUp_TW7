@@ -2,7 +2,6 @@
 document_id: DOC-16
 family: general-faqs
 title_en: General Company FAQs
-title_vi: Câu hỏi thường gặp về phúc lợi
 category: FAQ
 department: Company-wide
 version: 1.1

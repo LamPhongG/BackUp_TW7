@@ -2,7 +2,6 @@
 document_id: DOC-01
 family: employee-handbook
 title_en: Employee Handbook
-title_vi: Sổ tay nhân viên
 category: Handbook
 department: Company-wide
 version: 2.0

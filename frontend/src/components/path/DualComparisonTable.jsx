@@ -4,7 +4,7 @@ import { Badge, Button, Card, StatCard } from "../UI";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 /**
- * GenAI / Python comparison per requirement (SRS Step 46-47, Table 1), from GET /paths/{id}/comparison.
+ * GenAI / Python comparison per requirement, from GET /paths/{id}/comparison.
  * A field with `match: null` has no independent data on one side and is shown as such, never as a match.
  */
 const RESULT_KEY = {

@@ -1,5 +1,5 @@
-// Đổi dữ liệu backend (snake_case, tên theo DB) sang đúng dạng các trang đang dùng ở chế độ trình duyệt,
-// để trang không phải biết dữ liệu đến từ đâu.
+// Map backend data (snake_case, DB-aligned naming) into the exact shape expected by pages in browser mode,
+// so pages remain agnostic of the data source.
 
 const PROCESSING = { ready: "done", failed: "failed", pending: "pending", processing: "pending" };
 
@@ -17,7 +17,7 @@ export function mapUser(u) {
     department: u.department_code,
     job_position_id: u.job_position_id,
     is_active: u.is_active,
-    // Mật khẩu do Admin tạo và gửi qua email; dashboard nhân viên gợi ý đổi
+    // Password created by Admin and sent via email; employee dashboard prompts user to change it
     passwordIsTemporary: Boolean(u.password_is_temporary),
   };
 }
@@ -115,7 +115,7 @@ export function mapAuditEntry(e) {
   };
 }
 
-/** Bản ghi gán lộ trình (GET /me/enrollments) → cùng dạng tiến độ mà utils/progress.js dùng ở chế độ trình duyệt */
+/** Map enrollment record (GET /me/enrollments) -> same progress format used by utils/progress.js in browser mode */
 export function mapEnrollment(e) {
   const quiz = Object.fromEntries(Object.entries(e.quiz || {}).map(([moduleId, attempts]) => [
     moduleId, attempts.map(a => ({ at: a.at, answers: a.answers, score: a.score, total: a.total })),

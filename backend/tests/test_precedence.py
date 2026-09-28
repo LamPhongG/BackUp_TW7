@@ -1,6 +1,6 @@
-"""Policy Precedence (SRS Step 34): tài liệu cấp bậc cao hơn / version mới hơn thắng.
+"""Policy Precedence (SRS Step 34): higher-tier / newer version documents take precedence.
 
-Hàm thuần túy, test bằng object giả (SimpleNamespace) — không cần đụng DB.
+Pure function, tested with mock objects (SimpleNamespace) — no DB needed.
 """
 from types import SimpleNamespace
 

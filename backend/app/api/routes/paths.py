@@ -30,7 +30,7 @@ router = APIRouter(prefix="/paths", tags=["learning paths"])
 
 HrUser = Annotated[User, Depends(require_roles(UserRole.HR))]
 ReviewerUser = Annotated[User, Depends(require_roles(UserRole.REVIEWER))]
-# Read-only endpoints; Admins oversee them (SRS Step 51) but take no part in the workflow.
+# Endpoints accessible to staff and admin users.
 StaffUser = Annotated[User, Depends(require_roles(UserRole.HR, UserRole.REVIEWER, UserRole.ADMIN))]
 
 
@@ -125,7 +125,7 @@ def get_path_checks(path_id: str, db: DbSession, user: StaffUser):
 
 @router.get("/{path_id}/comparison")
 def get_path_dual_comparison(path_id: str, db: DbSession, user: StaffUser):
-    """Dual-Pipeline Comparison report (SRS Step 46, 47, Table 1)."""
+    """Dual-pipeline comparison report against ground truth requirements."""
     from app.comparator.engine import compare_path_with_ground_truth
     path = service.get_visible(db, user, path_id)
     return compare_path_with_ground_truth(db, path)

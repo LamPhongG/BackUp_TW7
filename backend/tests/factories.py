@@ -57,11 +57,9 @@ def policy_text(title: str = "Leave policy") -> list[str]:
 
 
 def upload(client, headers, content: bytes, file_name: str, **meta):
-    # category mặc định là "FAQ" (không bắt buộc) chứ không phải "Policy": kể từ khi có Coverage
-    # Score (Pipeline 2), mọi tài liệu "Policy"/"Company-wide" bị coi là bắt buộc cho MỌI lộ trình
-    # onboarding trong suốt phiên test (DB dùng chung, scope="session") — nếu để mặc định là
-    # "Policy" thì tài liệu tạm của một test sẽ vô tình "làm ô nhiễm" ma trận bắt buộc của các test
-    # khác chạy sau đó. Test nào thật sự cần một tài liệu bắt buộc thì tự truyền category= rõ ràng.
+    # Default category is "FAQ" (optional), not "Policy": since Coverage Score (Pipeline 2),
+    # all "Policy"/"Company-wide" documents are considered mandatory for all onboarding paths during
+    # the test session (shared DB, session scope). Tests that require a mandatory document should pass category explicitly.
     fields = {
         "code": meta.pop("code", None) or unique_code(),
         "title_en": meta.pop("title_en", None) or f"Policy {uuid.uuid4().hex[:6]}",

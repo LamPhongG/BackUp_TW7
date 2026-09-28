@@ -3,11 +3,11 @@ import { BrainCircuit, Check, CircleAlert, Loader2, Sparkles, X } from "../Icons
 import { EngineBadge } from "./Badges";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-// Tiến độ của một lần AI soạn lộ trình, vẽ từ job chạy nền của backend (GET /paths/jobs/{id}).
-// Mọi con số là của lần chạy thật — không có thanh tiến độ giả theo thời gian.
+// Generation progress for AI path drafting, powered by backend background job (GET /paths/jobs/{id}).
+// All figures reflect actual pipeline runs — no simulated timer progress bars.
 
 export const STEPS = ["sources", "analysis", "plan", "modules", "coverage", "saving"];
-// Soạn từng học phần là phần tốn thời gian nhất (mỗi học phần 2 lần gọi AI)
+// Drafting individual modules is the most time-consuming step (each module makes 2 AI calls)
 const WEIGHT = { sources: 5, analysis: 5, plan: 5, modules: 75, coverage: 5, saving: 5 };
 const MODULE_PHASE_SHARE = { waiting: 0, lessons: 0.25, quiz: 0.6, done: 1, fallback: 1 };
 
@@ -26,7 +26,7 @@ export function jobPercent(job) {
   return Math.min(99, Math.round(total));
 }
 
-/** Mã lỗi AI (QUOTA_EXCEEDED, UPSTREAM_UNAVAILABLE…) → câu dễ hiểu; mã lạ thì giữ nguyên */
+/** AI error code (QUOTA_EXCEEDED, UPSTREAM_UNAVAILABLE...) -> readable message; preserves unknown codes */
 export function llmErrorLabel(t, code) {
   if (!code) return "";
   const key = `llm_error_${code.startsWith("BLOCKED_") ? "BLOCKED" : code}`;
@@ -92,11 +92,11 @@ function ModuleRow({ module, t, pick }) {
 }
 
 /**
- * @param {object}   props.job       job từ backend (null khi vừa bấm, chưa có phản hồi)
- * @param {string}   props.subtitle  cấu hình đang sinh: vị trí · mục đích · độ dài · số tài liệu
- * @param {string}   [props.error]   lỗi đã dịch khi job thất bại
- * @param {Function} [props.onBack]  quay lại chỉnh cấu hình sau khi lỗi
- * @param {boolean}  [props.compact] trong hộp thoại "Sinh lại": ẩn bảng học phần
+ * @param {object}   props.job       job from backend (null upon click before response)
+ * @param {string}   props.subtitle  current configuration: role · purpose · duration · document count
+ * @param {string}   [props.error]   translated error message when job fails
+ * @param {Function} [props.onBack]  return to configuration screen after error
+ * @param {boolean}  [props.compact] in "Regenerate" dialog: hides module progress table
  */
 export default function GenerationProgress({ job, subtitle, error, onBack, compact = false }) {
   const { t, pick } = useLanguage();

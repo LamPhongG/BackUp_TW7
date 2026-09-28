@@ -165,7 +165,7 @@ def test_onboard_emails_a_generated_password_that_logs_in(client, admin_headers,
     message = smtp.sent[0]
     assert message["To"] == address
     text = message.get_body(("plain",)).get_content()
-    password = next(line.split(": ", 1)[1] for line in text.splitlines() if line.startswith("Mật khẩu tạm thời"))
+    password = next(line.split(": ", 1)[1] for line in text.splitlines() if line.lower().startswith("temporary password"))
     assert len(password) == 12
 
     user = db.scalar(select(User).where(User.email == address))

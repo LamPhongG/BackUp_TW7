@@ -7,7 +7,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { usePaths, PathError } from "../../contexts/PathsContext";
 import { stageTemplate } from "../../data/company";
 
-// Các phép sửa lộ trình (thuần, trả về bản mới)
+// Path mutation helpers (pure functions, returning new instance)
 
 function mapModule(path, moduleId, fn) {
   return { ...path, stages: path.stages.map(s => ({ ...s, modules: s.modules.map(m => (m.id === moduleId ? fn(m) : m)) })) };
@@ -21,15 +21,15 @@ function moveModule(path, moduleId, toKey) {
     stages = [...stages, { key: toKey, modules: [] }].sort((a, b) => template.indexOf(a.key) - template.indexOf(b.key));
   }
   stages = stages.map(s => (s.key === toKey ? { ...s, modules: [...s.modules, module] } : s));
-  // Giai đoạn rỗng sau khi chuyển không còn ý nghĩa với nhân viên
+  // Empty stage after moving has no meaning for learners
   return { ...path, stages: stages.filter(s => s.modules.length) };
 }
 
 const KIND_FIELD = { lesson: "lessons", task: "tasks", quiz: "quiz" };
 
 /**
- * Nội dung lộ trình: giai đoạn → học phần → bài học / nhiệm vụ / câu hỏi.
- * editable = true thì cho sửa, xoá, chuyển học phần sang giai đoạn khác (mọi thay đổi ghi audit).
+ * Path content: stage -> module -> lesson / task / quiz.
+ * When editable = true, allows editing, deleting, moving modules to other stages (all audited).
  */
 export default function PathContent({ path, editable = false, statusByItem = {}, commentCounts = {}, onComment }) {
   const { t, pick } = useLanguage();
@@ -37,10 +37,10 @@ export default function PathContent({ path, editable = false, statusByItem = {},
   const [open, setOpen] = useState(() => new Set([path.stages[0]?.modules[0]?.id]));
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState("");
-  // Chỉ cho chuyển học phần trong các giai đoạn thuộc độ dài lộ trình HR đã chọn
+  // Only allow moving modules between stages within the HR-selected duration template
   const template = stageTemplate(path.purpose, path.duration_days);
 
-  // await được cả thao tác đồng bộ (chế độ trình duyệt) lẫn lời gọi API (chế độ backend)
+  // Awaits both synchronous operations (browser mode) and API calls (backend mode)
   const apply = async (mutate, details) => {
     setError("");
     try {
@@ -64,7 +64,7 @@ export default function PathContent({ path, editable = false, statusByItem = {},
   };
 
   const save = async (module, kind, item, patch) => {
-    // Sửa tiêu đề / tiêu chí thì bỏ bản tiếng Anh do AI sinh, để hai ngôn ngữ không lệch nhau
+    // When updating title / criteria, clear legacy fields to maintain consistency
     let change = kind !== "quiz" && "title" in patch ? { ...patch, titleEn: undefined } : patch;
     if ("completion_criteria" in patch) change = { ...change, completion_criteriaEn: undefined };
     if (await apply(p => mapModule(p, module.id, m => ({ ...m, [KIND_FIELD[kind]]: m[KIND_FIELD[kind]].map(x => (x.id === item.id ? { ...x, ...change } : x)) })), { op: "update", kind, item: item.id })) {
@@ -207,7 +207,7 @@ export default function PathContent({ path, editable = false, statusByItem = {},
   );
 }
 
-/** Mục tiêu học tập và yêu cầu ma trận mà học phần phủ (backend gắn theo mục tài liệu của từng bài) */
+/** Learning objectives and matrix requirements covered by module (attached per document section) */
 function ModuleBrief({ module }) {
   const { t } = useLanguage();
   const objectives = module.learning_objectives || [];
@@ -249,7 +249,7 @@ function TaskForm({ task, onSave, onCancel }) {
     <div className="inline-form">
       <label>{t("task_action")}<textarea rows={3} value={title} onChange={e => setTitle(e.target.value)} /></label>
       <label>{t("completion_criteria")}<textarea rows={2} value={criteria} onChange={e => setCriteria(e.target.value)} placeholder={t("completion_criteria_hint")} /></label>
-      {/* Thiếu tiêu chí thì kiểm định Python chặn phát hành, nên không cho lưu trống */}
+      {/* Missing criteria blocks publication in Python verification; do not allow empty criteria */}
       <FormButtons onCancel={onCancel} onSave={() => onSave({ title: title.trim(), completion_criteria: criteria.trim() })}
         disabled={!title.trim() || !criteria.trim()} />
     </div>
@@ -272,7 +272,7 @@ function QuizForm({ question, onSave, onCancel }) {
         </label>
       ))}
       <span className="cell-sub">{t("quiz_edit_hint")}</span>
-      {/* Câu hỏi đã sửa tay dùng chung một nội dung cho cả hai ngôn ngữ */}
+      {/* Manually edited questions use the edited content for both language fields */}
       <FormButtons onCancel={onCancel} disabled={!valid}
         onSave={() => onSave({ question: text.trim(), questionEn: text.trim(), options: options.map(o => o.trim()), answer })} />
     </div>

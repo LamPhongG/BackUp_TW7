@@ -3,7 +3,6 @@ document_id: RD-05
 role_id: ops-coordinator
 family: role-description-operations-coordinator
 title_en: Role Description – Operations Coordinator
-title_vi: Mô tả công việc – Điều phối viên Vận hành hệ thống
 category: Role Description
 department: Operations
 version: 1.0

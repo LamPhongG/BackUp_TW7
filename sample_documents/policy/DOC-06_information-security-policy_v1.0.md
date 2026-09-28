@@ -2,7 +2,6 @@
 document_id: DOC-06
 family: information-security-policy
 title_en: Information Security Policy
-title_vi: Chính sách an toàn thông tin & mật khẩu
 category: Policy
 department: Company-wide
 version: 1.0

@@ -7,13 +7,13 @@ import { readJson, STORAGE_KEYS, writeJson } from "../services/localStore";
 import { sanitizeEnrollments } from "../services/sanitize";
 import { emptyEnrollment, pathProgress, scoreQuiz } from "../utils/progress";
 
-// Tiến độ học theo từng nhân viên và từng lộ trình: bài đã đọc, nhiệm vụ đã làm, các lần làm bài kiểm tra.
-// Có backend: bản ghi gán lộ trình nằm ở server (GET /me/enrollments), server chấm bài và tính hoàn thành.
+// Learning progress by employee and path: read lessons, completed tasks, quiz attempts.
+// Backend mode: enrollment records reside on server (GET /me/enrollments); server grades quizzes and computes completion.
 const EnrollmentContext = createContext(null);
 
 const base = pathId => `/me/enrollments/${encodeURIComponent(pathId)}`;
 
-// Chế độ cố định lúc build, nên provider luôn gọi cùng một hook
+// Mode is fixed at build time, so provider always calls the same hook
 const useEnrollmentSource = backendEnabled() ? useBackendEnrollments : useBrowserEnrollments;
 
 export function EnrollmentProvider({ children }) {
@@ -46,7 +46,7 @@ function useBrowserEnrollments() {
     tasksDone: e.tasksDone.includes(taskId) ? e.tasksDone.filter(x => x !== taskId) : [...e.tasksDone, taskId],
   })), [update]);
 
-  /** Chấm bài và lưu lần làm; trả về kết quả để trang hiển thị */
+  /** Grade quiz and save attempt; returns result for page display */
   const submitQuiz = useCallback((path, module, answers) => {
     const result = scoreQuiz(module.quiz, answers);
     update(path, e => ({
@@ -59,7 +59,7 @@ function useBrowserEnrollments() {
   return useMemo(() => ({
     enrollmentFor: pathId => mine[pathId] || emptyEnrollment(),
     markLessonRead, toggleTask, submitQuiz, error: "",
-    // Khám phá và tự đăng ký lộ trình chỉ có khi có backend
+    // Explore and self-enroll in paths is only available when backend is active
     enroll: () => Promise.reject(new Error("backend_only")),
   }), [mine, markLessonRead, toggleTask, submitQuiz]);
 }
@@ -80,7 +80,7 @@ function useBackendEnrollments() {
     return () => { active = false; };
   }, [isEmployee, user?.id]);
 
-  // Mỗi thao tác trả về bản ghi mới nhất từ server (trạng thái, % hoàn thành do server tính)
+  // Each action returns the latest record from server (status, completion % calculated by server)
   const save = useCallback(async request => {
     setError("");
     try {
@@ -108,7 +108,7 @@ function useBackendEnrollments() {
     return { score: res.score, total: res.total, passed: res.passed };
   }, [save]);
 
-  /** Tự đăng ký lộ trình của phòng ban (Khám phá lộ trình); lộ trình hiện ngay trong Lộ trình của tôi */
+  /** Self-enroll in department path (Explore paths); path immediately appears in My Paths */
   const enroll = useCallback(async pathId => {
     const row = await save(() => apiRequest(`/explore/paths/${encodeURIComponent(pathId)}/enroll`, { method: "POST" }));
     await refreshPaths();

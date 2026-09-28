@@ -2,7 +2,6 @@
 document_id: DOC-23
 family: sop-partner-school-session-delivery
 title_en: SOP – Partner-School Session Delivery
-title_vi: Quy trình tổ chức buổi đào tạo tại trường đối tác
 category: SOP
 department: Operations
 version: 1.0
@@ -19,7 +18,7 @@ This SOP describes how the Operations team prepares, runs and follows up trainin
 
 ## 2. Scope
 
-The SOP applies to every scheduled session at a partner school, whether it is delivered on site, online through the learning platform, or in a mixed format. It applies at both offices, Ho Chi Minh City and Đà Nẵng.
+The SOP applies to every scheduled session at a partner school, whether it is delivered on site, online through the learning platform, or in a mixed format. It applies at both offices, Ho Chi Minh City and Da Nang.
 
 ## 3. Roles
 

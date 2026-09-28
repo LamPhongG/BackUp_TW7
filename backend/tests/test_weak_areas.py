@@ -1,7 +1,7 @@
-"""Weak-Area Detection (SRS Step 55-56): quiz_attempts → weak_areas + manager_review_required.
+"""Weak-Area Detection (SRS Step 55-56): quiz_attempts -> weak_areas + manager_review_required.
 
-Hàm thuần túy, test bằng object giả (SimpleNamespace khớp shape của QuizAttempt thật:
-module_id/score/total) — không cần DB hay endpoint nộp bài (chưa tồn tại).
+Pure function, tested with mock objects (SimpleNamespace matching shape of real QuizAttempt:
+module_id/score/total) — no DB or submission endpoint needed.
 """
 from types import SimpleNamespace
 
@@ -18,7 +18,7 @@ def _stages(*module_id_title_pairs: tuple[str, str]) -> list[dict]:
 
 
 def test_module_below_threshold_is_flagged_weak():
-    attempts = [_attempt("M1", 2, 10)]  # 20% đúng
+    attempts = [_attempt("M1", 2, 10)]  # 20% correct
     stages = _stages(("M1", "Data Privacy Basics"))
 
     result = analyze_weak_areas(attempts, stages)
@@ -28,7 +28,7 @@ def test_module_below_threshold_is_flagged_weak():
 
 
 def test_module_at_or_above_threshold_is_not_flagged():
-    attempts = [_attempt("M1", 8, 10)]  # 80% đúng, ngưỡng mặc định 70%
+    attempts = [_attempt("M1", 8, 10)]  # 80% correct, default 70% threshold
     stages = _stages(("M1", "Data Privacy Basics"))
 
     result = analyze_weak_areas(attempts, stages)
@@ -38,7 +38,7 @@ def test_module_at_or_above_threshold_is_not_flagged():
 
 
 def test_multiple_attempts_on_same_module_are_aggregated():
-    attempts = [_attempt("M1", 1, 5), _attempt("M1", 1, 5)]  # gộp lại: 2/10 = 20%
+    attempts = [_attempt("M1", 1, 5), _attempt("M1", 1, 5)]  # aggregated: 2/10 = 20%
     stages = _stages(("M1", "Security Basics"))
 
     result = analyze_weak_areas(attempts, stages)
@@ -55,7 +55,7 @@ def test_module_missing_from_stages_falls_back_to_module_id_as_topic():
 
 
 def test_custom_threshold_is_respected():
-    attempts = [_attempt("M1", 6, 10)]  # 60% đúng
+    attempts = [_attempt("M1", 6, 10)]  # 60% correct
     stages = _stages(("M1", "X"))
 
     assert analyze_weak_areas(attempts, stages, threshold=0.5)["weak_areas"] == []

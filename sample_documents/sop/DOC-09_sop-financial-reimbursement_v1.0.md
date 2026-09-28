@@ -2,7 +2,6 @@
 document_id: DOC-09
 family: sop-financial-reimbursement
 title_en: SOP – Financial Reimbursement
-title_vi: Quy trình hoàn tiền, thanh toán chi phí
 category: SOP
 department: Finance
 version: 1.0

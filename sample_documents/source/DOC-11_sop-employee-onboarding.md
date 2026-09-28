@@ -2,7 +2,6 @@
 document_id: DOC-11
 family: sop-employee-onboarding
 title_en: SOP – Employee Onboarding Process
-title_vi: Quy trình hội nhập nhân sự chuẩn
 category: SOP
 department: Human Resources
 version: 1.0
@@ -21,7 +20,7 @@ The process is delivered through the SkillSprint AI platform: every onboarding l
 
 ## 2. Scope
 
-This SOP applies to all permanent and fixed-term employees in every department and at both offices (Ho Chi Minh City headquarters and the Đà Nẵng office). Interns and contractors follow Section 9 instead of the full process. Internal transfers and promotions do not repeat onboarding; they follow the promotion learning path defined by HR for the new role.
+This SOP applies to all permanent and fixed-term employees in every department and at both offices (Ho Chi Minh City headquarters and the Da Nang office). Interns and contractors follow Section 9 instead of the full process. Internal transfers and promotions do not repeat onboarding; they follow the promotion learning path defined by HR for the new role.
 
 ## 3. Roles & Responsibilities [ROLE-SPECIFIC]
 

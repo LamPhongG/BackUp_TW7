@@ -11,7 +11,7 @@ class SourceCitation(BaseModel):
 
 
 class RubricCriterionSchema(BaseModel):
-    """Structured rubric criterion for practical assessments (SRS Step 24)."""
+    """Structured rubric criterion for practical assessments."""
     criterion: str
     weight: float = Field(default=1.0, description="Relative weight or percentage for scoring")
     expected_performance: str = Field(description="Benchmark of successful execution")
@@ -26,7 +26,7 @@ class QuizQuestionSchema(BaseModel):
     explanation: str
     difficulty: Literal["Beginner", "Intermediate", "Advanced"] = Field(
         default="Intermediate",
-        description="Difficulty level based on role and experience (SRS Step 25)",
+        description="Difficulty level based on role and experience",
     )
     source_citation: SourceCitation
 
@@ -38,7 +38,7 @@ class TaskSchema(BaseModel):
     estimated_minutes: int
     difficulty: Literal["Beginner", "Intermediate", "Advanced"] = Field(
         default="Intermediate",
-        description="Task difficulty level (SRS Step 25)",
+        description="Task difficulty level",
     )
     source_citation: SourceCitation
 
@@ -50,13 +50,13 @@ class ModuleSchema(BaseModel):
     order_index: int
     difficulty: Literal["Beginner", "Intermediate", "Advanced"] = Field(
         default="Intermediate",
-        description="Overall module difficulty (SRS Step 25)",
+        description="Overall module difficulty",
     )
     tasks: list[TaskSchema] = Field(default_factory=list)
     quizzes: list[QuizQuestionSchema] = Field(default_factory=list)
     rubric: list[RubricCriterionSchema] = Field(
         default_factory=list,
-        description="Assessment rubrics for practical or scenario evaluations (SRS Step 24)",
+        description="Assessment rubrics for practical or scenario evaluations",
     )
     source_citation: SourceCitation
 

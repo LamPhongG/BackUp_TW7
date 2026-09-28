@@ -2,7 +2,6 @@
 document_id: DOC-17
 family: conflicting-policy-sample
 title_en: Conflicting Policy Sample
-title_vi: Mẫu quy định xung đột (test Contradiction)
 category: Test Case
 department: Company-wide
 version: 1.0
@@ -21,7 +20,7 @@ This policy sets the rules for working away from the office and for work perform
 
 ## 2. Scope
 
-The policy applies to all employees who have passed probation, at both the Ho Chi Minh City headquarters and the Đà Nẵng office. Employees on probation work from the office unless their manager approves an exception in writing.
+The policy applies to all employees who have passed probation, at both the Ho Chi Minh City headquarters and the Da Nang office. Employees on probation work from the office unless their manager approves an exception in writing.
 
 ## 3. Remote Work
 

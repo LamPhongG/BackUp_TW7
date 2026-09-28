@@ -10,10 +10,10 @@ import { apiRequest, backendEnabled } from "../services/apiClient";
 import { mapAuditEntry, mapPath } from "../services/apiMappers";
 import { useLanguage } from "./LanguageContext";
 
-// Kho lộ trình + audit log, cùng một bộ hàm cho hai chế độ:
-// - Trình duyệt: localStorage; mọi thao tác kiểm tra quyền theo vai trò và trạng thái (utils/pathWorkflow),
-//   rồi ghi lộ trình và dòng audit trong cùng một lần lưu. Audit log chỉ thêm, không sửa, không xoá.
-// - Backend (VITE_API_URL): /paths và /audit-logs; server sinh nội dung (Gemini), kiểm tra quyền và kiểm định.
+// Learning paths store + audit log, sharing identical function signatures across both modes:
+// - Browser mode: localStorage; all operations enforce role and status permissions (utils/pathWorkflow),
+//   then persist path and audit entry within a single atomic save. Audit log is append-only (no edit/delete).
+// - Backend mode (VITE_API_URL): /paths and /audit-logs; server generates content (Gemini), enforces permissions and audit rules.
 
 const PathsContext = createContext(null);
 
@@ -26,11 +26,11 @@ export class PathError extends Error {
 }
 
 const TITLES = {
-  onboarding: ["Hội nhập", "Onboarding"],
-  promotion: ["Bồi dưỡng thăng chức", "Promotion upskilling"],
+  onboarding: ["Onboarding", "Onboarding"],
+  promotion: ["Promotion upskilling", "Promotion upskilling"],
 };
 
-// Chế độ cố định lúc build, nên provider luôn gọi cùng một hook
+// Build-time fixed mode, so provider always invokes the same hook
 const usePathSource = backendEnabled() ? useBackendPaths : useBrowserPaths;
 
 export function PathsProvider({ children }) {
@@ -46,7 +46,7 @@ function useBrowserPaths() {
   const { user } = useAuth();
   const [paths, setPaths] = useState(() => sanitizePaths(readJson(STORAGE_KEYS.paths, [])));
   const [auditLog, setAuditLog] = useState(() => sanitizeAuditLog(readJson(STORAGE_KEYS.auditLog, [])));
-  // Bản mới nhất để các thao tác async (sinh nội dung) không ghi đè thay đổi xảy ra trong lúc chờ
+  // Latest ref prevents asynchronous operations (path generation) from overwriting concurrent changes
   const latest = useRef({ paths, auditLog });
   latest.current = { paths, auditLog };
 
@@ -86,14 +86,14 @@ function useBrowserPaths() {
   const createPath = useCallback(async ({ role, level, purpose, durationDays, sourceDocs, processed, prompt }) => {
     if (actor?.role !== "hr") throw new PathError("err_action_not_allowed");
     const id = newId("LP");
-    // Giống server: độ dài chỉ áp dụng cho lộ trình hội nhập
+    // Server-aligned: duration only applies to onboarding paths
     const duration = purpose === "onboarding" ? durationDays || DEFAULT_ONBOARDING_DAYS : null;
     const content = await generateContent({ id, role, level, purpose, durationDays: duration, sourceDocs, processed, prompt });
     const now = new Date().toISOString();
-    const [vi, en] = TITLES[purpose] || TITLES.onboarding;
+    const [, en] = TITLES[purpose] || TITLES.onboarding;
     const path = {
       id,
-      title: `${vi} — ${role.name}`,
+      title: `${en} — ${role.name}`,
       titleEn: `${en} — ${role.nameEn}`,
       purpose, level,
       duration_days: duration,
@@ -129,7 +129,7 @@ function useBrowserPaths() {
     commit(replace(updated), { ...logBase(updated), action: "regenerate", status_before: current.status, status_after: current.status, details: { engine: content.engine } });
   }, [commit]);
 
-  /** @param {(path) => path} mutate  trả về bản lộ trình đã sửa; details mô tả thay đổi cho audit */
+  /** @param {(path) => path} mutate  returns updated path object; details describes change for audit */
   const editPath = useCallback((id, mutate, details) => {
     const path = get(id);
     guard("edit", path);
@@ -203,7 +203,7 @@ function useBrowserPaths() {
     commit(replace({ ...path, comments }), null);
   }, [actor, commit]);
 
-  // Chế độ trình duyệt đọc thẳng từ localStorage, không có gì để tải lại
+  // Browser mode reads synchronously from localStorage; no reload required
   const refreshPaths = useCallback(() => Promise.resolve(), []);
 
   return useMemo(() => ({
@@ -213,7 +213,7 @@ function useBrowserPaths() {
   }), [paths, auditLog, createPath, regeneratePath, editPath, submitPath, requestChanges, approvePath, archivePath, deletePath, addComment, resolveComment, refreshPaths]);
 }
 
-// Lỗi nghiệp vụ của backend mang khoá dịch (err_...) → PathError để trang hiển thị như lỗi ở chế độ trình duyệt
+// Backend domain errors carry translation key (err_...) -> PathError for unified display across modes
 const JOB_POLL_MS = 700;
 
 function asPathError(e) {
@@ -225,7 +225,7 @@ function useBackendPaths() {
   const { lang } = useLanguage();
   const [paths, setPaths] = useState([]);
   const [auditLog, setAuditLog] = useState([]);
-  // Chưa tải xong lần đầu: trang nhân viên hiện "đang tải" thay vì "chưa có lộ trình"
+  // Initial load pending: employee page displays "loading" rather than empty state
   const [loaded, setLoaded] = useState(false);
   const latest = useRef(paths);
   latest.current = paths;
@@ -246,7 +246,7 @@ function useBackendPaths() {
       return;
     }
     let cancelled = false;
-    // Lấy kèm nội dung: danh sách, tiến độ học và kiểm định đều cần stages
+    // Fetch full path with stages: list, progress tracking, and verification checks require stages
     apiRequest("/paths", { query: { include_content: true } })
       .then(list => { if (!cancelled) setPaths(list.map(mapPath)); })
       .catch(() => { if (!cancelled) setPaths([]); })
@@ -255,7 +255,7 @@ function useBackendPaths() {
     return () => { cancelled = true; };
   }, [user, reloadAudit]);
 
-  /** Gọi API, thay bản lộ trình trả về vào danh sách, tải lại audit log */
+  /** Invoke API, update path in local state list, reload audit log */
   const call = useCallback(async (path, options) => {
     let result;
     try {
@@ -272,8 +272,8 @@ function useBackendPaths() {
   }, [reloadAudit]);
 
   /**
-   * Sinh bằng job chạy nền: server trả job ngay, giao diện hỏi lại mỗi JOB_POLL_MS và nhận từng bước thật
-   * (kiểm tra nguồn → phân tích → dàn ý → từng học phần → ma trận → lưu) qua onProgress(job).
+   * Background generation job: server returns job immediately, frontend polls every JOB_POLL_MS and tracks stages
+   * (sources -> analysis -> outline -> modules -> coverage matrix -> save) via onProgress(job).
    */
   const runJob = useCallback(async (startPath, body, onProgress) => {
     let job;
@@ -292,7 +292,7 @@ function useBackendPaths() {
     return call(`/paths/${job.path_id}`);
   }, [call]);
 
-  // allowMissingMandatory: HR đã chủ động bỏ tài liệu bắt buộc; server vẫn sinh và cảnh báo Reviewer
+  // allowMissingMandatory: HR opted to exclude mandatory documents; server still generates and flags Reviewer
   const createPath = useCallback(({ role, level, purpose, durationDays, sourceDocs, prompt, allowMissingMandatory, onProgress }) => runJob("/paths/jobs", {
     job_position_id: role.id, level, purpose, source_document_ids: sourceDocs.map(d => d.id), prompt, language: lang,
     duration_days: purpose === "onboarding" ? durationDays : null, allow_missing_mandatory: !!allowMissingMandatory,
@@ -314,7 +314,7 @@ function useBackendPaths() {
   const requestChanges = useCallback((id, { message }) =>
     call(`/paths/${id}/request-changes`, { method: "POST", body: { message } }), [call]);
 
-  // Server tự chạy lại kiểm định trước khi phát hành; `checks` phía trình duyệt chỉ để hiển thị
+  // Server runs pre-publish verification check; client-side checks are for display
   const approvePath = useCallback((id, { departments, roles, reason }) =>
     call(`/paths/${id}/approve`, { method: "POST", body: { departments, job_positions: roles, reason } }), [call]);
 
@@ -333,7 +333,7 @@ function useBackendPaths() {
   const resolveComment = useCallback((id, commentId, resolved = true) =>
     call(`/paths/${id}/comments/${commentId}/resolve`, { method: "POST", body: { resolved } }), [call]);
 
-  // Tự đăng ký một lộ trình làm server cho xem thêm lộ trình đó: tải lại danh sách
+  // Self-enrolling in a path makes it visible: refresh list
   const refreshPaths = useCallback(async () => {
     const list = await apiRequest("/paths", { query: { include_content: true } });
     setPaths(list.map(mapPath));

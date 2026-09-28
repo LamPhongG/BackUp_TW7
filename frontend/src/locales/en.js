@@ -91,7 +91,7 @@ export const en = {
   col_ground_truth: "Python Ground Truth",
   col_status: "Status",
 
-  // Data values — dùng qua tv(): tv("Human Resources") → v_human_resources
+  // Data values — used via tv(): tv("Human Resources") → v_human_resources
   v_engineering: "Engineering",
   v_data: "Data",
   v_compliance: "Compliance",
@@ -642,7 +642,7 @@ export const en = {
   completed_on: "completed {date}",
   login_demo_note: "Shared password: {password}. Real accounts will come from the backend.",
 
-  // Trang lỗi
+  // Error page
   go_home: "Go to my home page",
   crash_title: "Something went wrong",
   crash_desc: "This page could not be displayed. The most common cause is outdated or corrupted demo data saved in this browser by an earlier version.",
@@ -722,7 +722,7 @@ export const en = {
   rep_title_learners: "Learning progress report",
   rep_sub_learners: "Progress, quiz scores and certificates of each employee per assigned path.",
   rep_title_coverage: "Role requirement coverage report",
-  rep_sub_coverage: "Mandatory Role Requirement Matrix items taught by each role's latest published path (SRS Step 29).",
+  rep_sub_coverage: "Mandatory Role Requirement Matrix items taught by each role's latest published path.",
   rep_title_quizzes: "Quiz results report",
   rep_sub_quizzes: "Attempts, pass rate (70% or more) and average score of every published module.",
   rep_title_knowledge: "Documents and citations report",
@@ -730,7 +730,7 @@ export const en = {
   rep_title_alerts: "Security and content alerts report",
   rep_sub_alerts: "Prompt injection in documents, unsupported items and chunks excluded during generation.",
   rep_title_comparison: "GenAI / Python comparison report",
-  rep_sub_comparison: "Requirement-level comparison of paths in review or published (SRS Step 46).",
+  rep_sub_comparison: "Requirement-level comparison of paths in review or published.",
   rep_kpi_learners: "Assignments",
   rep_kpi_completed: "Completed",
   rep_kpi_in_progress: "In progress",
@@ -1086,7 +1086,7 @@ export const en = {
   not_started: "Not Started",
   no_due_date: "No deadline",
   export_pdf_certificate: "Export PDF / Print Certificate",
-  // Tạo tài khoản từ CV và đổi mật khẩu
+  // Account creation from CV and password change
   pwd_change: "Change password",
   pwd_current: "Current password",
   pwd_new: "New password",
@@ -1132,4 +1132,7 @@ export const en = {
   cv_close: "Close",
   err_cv_unreadable: "The CV could not be read ({reason}). Try a PDF with a text layer, or a DOCX.",
   err_position_unknown: "Unknown job position.",
+  tab_dual_comparison: "Dual-Pipeline Comparison (Table 1)",
+  menu_plan_comparison: "Plan Comparison",
 };
+

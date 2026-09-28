@@ -20,7 +20,7 @@ _YEARS = re.compile(r"(\d{1,2})\s*\+?\s*(?:năm|years?|yrs?)\b[^\n.]{0,20}?(?:ki
 _NOT_A_NAME = re.compile(r"curriculum|vitae|\bcv\b|resume|sơ\s*yếu|lý\s*lịch|profile|hồ\s*sơ", re.IGNORECASE)
 
 # Section headings. A heading is a short line without digits that starts with one of these words and is either written in
-# capitals ("KỸ NĂNG CHUYÊN MÔN"), ends with a colon, or has at most two words after the keyword ("Technical skills").
+# capitals ("KEY SKILLS"), ends with a colon, or has at most two words after the keyword ("Technical skills").
 _HEADINGS = {
     "experience": r"kinh\s*nghiệm|work\s*experience|professional\s*experience|experience|employment|work\s*history"
                   r"|quá\s*trình\s*(?:làm\s*việc|công\s*tác)",
@@ -76,7 +76,7 @@ def _is_list_line(raw: str) -> bool:
 def _skills(lines: list[str], name: str | None) -> list[str]:
     skills: list[str] = []
     for i, raw in enumerate(lines):
-        # Footer lines ("Nguyễn Lâm Phong — CV", the email) end up after the last section of a PDF.
+        # Footer lines ("Candidate Name — CV", the email) end up after the last section of a PDF.
         if "@" in raw or "http" in raw.lower() or (name and name.lower() in raw.lower()):
             continue
         line = _BULLET.sub("", raw).strip()
@@ -87,7 +87,7 @@ def _skills(lines: list[str], name: str | None) -> list[str]:
         elif _is_tag_line(line):
             items = line.split()
         elif i + 1 < len(lines) and _is_list_line(lines[i + 1]):
-            continue  # group label above the skills of the group: "Ngôn ngữ lập trình", "Back-end & Cloud"
+            continue  # group label above the skills of the group: "Programming languages", "Back-end & Cloud"
         else:
             items = [line]
         for item in items:
@@ -162,7 +162,7 @@ def parse_text(text: str) -> dict:
 
     experience = " ".join(sections["experience"])
     if years is None:
-        # No "N năm kinh nghiệm" sentence: count the years covered by the jobs listed.
+        # No "N years experience" sentence: count the years covered by the jobs listed.
         years = _years_from_ranges(experience)
     if len(experience) > MAX_EXPERIENCE_CHARS:
         experience = experience[:MAX_EXPERIENCE_CHARS].rsplit(" ", 1)[0] + "…"

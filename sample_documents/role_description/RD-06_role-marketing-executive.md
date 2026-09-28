@@ -3,7 +3,6 @@ document_id: RD-06
 role_id: marketing-exec
 family: role-description-marketing-executive
 title_en: Role Description – Marketing Executive
-title_vi: Mô tả công việc – Nhân viên Tiếp thị kỹ thuật số
 category: Role Description
 department: Marketing
 version: 1.0

@@ -2,7 +2,6 @@
 document_id: DOC-24
 family: vendor-procurement-procedure
 title_en: Vendor & Procurement Procedure
-title_vi: Quy trình mua hàng và quản lý nhà cung cấp
 category: Process Manual
 department: Operations
 version: 1.0
@@ -56,7 +55,7 @@ A purchase is not split into several smaller orders to avoid a quote requirement
 ## 6. Purchase Orders [MANDATORY]
 
 - Every purchase from a vendor has an approved purchase order before the vendor starts work or delivers goods.
-- Approval limits: up to 100,000,000 VND per order by the Branch Manager; above that by the Chief Operating Officer (DOC-12 §3.1). For the Đà Nẵng office the exception of DOC-20 §9 applies until a Branch Manager is appointed there.
+- Approval limits: up to 100,000,000 VND per order by the Branch Manager; above that by the Chief Operating Officer (DOC-12 §3.1). For the Da Nang office the exception of DOC-20 §9 applies until a Branch Manager is appointed there.
 - The purchase order states the vendor, the goods or services, quantities, prices, delivery date and payment terms.
 - Changes to price or quantity after approval need a revised purchase order approved at the level of the new total.
 
@@ -102,7 +101,7 @@ For recurring purchases such as printing and transport, a framework agreement wi
 ## 13. Cross-References
 
 - Operations Coordinator vendor duties: DOC-12 §6.3; approval limits: DOC-12 §3.1
-- Đà Nẵng purchase approval: DOC-20 §9
+- Da Nang purchase approval: DOC-20 §9
 - Finance Associate checks and bank-detail changes: DOC-15 §4.2, §4.3
 - Personal data with vendors: DOC-05 §6; phishing reporting: DOC-06 §5
 - Conflict of interest: DOC-04 §5; disciplinary process: DOC-04 §6

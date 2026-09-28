@@ -3,7 +3,6 @@ document_id: RD-07
 role_id: support-engineer
 family: role-description-software-support-engineer
 title_en: Role Description – Software Support Engineer
-title_vi: Mô tả công việc – Kỹ sư Hỗ trợ Kỹ thuật phần mềm
 category: Role Description
 department: Engineering
 version: 1.0

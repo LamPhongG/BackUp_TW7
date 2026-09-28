@@ -8,8 +8,8 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { DEPARTMENTS as DEPT_CODES } from "../../data/company";
 
 /**
- * HR tạo tài khoản nhân viên ngay (không còn gửi link tự đăng ký): hệ thống tự sinh mật khẩu và gửi
- * qua email, nhân viên chỉ cần đăng nhập. Danh sách bên dưới là các tài khoản nhân viên mới nhất.
+ * HR creates employee accounts directly: system generates a temporary password and delivers it
+ * via email, allowing immediate employee login. The list below shows recently created employee accounts.
  */
 export default function HrInvites() {
   const { t, tv } = useLanguage();

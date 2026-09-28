@@ -2,7 +2,6 @@
 document_id: DOC-28
 family: sop-budget-and-month-end-close
 title_en: SOP – Budget Planning & Month-End Close
-title_vi: Quy trình lập ngân sách và khoá sổ cuối tháng
 category: SOP
 department: Finance
 version: 1.0
@@ -45,7 +44,7 @@ A department budget lists personnel costs, software subscriptions, training, tra
 ## 5. Spending Against Budget
 
 - Spending must fit an approved budget line. A purchase without a budget line needs the Finance Manager's approval before the purchase order is raised.
-- Purchase orders follow the procurement procedure of DOC-24 and the approval limits of DOC-12 §3.1. For the Đà Nẵng office, the exception of DOC-20 §9 applies.
+- Purchase orders follow the procurement procedure of DOC-24 and the approval limits of DOC-12 §3.1. For the Da Nang office, the exception of DOC-20 §9 applies.
 - Expense claims follow DOC-09: submission within 15 calendar days, and claims of 5,000,000 VND or more need Branch Manager approval in addition to the direct manager (DOC-09 §3, §4).
 - When a line is expected to be overspent by more than 10 percent, the budget owner requests a revision before spending more. The request states the reason, the amount and the line that will absorb it.
 - Splitting a purchase into smaller orders to stay under an approval limit is not allowed and is handled under DOC-04 §6.
@@ -108,7 +107,7 @@ Budget owners are encouraged to review their lines every two weeks during the la
 
 - Reimbursement rules: DOC-09 §3–§7
 - Finance Associate duties and month-end close: DOC-15 §4
-- Purchase approval limits: DOC-12 §3.1; Đà Nẵng exception: DOC-20 §9
+- Purchase approval limits: DOC-12 §3.1; Da Nang exception: DOC-20 §9
 - Finance month-end leave blackout: DOC-20 §5
 - Procurement and invoice matching: DOC-24
 - Marketing plan: DOC-22 §3.1; delivery figures: DOC-23 §11

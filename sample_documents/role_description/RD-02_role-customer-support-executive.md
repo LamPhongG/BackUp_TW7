@@ -3,7 +3,6 @@ document_id: RD-02
 role_id: cs-exec
 family: role-description-customer-support-executive
 title_en: Role Description – Customer Support Executive
-title_vi: Mô tả công việc – Nhân viên Chăm sóc khách hàng
 category: Role Description
 department: Customer Support
 version: 1.0

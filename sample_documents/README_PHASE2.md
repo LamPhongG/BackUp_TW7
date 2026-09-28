@@ -136,7 +136,7 @@ Bộ dữ liệu phải có ít nhất 10 lần thay đổi phiên bản chính 
 | 6 | `DOC-14_jd-engineering-support_v1.1.pdf` | 2026-06-01 | v1.0 | §3.2 cập nhật ticket Tier 2 1 → **2** lần/ngày · §6.2 xoá bản trích có dữ liệu cá nhân 30 → **14** ngày |
 | 7 | `DOC-15_jd-hr-finance_v1.1.pdf` | 2026-04-01 | v1.0 | §3.2 đồng bộ với DOC-11 v1.1 (7 ngày, ngày 50) · §4.3 đổi tài khoản ngân hàng nhà cung cấp cần **thêm Finance Manager duyệt** |
 | 8 | `DOC-16_general-faqs_v1.1.pdf` | 2026-04-01 | v1.0 | §3 đồng bộ ngày 50 · §8 ngân sách học tập 5.000.000 → **7.000.000** VND/năm |
-| 9 | `DOC-20_department-exceptions_v1.1.pdf` | 2026-07-01 | v1.0 | §4 trực on-call phản hồi 30 → **15** phút · §9 đồng bộ với DOC-12 v2.0 (100.000.000 VND); hạn mức duyệt từ xa cho văn phòng Đà Nẵng 20.000.000 → **30.000.000** VND |
+| 9 | `DOC-20_department-exceptions_v1.1.pdf` | 2026-07-01 | v1.0 | §4 trực on-call phản hồi 30 → **15** phút · §9 đồng bộ với DOC-12 v2.0 (100.000.000 VND); hạn mức duyệt từ xa cho văn phòng Da Nang 20.000.000 → **30.000.000** VND |
 | 10 | `DOC-20_department-exceptions_v1.2.pdf` | **2027-01-01** | v1.1 | §3 gia hạn ca mở rộng của Customer Support đến 31/12/2027, ca thứ Bảy 09:00–13:00 → **08:00–12:00** · §6 tiếp khách không cần duyệt trước 2.000.000 → **3.000.000** VND/buổi, gia hạn đến 31/12/2027 |
 
 Cộng với DOC-02 → DOC-01 v2.0 của Duyên, bộ dữ liệu có **11 lần đổi phiên bản** và 23 dòng thay đổi trong các mục Revision History.

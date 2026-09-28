@@ -2,7 +2,6 @@
 document_id: DOC-20
 family: department-exceptions
 title_en: Department-Specific Exceptions
-title_vi: Ngoại lệ đặc thù theo phòng ban
 category: Policy
 department: Company-wide
 version: 1.0
@@ -72,13 +71,13 @@ Company-wide policies set one rule for everyone. Some departments cannot work un
 - **Conditions**: professional behaviour standards still apply (DOC-04 §2). Hours worked beyond 8 on a visit day are recorded and taken back within the same month.
 - **Approved by**: Branch Manager. **Valid until**: no end date.
 
-## 9. Đà Nẵng Office – Purchase Approval [EXCEPTION]
+## 9. Da Nang Office – Purchase Approval [EXCEPTION]
 
 - **Base rule**: the Branch Manager approves purchase orders up to 50,000,000 VND (DOC-12 §3.1).
-- **Exception**: until the Đà Nẵng office has a full-time Branch Manager, purchase orders for that office up to 20,000,000 VND are approved by the headquarters Branch Manager remotely, and larger orders go directly to the Chief Operating Officer.
-- **Scope**: Đà Nẵng office only.
+- **Exception**: until the Da Nang office has a full-time Branch Manager, purchase orders for that office up to 20,000,000 VND are approved by the headquarters Branch Manager remotely, and larger orders go directly to the Chief Operating Officer.
+- **Scope**: Da Nang office only.
 - **Conditions**: expense-claim thresholds of DOC-09 §4 are unchanged.
-- **Approved by**: Chief Operating Officer. **Valid until**: the appointment of a Đà Nẵng Branch Manager.
+- **Approved by**: Chief Operating Officer. **Valid until**: the appointment of a Da Nang Branch Manager.
 
 ## 10. Requesting a New Exception
 

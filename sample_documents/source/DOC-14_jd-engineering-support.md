@@ -2,7 +2,6 @@
 document_id: DOC-14
 family: jd-engineering-support
 title_en: Job Descriptions – Engineering & Support
-title_vi: Mô tả công việc khối Kỹ thuật & Hỗ trợ
 category: Role Description
 department: Engineering
 version: 1.0

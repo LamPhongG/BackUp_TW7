@@ -82,5 +82,3 @@
   * Khi tạo phiên bản prompt mới, đưa các yêu cầu văn phong của mục này vào system prompt (không thổi phồng, không song hành phủ định, không "Cần lưu ý rằng", không emoji, không Title Case).
   * Output không được chứa `[cite: N]`, lời thoại, lời từ chối; gặp thì coi là lỗi định dạng như JSON hỏng.
 - Không dùng danh sách này để kết tội: một từ đơn lẻ không chứng minh gì, công cụ "AI detector" không được dùng làm căn cứ (mục J). Mục đích là tự rà văn bản của mình trước khi commit và khi review.
-
-RULES khi vibe code dự án - copy dán vào folder trong project cho AI đọc trước khi làm

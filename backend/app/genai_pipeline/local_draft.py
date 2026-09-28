@@ -15,8 +15,7 @@ LESSON_MAX_CHARS = 2500
 DAY30_MAX_MODULES = 3
 
 # Sentences stating a duty make good practice tasks.
-_OBLIGATION = re.compile(r"\b(must|should|shall|required|need to|ensure|never|always)\b|phải|cần|bắt buộc|không được|nghiêm cấm",
-                         re.IGNORECASE)
+_OBLIGATION = re.compile(r"\b(must|should|shall|required|need to|ensure|never|always)\b", re.IGNORECASE)
 # A standalone number (not part of DOC-10, v1.0, ISO-27001); ASCII \w to match JavaScript.
 _NUMBER = re.compile(r"(?<![\w.#/-])(\d{1,4})(?![\w/.-]?\d)(?![\w/-])", re.ASCII)
 
@@ -112,7 +111,7 @@ def source_reference(doc: SourceDoc, chunk: dict, quote: str, section: str | Non
 
 
 def module_shell(module_id: str, doc: SourceDoc) -> dict:
-    return {"id": module_id, "kind": "lesson", "title": doc.title or doc.title_en, "titleEn": doc.title_en or doc.title,
+    return {"id": module_id, "kind": "lesson", "title": doc.title_en or doc.title, "titleEn": doc.title_en or doc.title,
             "doc_id": doc.id, "doc_code": doc.code, "tier": doc_tier(doc)}
 
 
@@ -185,7 +184,7 @@ def _quiz(m: _Module, level: str, all_sentences: list[tuple[str, str]]) -> list[
             section = lesson["source_reference"]["section"]
             quiz.append({
                 "id": f"{m.id}-Q{len(quiz) + 1}", "kind": "cloze",
-                "question": f"Điền vào chỗ trống theo {code} · {section}: “{cloze['blanked']}”",
+                "question": f"Fill in the blank ({code} · {section}): “{cloze['blanked']}”",
                 "questionEn": f"Fill in the blank ({code} · {section}): “{cloze['blanked']}”",
                 "options": options, "answer": answer, "source_reference": _ref(lesson, s),
             })
@@ -211,7 +210,7 @@ def _quiz(m: _Module, level: str, all_sentences: list[tuple[str, str]]) -> list[
         section = lesson["source_reference"]["section"]
         quiz.append({
             "id": f"{m.id}-Q{len(quiz) + 1}", "kind": "statement",
-            "question": f"Theo {code} · mục “{section}”, phát biểu nào đúng?",
+            "question": f"According to {code} · “{section}”, which statement is correct?",
             "questionEn": f"According to {code} · “{section}”, which statement is correct?",
             "options": options, "answer": answer, "source_reference": _ref(lesson, s),
         })
@@ -222,7 +221,7 @@ def _quiz(m: _Module, level: str, all_sentences: list[tuple[str, str]]) -> list[
 def completion_criteria(code: str, section: str) -> tuple[str, str]:
     """Criteria for a task built from a quoted obligation. The rules cannot know the evidence a policy expects,
     so the criterion points back at the quoted rule instead of inventing a deliverable."""
-    return (f"Đã thực hiện đúng yêu cầu trong câu trích ({code} · {section}) ít nhất một lần trong công việc thực tế.",
+    return (f"Carried out the quoted requirement ({code} · {section}) correctly at least once in real work.",
             f"Carried out the quoted requirement ({code} · {section}) correctly at least once in real work.")
 
 
@@ -269,7 +268,7 @@ def arrange_stages(req: GenerationRequest, modules: list[dict]) -> list[dict]:
                   for i, m in enumerate((m for m in modules if m["quiz"]), start=1)]
     if final_quiz:
         stage_map[template[-1]].append({
-            "id": f"{req.path_id}-FA", "kind": "assessment", "title": "Bài đánh giá tổng hợp", "titleEn": "Final assessment",
+            "id": f"{req.path_id}-FA", "kind": "assessment", "title": "Final Assessment", "titleEn": "Final Assessment",
             "doc_id": None, "doc_code": None, "tier": 5, "lessons": [], "tasks": [], "quiz": final_quiz,
         })
     return [{"key": k, "modules": stage_map[k]} for k in template if stage_map[k]]

@@ -294,7 +294,7 @@ def soft_delete_user(
     db.refresh(target)
     return UserStatusResponse(
         success=True,
-        message=f"Tài khoản {target.name} ({target.email}) đã được vô hiệu hóa an toàn trong database.",
+        message=f"Account {target.name} ({target.email}) has been deactivated safely in the database.",
         user=UserOut.from_user(target),
     )
 
@@ -318,6 +318,7 @@ def restore_user(
     db.refresh(target)
     return UserStatusResponse(
         success=True,
-        message=f"Tài khoản {target.name} ({target.email}) đã được kích hoạt lại thành công.",
+        message=f"Account {target.name} ({target.email}) has been reactivated successfully.",
         user=UserOut.from_user(target),
     )
+

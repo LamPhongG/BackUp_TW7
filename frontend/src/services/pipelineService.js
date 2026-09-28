@@ -1,7 +1,7 @@
-// Sinh nội dung lộ trình ở chế độ trình duyệt (không có backend): bản nháp dựng từ cấu trúc tài liệu
+// Generate path content in browser mode (without backend): draft built from document structure
 // (utils/pathGenerator.js), engine = "local-draft".
-// Có backend thì PathsContext gọi POST /paths và server sinh nội dung (Gemini + kiểm tra trích dẫn),
-// nên module này không được dùng.
+// When backend is active, PathsContext calls POST /paths and the server generates content (Gemini + citation verification),
+// so this module serves as browser fallback.
 import { generatePathContent } from "../utils/pathGenerator";
 
 export const PROMPT_VERSION = import.meta.env?.VITE_PROMPT_VERSION || "v1.1";

@@ -15,9 +15,9 @@ const NO_MATRIX = { roleId: null, list: [], loading: false, error: "" };
 const DONE_PAUSE_MS = 1200;
 
 /**
- * Ma trận yêu cầu của vị trí (SRS Step 10, 28): tài liệu bắt buộc được chọn sẵn.
- * Chỉ có ở chế độ backend — ma trận nằm ở server. HR bỏ chọn được, nhưng server chỉ nhận khi request
- * xác nhận `allow_missing_mandatory`, và Reviewer luôn thấy cảnh báo thiếu tài liệu bắt buộc.
+ * Role requirement matrix: mandatory documents preselected.
+ * Backend mode only — matrix resides on server. HR may deselect, but the server only accepts
+ * if `allow_missing_mandatory` is confirmed, and Reviewer always sees missing mandatory warnings.
  */
 function useRequiredSources(roleId, readyKey) {
   const [state, setState] = useState(NO_MATRIX);
@@ -29,12 +29,12 @@ function useRequiredSources(roleId, readyKey) {
       .then(list => { if (!cancelled) setState({ roleId, list, loading: false, error: "" }); })
       .catch(e => { if (!cancelled) setState({ roleId, list: [], loading: false, error: e.message }); });
     return () => { cancelled = true; };
-    // readyKey: tài liệu vừa xử lý xong có thể đổi trạng thái "sẵn sàng" của một tài liệu bắt buộc
+    // readyKey: newly processed document can change the "ready" status of a mandatory document
   }, [roleId, readyKey]);
   return state;
 }
 
-/** HR chọn vị trí + tài liệu nguồn → AI sinh bản nháp lộ trình → mở trang chi tiết để xem, sửa và gửi duyệt */
+/** HR selects role + source documents -> AI drafts path -> opens detail page for review, edit, and submission */
 export default function CreatePath() {
   const { activeDocuments, processed, progress } = useDocuments();
   const { createPath } = usePaths();
@@ -46,7 +46,7 @@ export default function CreatePath() {
   const [purpose, setPurpose] = useState("onboarding");
   const [durationDays, setDurationDays] = useState(DEFAULT_ONBOARDING_DAYS);
   const [prompt, setPrompt] = useState("");
-  // Tài liệu HR tự chọn thêm, và tài liệu bắt buộc HR đã bỏ chọn
+  // Manually added documents, and mandatory documents deselected by HR
   const [extraIds, setExtraIds] = useState([]);
   const [omittedIds, setOmittedIds] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -80,7 +80,7 @@ export default function CreatePath() {
   const sources = ready.filter(d => selectedIds.has(d.id));
   const flagged = sources.filter(d => d.injectionFlagCount > 0);
   const notReady = activeDocuments.filter(d => d.processing !== "done");
-  // Bắt buộc lên đầu, rồi đến tài liệu ma trận gợi ý, cuối cùng là phần còn lại
+  // Mandatory first, then matrix suggested documents, followed by remaining documents
   const rank = d => (mandatoryIds.has(d.id) ? 0 : byDocId[d.id] ? 1 : 2);
   const listed = [...activeDocuments].sort((a, b) => rank(a) - rank(b));
 
@@ -97,12 +97,12 @@ export default function CreatePath() {
     try {
       const path = await createPath({ role, level, purpose, durationDays, sourceDocs: sources, processed, prompt: prompt.trim(),
         allowMissingMandatory: omittedCodes.length > 0, onProgress: setJob });
-      // Để HR kịp thấy mọi bước đã xong trước khi chuyển sang bản nháp
+      // Allow HR to see all steps completed before transitioning to draft
       if (backendEnabled()) await new Promise(resolve => setTimeout(resolve, DONE_PAUSE_MS));
       navigate(`/hr/paths/${path.id}`);
     } catch (e) {
       setError(e instanceof PathError ? t(e.key, e.vars) : e.message === "NO_CONTENT" ? t("err_no_content") : e.message);
-      // Chế độ trình duyệt không có màn hình tiến độ: lỗi hiện ngay dưới nút như trước
+      // Browser mode without progress screen: error displayed directly below button as before
       if (!backendEnabled()) setBusy(false);
     }
   };

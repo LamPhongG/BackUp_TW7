@@ -139,7 +139,7 @@ def create_document(db: Session, actor: User, meta: DocumentMeta, file_name: str
         code=meta.code,
         family=family,
         version=meta.version,
-        title=vietnamese_title(meta.code, meta.title_en),
+        title=meta.title_en or vietnamese_title(meta.code, meta.title_en),
         title_en=meta.title_en,
         category=meta.category,
         department_code=meta.department_code,

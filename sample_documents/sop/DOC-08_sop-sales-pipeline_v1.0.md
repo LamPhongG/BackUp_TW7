@@ -2,7 +2,6 @@
 document_id: DOC-08
 family: sop-sales-pipeline
 title_en: SOP – Sales Pipeline Management
-title_vi: Quy trình quản lý phễu bán hàng
 category: SOP
 department: Sales
 version: 1.0

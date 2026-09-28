@@ -3,7 +3,6 @@ document_id: RD-04
 role_id: finance-associate
 family: role-description-finance-associate
 title_en: Role Description – Finance Associate
-title_vi: Mô tả công việc – Chuyên viên Tài chính - Kế toán
 category: Role Description
 department: Finance
 version: 1.0

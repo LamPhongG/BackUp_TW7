@@ -2,7 +2,6 @@
 document_id: DOC-21
 family: brand-content-guidelines
 title_en: Brand & Content Guidelines
-title_vi: Hướng dẫn thương hiệu và nội dung
 category: Policy
 department: Marketing
 version: 1.0

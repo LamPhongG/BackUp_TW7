@@ -2,7 +2,6 @@
 document_id: DOC-25
 family: data-governance-reporting-standards
 title_en: Data Governance & Reporting Standards
-title_vi: Chuẩn quản trị dữ liệu và báo cáo
 category: Policy
 department: Data
 version: 1.0

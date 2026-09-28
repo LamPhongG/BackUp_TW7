@@ -1,4 +1,4 @@
-"""Selective Regeneration Engine (SRS Step 59).
+"""Selective Regeneration Engine.
 
 Enables updating only affected modules or quizzes when policies change,
 preserving unaffected content and keeping the onboarding plan stable.
@@ -33,7 +33,7 @@ def regenerate_affected_modules(
     updated_chunks: list[DocumentChunk],
     target_role: str | None = None,
 ) -> tuple[OnboardingPlanSchema, dict[str, Any]]:
-    """Selectively regenerate only affected modules, preserving unaffected modules (SRS Step 59).
+    """Selectively regenerate only affected modules, preserving unaffected modules.
     
     Returns:
         (updated_plan, regeneration_report)

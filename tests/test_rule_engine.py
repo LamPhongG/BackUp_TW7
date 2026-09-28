@@ -1,5 +1,5 @@
-# Unit tests for Pipeline 2 rule engine (Phase 2): coverage_scorer + prerequisite_checker.
-# Engine phải thuần Python — không import bất kỳ AI SDK nào (WBS Phase 2 tiêu chí hoàn thành).
+# Unit tests for rule engine: coverage_scorer and prerequisite_checker.
+# Engine is pure Python with no external AI SDK dependencies.
 
 import ast
 from pathlib import Path
@@ -33,7 +33,7 @@ def _citation() -> SourceCitation:
 
 
 def _plan(role: str, module_specs: list[tuple[str, int]]) -> OnboardingPlanSchema:
-    """module_specs: danh sách (title, order_index); mỗi module dùng title làm cả description."""
+    """module_specs: list of (title, order_index); each module uses title for description."""
     citation = _citation()
     modules = [
         ModuleSchema(
@@ -63,8 +63,8 @@ def test_load_role_matrix_has_expected_columns():
 # ---------------------------------------------------------------------------
 
 def test_build_rule_data_matches_existing_hidden_test_scenario():
-    """DevOps Engineer đã được hidden_test_ready dùng với required_topics=[VPN, Encryption],
-    max_total_minutes=240 — ma trận mới không được đổi kịch bản đã có này."""
+    """DevOps Engineer scenario used by hidden_test_ready with required_topics=[VPN, Encryption],
+    max_total_minutes=240 — new matrix must not break this existing scenario."""
     rule_data = build_rule_data("DevOps Engineer", MATRIX_ROWS)
 
     assert set(rule_data["required_topics"]) == {"VPN", "Encryption"}
@@ -88,8 +88,8 @@ def test_calculate_coverage_score_partial_and_full():
 
 
 def test_calculate_coverage_score_unknown_role_defaults_to_full():
-    # Thiếu dữ liệu ma trận không phải lỗi nội dung của plan (cùng quy ước với
-    # backend/app/rule_pipeline/coverage.py::score_requirements khi không có yêu cầu bắt buộc).
+    # Missing matrix data is not a plan content error (same convention as
+    # backend/app/rule_pipeline/coverage.py::score_requirements when there are no mandatory requirements).
     plan = _plan("Astronaut", [("Anything", 1)])
 
     assert calculate_coverage_score(plan, MATRIX_ROWS, "Astronaut") == 1.0
@@ -115,7 +115,7 @@ def test_check_prerequisites_passes_correct_order():
 
 
 def test_check_prerequisites_skips_topics_missing_from_plan():
-    # VPN chưa xuất hiện trong plan: coverage_scorer đã báo thiếu ở chỗ khác, không lặp lỗi ở đây.
+    # VPN not yet in plan: coverage_scorer reports missing topics elsewhere, do not duplicate here.
     plan = _plan("DevOps Engineer", [("Disk Encryption Basics", 1)])
 
     assert check_prerequisites(plan, MATRIX_ROWS, "DevOps Engineer") == []
@@ -128,7 +128,7 @@ def test_check_prerequisites_unknown_role_has_nothing_to_check():
 
 
 # ---------------------------------------------------------------------------
-# Anti-AI-signature: rule engine không được phụ thuộc bất kỳ AI SDK nào
+# Anti-AI-signature: rule engine must not depend on any AI SDK
 # ---------------------------------------------------------------------------
 
 def test_rule_engine_modules_do_not_import_any_ai_sdk():

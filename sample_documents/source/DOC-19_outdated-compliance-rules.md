@@ -2,7 +2,6 @@
 document_id: DOC-19
 family: outdated-compliance-rules
 title_en: Outdated Compliance Rules
-title_vi: Quy định tuân thủ cũ (đã bị thay thế)
 category: Compliance
 department: Company-wide
 version: 1.0
@@ -109,7 +108,7 @@ New employees read this handbook during their first month and sign a paper ackno
 
 ## 12. Why These Rules Were Replaced
 
-In 2025 the Company opened the Đà Nẵng office, moved customer data to managed systems and adopted Decree 13/2023 on personal data protection. The rules in Sections 3 to 10 no longer meet the Company's legal obligations or security standards and were replaced on 2026-01-01.
+In 2025 the Company opened the Da Nang office, moved customer data to managed systems and adopted Decree 13/2023 on personal data protection. The rules in Sections 3 to 10 no longer meet the Company's legal obligations or security standards and were replaced on 2026-01-01.
 
 ## 13. Where to Find the Current Rules
 

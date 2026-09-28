@@ -2,7 +2,6 @@
 document_id: DOC-05
 family: data-privacy-policy
 title_en: Data Privacy Policy
-title_vi: Chính sách bảo mật dữ liệu cá nhân
 category: Policy
 department: Company-wide
 version: 1.0

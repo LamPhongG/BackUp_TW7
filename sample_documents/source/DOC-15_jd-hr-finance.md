@@ -2,7 +2,6 @@
 document_id: DOC-15
 family: jd-hr-finance
 title_en: HR & Finance Role Descriptions
-title_vi: Mô tả công việc khối Nhân sự & Tài chính
 category: Role Description
 department: Human Resources
 version: 1.0

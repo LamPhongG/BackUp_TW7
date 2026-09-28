@@ -1,7 +1,7 @@
-// Sinh BẢN NHÁP lộ trình từ cấu trúc tài liệu ở chế độ không có backend (engine = "local-draft").
-// Không bịa nội dung: bài học là nguyên văn các mục trong tài liệu, câu hỏi và nhiệm vụ được
-// dựng từ câu có thật trong tài liệu, mọi mục đều kèm source_reference trỏ về chunk gốc.
-// Khi có backend, Pipeline 1 (Gemini) trả về cùng cấu trúc này.
+// Generate draft path from document structure in offline/draft mode (engine = "local-draft").
+// Content is faithful to source documents: lessons are verbatim sections, quizzes and tasks are
+// constructed from actual sentences, and each item links back via source_reference to the original chunk.
+// When backend is active, Pipeline 1 (Gemini) produces this identical structure.
 import { docTier, stageTemplate } from "../data/company";
 
 const QUIZ_PER_MODULE = { Beginner: 3, Intermediate: 4, Advanced: 5 };
@@ -9,10 +9,10 @@ const TASKS_PER_MODULE = { Beginner: 1, Intermediate: 2, Advanced: 3 };
 const LESSON_MAX_CHARS = 2500;
 const DAY30_MAX_MODULES = 3;
 
-// Câu thể hiện nghĩa vụ/quy định — dùng làm nhiệm vụ thực hành
-const OBLIGATION = /\b(must|should|shall|required|need to|ensure|never|always)\b|phải|cần|bắt buộc|không được|nghiêm cấm/iu;
+// Sentences indicating obligations/rules — used for hands-on tasks
+const OBLIGATION = /\b(must|should|shall|required|need to|ensure|never|always)\b/iu;
 
-// Số đứng riêng (không nằm trong mã như DOC-10, v1.0, ISO-27001) — dùng cho câu hỏi điền chỗ trống
+// Standalone numbers — used for cloze questions
 const NUMBER = /(?<![\w.#/-])(\d{1,4})(?![\w/.-]?\d)(?![\w/-])/u;
 
 export function splitSentences(text) {
@@ -23,7 +23,7 @@ export function splitSentences(text) {
     .filter(s => s.length >= 25 && s.length <= 260);
 }
 
-// Băm chuỗi ổn định để vị trí đáp án đúng không phụ thuộc Math.random (sinh lại cho cùng kết quả)
+// Deterministic string hash for stable distractor placement
 function stableHash(s) {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
@@ -43,7 +43,7 @@ function numberDistractors(n) {
 }
 
 export function makeClozeQuestion(sentence) {
-  // Bỏ số thứ tự đầu câu ("1. Use ...") vì đó là đánh số mục, không phải kiến thức
+  // Strip leading list numbers ("1. Use ...")
   const body = sentence.replace(/^\d+[.)]\s+/, "");
   const offset = sentence.length - body.length;
   const m = body.match(NUMBER);
@@ -66,11 +66,10 @@ function groupSections(chunks) {
   return sections;
 }
 
-// Nhiệm vụ dựng từ câu quy định: luật không biết bằng chứng cụ thể mà chính sách yêu cầu,
-// nên tiêu chí trỏ về chính câu trích thay vì bịa ra sản phẩm đầu ra
+// Tasks generated from policy rules
 function completionCriteria(code, section) {
   return {
-    completion_criteria: `Đã thực hiện đúng yêu cầu trong câu trích (${code} · ${section}) ít nhất một lần trong công việc thực tế.`,
+    completion_criteria: `Carried out the quoted requirement (${code} · ${section}) correctly at least once in real work.`,
     completion_criteriaEn: `Carried out the quoted requirement (${code} · ${section}) correctly at least once in real work.`,
   };
 }
@@ -86,15 +85,15 @@ function assignStage(purpose, tier, day30Count) {
 
 /**
  * @param {object} p
- * @param {string} p.id                 id của lộ trình (các id con được suy ra từ id này)
+ * @param {string} p.id                 Path ID
  * @param {string} p.level              Beginner | Intermediate | Advanced
  * @param {"onboarding"|"promotion"} p.purpose
- * @param {7|30|90} [p.durationDays]  độ dài lộ trình hội nhập; mốc vượt quá độ dài dồn vào giai đoạn cuối
- * @param {Array}  p.docs               tài liệu nguồn đang hiệu lực ({ id, code, version, title, titleEn, category, department })
- * @param {object} p.chunksByDocId      id tài liệu → chunk
- * @param {object} p.flagsByDocId       id tài liệu → cờ injection; chunk bị gắn cờ không được đưa vào lộ trình
+ * @param {7|30|90} [p.durationDays]  Onboarding duration in days
+ * @param {Array}  p.docs               Active source documents ({ id, code, version, title, titleEn, category, department })
+ * @param {object} p.chunksByDocId      Doc ID to chunks mapping
+ * @param {object} p.flagsByDocId       Doc ID to injection flags mapping
  * @returns {{stages, excluded_chunks}}
- * @throws {Error} "NO_CONTENT" khi không tài liệu nào có nội dung đã trích xuất
+ * @throws {Error} "NO_CONTENT" when no document has extracted content
  */
 export function generatePathContent({ id, level, purpose, durationDays, docs, chunksByDocId, flagsByDocId = {} }) {
   const ordered = [...docs].sort((a, b) => docTier(a) - docTier(b) || a.code.localeCompare(b.code));
@@ -124,7 +123,6 @@ export function generatePathContent({ id, level, purpose, durationDays, docs, ch
         minutes: Math.max(1, Math.ceil(full.split(/\s+/).length / 180)),
         sentences,
         source_reference: {
-          // Mục không có tiêu đề (đoạn mở đầu tài liệu) thì gọi theo tên tài liệu thay vì mã S001
           doc_id: doc.id, doc: doc.code, section: section.heading || doc.titleEn || doc.title || section.section_id,
           page: first.page ?? null, chunk_id: first.chunk_id, exact_quote: sentences[0] || full.slice(0, 160).trim(),
         },
@@ -143,7 +141,7 @@ export function generatePathContent({ id, level, purpose, durationDays, docs, ch
     const ref = (lesson, sentence) => ({ ...lesson.source_reference, exact_quote: sentence });
     const section = (lesson) => lesson.source_reference.section;
 
-    // Vòng 1: câu có số liệu → điền chỗ trống (kiểm tra được con số cụ thể trong quy định)
+    // Round 1: numeric cloze questions
     for (const lesson of m.lessons) {
       for (const s of lesson.sentences) {
         if (quiz.length >= quizTarget) break;
@@ -152,7 +150,7 @@ export function generatePathContent({ id, level, purpose, durationDays, docs, ch
         const { options, answer } = placeAnswer(cloze.correct, cloze.distractors, s);
         quiz.push({
           id: `${m.id}-Q${quiz.length + 1}`, kind: "cloze",
-          question: `Điền vào chỗ trống theo ${m.doc.code} · ${section(lesson)}: “${cloze.blanked}”`,
+          question: `Fill in the blank (${m.doc.code} · ${section(lesson)}): “${cloze.blanked}”`,
           questionEn: `Fill in the blank (${m.doc.code} · ${section(lesson)}): “${cloze.blanked}”`,
           options, answer, source_reference: ref(lesson, s),
         });
@@ -160,7 +158,7 @@ export function generatePathContent({ id, level, purpose, durationDays, docs, ch
         break;
       }
     }
-    // Vòng 2: chọn phát biểu đúng của mục — phương án nhiễu là câu có thật ở mục/tài liệu khác
+    // Round 2: statement verification
     for (const lesson of m.lessons) {
       if (quiz.length >= quizTarget) break;
       const s = lesson.sentences.find(x => !used.has(x));
@@ -174,7 +172,7 @@ export function generatePathContent({ id, level, purpose, durationDays, docs, ch
       const { options, answer } = placeAnswer(s, distractors, s);
       quiz.push({
         id: `${m.id}-Q${quiz.length + 1}`, kind: "statement",
-        question: `Theo ${m.doc.code} · mục “${section(lesson)}”, phát biểu nào đúng?`,
+        question: `According to ${m.doc.code} · “${section(lesson)}”, which statement is correct?`,
         questionEn: `According to ${m.doc.code} · “${section(lesson)}”, which statement is correct?`,
         options, answer, source_reference: ref(lesson, s),
       });
@@ -194,7 +192,7 @@ export function generatePathContent({ id, level, purpose, durationDays, docs, ch
     return {
       id: m.id,
       kind: "lesson",
-      title: m.doc.title || m.doc.titleEn,
+      title: m.doc.titleEn || m.doc.title,
       titleEn: m.doc.titleEn || m.doc.title,
       doc_id: m.doc.id,
       doc_code: m.doc.code,
@@ -211,16 +209,15 @@ export function generatePathContent({ id, level, purpose, durationDays, docs, ch
   for (const m of built) {
     const natural = assignStage(purpose, m.tier, day30);
     if (natural === "day30") day30++;
-    // Lộ trình ngắn vẫn dạy đủ mọi nguồn, chỉ dồn sớm hơn vào giai đoạn cuối của độ dài đã chọn
     stageMap[template.includes(natural) ? natural : template[template.length - 1]].push(m);
   }
 
-  // Bài đánh giá cuối: mỗi học phần góp câu hỏi đầu tiên, đặt ở giai đoạn cuối cùng
+  // Final Assessment: aggregate first question from each module
   const finalQuiz = built.filter(m => m.quiz.length).map((m, i) => ({ ...m.quiz[0], id: `${id}-FA-Q${i + 1}` }));
   const lastKey = template[template.length - 1];
   if (finalQuiz.length) {
     stageMap[lastKey].push({
-      id: `${id}-FA`, kind: "assessment", title: "Bài đánh giá tổng hợp", titleEn: "Final assessment",
+      id: `${id}-FA`, kind: "assessment", title: "Final Assessment", titleEn: "Final Assessment",
       doc_id: null, doc_code: null, tier: 5, lessons: [], tasks: [], quiz: finalQuiz,
     });
   }
@@ -232,3 +229,4 @@ export function generatePathContent({ id, level, purpose, durationDays, docs, ch
 export function allModules(path) {
   return (path?.stages || []).flatMap(s => s.modules);
 }
+

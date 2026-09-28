@@ -1,5 +1,5 @@
-// Kết nối backend FastAPI. Đặt VITE_API_URL trong frontend/.env.local (ví dụ http://localhost:8000/api)
-// để bật; bỏ trống thì các service dùng chế độ xử lý trong trình duyệt.
+// Connect to FastAPI backend. Set VITE_API_URL in frontend/.env.local (e.g. http://localhost:8000/api)
+// to enable; if left blank, services fallback to browser-mode processing.
 
 const API_BASE = (import.meta.env?.VITE_API_URL || "").replace(/\/+$/, "");
 
@@ -7,7 +7,7 @@ export function backendEnabled() {
   return API_BASE !== "";
 }
 
-// Token đăng nhập do useAuth đặt; mọi request tự gắn vào header Authorization
+// Login auth token managed by useAuth; automatically attached to Authorization header
 let authToken = null;
 let onUnauthorized = null;
 
@@ -15,17 +15,17 @@ export function setAuthToken(token) {
   authToken = token || null;
 }
 
-/** useAuth đăng ký hàm đăng xuất: token hết hạn hoặc tài khoản bị khoá thì quay về trang đăng nhập */
+/** useAuth registers logout handler: on token expiry or account deactivation, redirect to login page */
 export function setUnauthorizedHandler(handler) {
   onUnauthorized = handler;
 }
 
 class ApiError extends Error {
   /**
-   * @param {string} message  câu tiếng Anh từ backend (`detail`)
+   * @param {string} message  English error message from backend (`detail`)
    * @param {number} status
-   * @param {string|null} code  khoá dịch của frontend (`err_...`) khi backend trả về
-   * @param {object} vars       tham số cho khoá dịch
+   * @param {string|null} code  Frontend translation key (`err_...`) when provided by backend
+   * @param {object} vars       Parameters for translation key
    */
   constructor(message, status, code = null, vars = {}) {
     super(message);
@@ -36,7 +36,7 @@ class ApiError extends Error {
   }
 }
 
-// FastAPI trả lỗi dạng { detail: "...", code?, vars? } hoặc { detail: [{ msg }] } (lỗi validate Pydantic)
+// FastAPI returns errors as { detail: "...", code?, vars? } or { detail: [{ msg }] } (Pydantic validation error)
 function toApiError(body, status) {
   const detail = body?.detail;
   let message = `HTTP ${status}`;
@@ -50,7 +50,7 @@ function authHeaders(headers = {}) {
 }
 
 function handleUnauthorized(status) {
-  // 401 khi đang có token nghĩa là phiên đã hết hạn; lỗi đăng nhập sai (chưa có token) để trang Login tự xử lý
+  // 401 with existing token indicates session expiry; wrong credentials (no token) handled by Login page
   if (status === 401 && authToken) onUnauthorized?.();
 }
 
@@ -76,7 +76,7 @@ export async function apiRequest(path, { method = "GET", body, headers = {}, que
   return data;
 }
 
-/** Tải file cần đăng nhập (không mở thẳng URL được vì trình duyệt không gửi header Authorization) */
+/** Download file requiring authentication (cannot navigate directly as browser won't attach Authorization header) */
 export async function apiBlob(path) {
   let res;
   try {
@@ -92,8 +92,8 @@ export async function apiBlob(path) {
 }
 
 /**
- * Upload multipart có báo tiến độ (fetch chưa hỗ trợ upload progress nên dùng XHR).
- * @param {(ratio: number) => void} onProgress  0 → 1 theo số byte đã gửi
+ * Multipart upload with progress callback (fetch does not support upload progress so XHR is used).
+ * @param {(ratio: number) => void} onProgress  0 → 1 according to bytes sent
  */
 export function uploadWithProgress(path, formData, onProgress) {
   return new Promise((resolve, reject) => {

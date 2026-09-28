@@ -25,7 +25,7 @@ def _page(body: str) -> str:
     return (
         f'<!DOCTYPE html><html><head><meta charset="utf-8"><style>{_STYLE}</style></head><body>'
         f'<div class="wrap"><div class="head">SkillSprint AI</div><div class="body">{body}</div>'
-        '<div class="foot">Email gửi tự động từ SkillSprint AI, vui lòng không trả lời.</div></div></body></html>'
+        '<div class="foot">This is an automated email from SkillSprint AI. Please do not reply.</div></div></body></html>'
     )
 
 
@@ -62,22 +62,23 @@ def send_account_credentials(
     email is sent. The employee is asked to change it after the first login.
     """
     html = _page(
-        f"<p>Xin chào <strong>{escape(name)}</strong>,</p>"
-        f"<p>Tài khoản SkillSprint AI của bạn đã được tạo để bắt đầu lộ trình hội nhập.</p>"
-        f'<div class="info"><p><strong>Email đăng nhập:</strong> {escape(to_email)}</p>'
-        f"<p><strong>Mật khẩu tạm thời:</strong> <code>{escape(password)}</code></p>"
-        f"<p><strong>Vị trí:</strong> {escape(position_name)}</p>"
-        f"<p><strong>Phòng ban:</strong> {escape(department_name)}</p></div>"
-        f"<p>Sau khi đăng nhập, bạn nên đổi mật khẩu trong menu tài khoản (góc trên bên phải).</p>"
-        f'<a class="btn" href="{escape(login_url)}">Đăng nhập</a>'
+        f"<p>Hello <strong>{escape(name)}</strong>,</p>"
+        f"<p>Your SkillSprint AI account has been created for your onboarding path.</p>"
+        f'<div class="info"><p><strong>Login Email:</strong> {escape(to_email)}</p>'
+        f"<p><strong>Temporary Password:</strong> <code>{escape(password)}</code></p>"
+        f"<p><strong>Position:</strong> {escape(position_name)}</p>"
+        f"<p><strong>Department:</strong> {escape(department_name)}</p></div>"
+        f"<p>After signing in, please change your password in the account menu (top-right corner).</p>"
+        f'<a class="btn" href="{escape(login_url)}">Sign In</a>'
     )
     text = (
-        f"Xin chào {name},\n"
-        f"Tài khoản SkillSprint AI của bạn đã được tạo.\n"
-        f"Email đăng nhập: {to_email}\n"
-        f"Mật khẩu tạm thời: {password}\n"
-        f"Vị trí: {position_name}. Phòng ban: {department_name}.\n"
-        f"Đăng nhập: {login_url}\n"
-        f"Sau khi đăng nhập, bạn nên đổi mật khẩu trong menu tài khoản."
+        f"Hello {name},\n"
+        f"Your SkillSprint AI account has been created.\n"
+        f"Login Email: {to_email}\n"
+        f"Temporary Password: {password}\n"
+        f"Position: {position_name}. Department: {department_name}.\n"
+        f"Sign in: {login_url}\n"
+        f"After signing in, please change your password in the account menu."
     )
-    return _send(to_email, "Thông tin đăng nhập SkillSprint AI", html, text)
+    return _send(to_email, "Your SkillSprint AI Login Credentials", html, text)
+

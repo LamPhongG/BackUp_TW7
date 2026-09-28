@@ -44,15 +44,15 @@ class FakeLLM:
             quote = "This rule was invented by the model." if code in self.hallucinate_docs else sentences[0]
             skip_lesson = code in self.untaught_docs and i == len(chunks) - 1 and len(chunks) > 1
             if not skip_lesson:
-                lessons.append(LessonDraft(title=f"Bài: {c['section']}", title_en=c["section"],
-                                           content=f"Giải thích: {c['text']}", chunk_ids=[c["id"]],
+                lessons.append(LessonDraft(title=f"Lesson: {c['section']}", title_en=c["section"],
+                                           content=f"Explanation: {c['text']}", chunk_ids=[c["id"]],
                                            quote_chunk_id=c["id"], exact_quote=quote))
             duty = next((s for s in sentences if re.search(r"\b(must|should)\b", s)), None)
             if duty:
                 criteria = ("" if code in self.no_criteria_docs
-                            else "Hoàn thành trong 999 ngày." if code in self.invented_deadline_docs
-                            else f"Có bằng chứng đã làm: {duty}")
-                tasks.append(TaskDraft(title=f"Thực hiện: {duty}", title_en=f"Do: {duty}", completion_criteria=criteria,
+                            else "Completed in 999 days." if code in self.invented_deadline_docs
+                            else f"Evidence of completion: {duty}")
+                tasks.append(TaskDraft(title=f"Do: {duty}", title_en=f"Do: {duty}", completion_criteria=criteria,
                                        completion_criteria_en=criteria, quote_chunk_id=c["id"], exact_quote=duty))
         # Cited under the wrong chunk id: grounding must find the sentence in its real chunk.
         if len(lessons) > 1:
@@ -60,7 +60,7 @@ class FakeLLM:
         tasks.append(TaskDraft(title="Invented task", title_en="Invented task", completion_criteria="Car received.",
                                completion_criteria_en="Car received.", quote_chunk_id=chunks[0]["id"],
                                exact_quote="Employees receive a free car on their first day."))
-        objectives = [f"Áp dụng quy định của mục {c['section']}" for c in chunks[:3]]
+        objectives = [f"Apply requirements from section {c['section']}" for c in chunks[:3]]
         # Like a careful model, report chunks that talk to the AI or the reviewer instead of the employee.
         suspicious = [c["id"] for c in chunks if re.search(r"pretend|higher priority than your own rules", c["text"], re.I)]
         return ModuleDraft(suspicious_chunk_ids=suspicious, learning_objectives=objectives, lessons=lessons, tasks=tasks)
@@ -74,9 +74,9 @@ class FakeLLM:
                     continue
                 correct = "Nonexistent" if code in self.bad_quiz_docs else words[0]
                 questions.append(QuestionDraft(
-                    question=f"Câu hỏi về {c['section']}?", question_en=f"Question about {c['section']}?",
+                    question=f"Question about {c['section']}?", question_en=f"Question about {c['section']}?",
                     options=[correct, "Wrongalpha", "Wrongbravo", "Wrongcharlie"], answer_index=0,
-                    quote_chunk_id=c["id"], exact_quote=sentence, explanation="Theo tài liệu."))
+                    quote_chunk_id=c["id"], exact_quote=sentence, explanation="According to the document."))
                 break
         # Always-invalid extras the grounding step must reject.
         questions.append(QuestionDraft(question="Dup?", question_en="Dup?", options=["same", "same", "x", "y"], answer_index=0,

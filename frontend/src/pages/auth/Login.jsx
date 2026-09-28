@@ -49,7 +49,7 @@ export default function Login() {
       <h2>{t("login_title")}</h2>
       <p className="glass-card__subtitle">{t("login_subtitle")}</p>
 
-      {/* placeholder=" " để CSS biết ô đã có chữ (:placeholder-shown) và đẩy nhãn lên mép trên */}
+      {/* placeholder=" " enables CSS :placeholder-shown to float label */}
       <div className="glass-float">
         <input id="login-email" type="email" autoComplete="username" placeholder=" " value={email}
           aria-invalid={!!error} onChange={e => { setEmail(e.target.value); setError(""); }} />

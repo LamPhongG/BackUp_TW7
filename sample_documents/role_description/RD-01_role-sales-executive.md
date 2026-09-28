@@ -3,7 +3,6 @@ document_id: RD-01
 role_id: sales-exec
 family: role-description-sales-executive
 title_en: Role Description – Sales Executive
-title_vi: Mô tả công việc – Nhân viên Kinh doanh phần mềm B2B
 category: Role Description
 department: Sales
 version: 1.0

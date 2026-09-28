@@ -1,4 +1,4 @@
-"""Reports (SRS Step 51-53, 62): HR, Reviewers and Admins."""
+"""Reports center: HR, Reviewers and Admins."""
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -40,6 +40,6 @@ def comparison_summary(db: DbSession, user: Reporter):
 
 @router.get("/comparison.csv")
 def comparison_csv(db: DbSession, user: Reporter):
-    # BOM so Excel opens the UTF-8 Vietnamese text correctly (SRS Step 63: Excel-compatible export).
+    # UTF-8 BOM so spreadsheet applications open the CSV correctly.
     return Response("\ufeff" + service.comparison_csv(db), media_type="text/csv; charset=utf-8",
                     headers={"Content-Disposition": 'attachment; filename="genai_python_comparison.csv"'})

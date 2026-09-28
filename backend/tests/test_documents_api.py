@@ -44,7 +44,7 @@ def test_catalog_code_gets_vietnamese_title_and_family(client, hr_headers):
                  code="DOC-10", title_en="SOP – Software Deployment Workflow", category="SOP", department_code="Engineering")
 
     assert res.status_code == 201
-    assert res.json()["title"] == "Quy trình bàn giao phần mềm cho khách hàng"
+    assert res.json()["title"] == "SOP – Software Deployment Workflow"
     assert res.json()["family"] == "sop-software-deployment"
 
 

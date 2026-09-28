@@ -13,9 +13,9 @@ const EMPTY_FORM = {
 };
 
 /**
- * Tạo tài khoản nhân viên: từ CV (backend đọc CV bằng Python, không lưu file, không đọc SĐT/địa chỉ/
- * ngày sinh) hoặc nhập tay trực tiếp. HR/Admin kiểm tra và sửa thông tin, backend sinh mật khẩu và gửi
- * email đăng nhập cho nhân viên — nhân viên không tự đăng ký, chỉ cần đăng nhập bằng mật khẩu nhận được.
+ * Create employee account: from CV (backend parses CV using Python without persisting file or extracting phone/address/DOB)
+ * or direct manual input. HR/Admin reviews and edits information; backend generates password and emails credentials
+ * to the employee — employee does not self-register, but simply logs in with credentials received.
  */
 export default function CreateEmployeeModal({ open, onClose, onCreated }) {
   const { t, tv } = useLanguage();

@@ -64,7 +64,7 @@ class GenerationRequest:
     role_name_en: str
     department: str
     prompt_version: str
-    language: str = "vi"
+    language: str = "en"
     hr_prompt: str | None = None
     # Onboarding only: 7, 30 or 90 days; None means the full 90-day template.
     duration_days: int | None = None

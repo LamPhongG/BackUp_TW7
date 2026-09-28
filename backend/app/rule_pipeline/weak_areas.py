@@ -1,9 +1,7 @@
-"""Phát hiện điểm yếu học tập từ kết quả quiz (Weak-Area Detection, SRS Step 55-56).
+"""Weak-area learning detection from quiz performance.
 
-Thuần Python, không dùng AI SDK. Gộp `quiz_attempts` theo module, tính tỷ lệ trả lời đúng; module
-dưới ngưỡng được xem là điểm yếu và kích hoạt cờ cần quản lý xem lại. Chưa có endpoint nộp bài quiz
-nào gọi tới hàm này (Enrollment/QuizAttempt hiện chỉ là model DB) — hàm này thuần tuý phân tích dữ
-liệu, sẵn sàng cho endpoint đó khi được xây.
+Aggregates quiz attempts by module, computes correct answer ratios;
+modules below threshold are identified as weak areas for reinforcement.
 """
 from typing import Protocol
 
@@ -27,10 +25,9 @@ def _module_titles(stages: list[dict]) -> dict[str, str]:
 def analyze_weak_areas(
     attempts: list[QuizAttemptLike], stages: list[dict], threshold: float = WEAK_AREA_THRESHOLD
 ) -> dict:
-    """Trả về `{weak_areas: [{module_id, topic, accuracy}], manager_review_required: bool}`.
+    """Returns `{weak_areas: [{module_id, topic, accuracy}], manager_review_required: bool}`.
 
-    `topic` lấy từ tiêu đề module (không có field topic riêng trong stages, cùng cách tiếp cận với
-    `coverage.py`). Module không có lần nộp bài nào bị bỏ qua (không đủ dữ liệu để đánh giá).
+    `topic` is derived from module titles. Modules without attempts are skipped.
     """
     totals: dict[str, list[int]] = {}
     for attempt in attempts:

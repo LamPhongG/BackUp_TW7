@@ -1,4 +1,4 @@
-"""GenAI Consistency Testing & Scoring Engine (SRS Step 44 & 45).
+"""GenAI Consistency Testing & Scoring Engine.
 
 Executes repeated structured generations under controlled parameters and evaluates
 consistency of structured business outputs (mandatory requirements, cited sources,
@@ -64,7 +64,7 @@ def _extract_plan_signature(plan: OnboardingPlanSchema) -> dict[str, Any]:
 
 
 def calculate_consistency_score(plans: list[OnboardingPlanSchema]) -> dict[str, Any]:
-    """Calculate structured consistency score between repeated generations (SRS Step 45).
+    """Calculate structured consistency score between repeated generations.
     
     The comparison focuses on structured business requirements rather than exact wording:
     - 40% Source document consistency

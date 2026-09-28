@@ -21,7 +21,7 @@ import { formatDateTime } from "../../utils/helpers";
 import { apiRequest, backendEnabled } from "../../services/apiClient";
 import { useEffect } from "react";
 
-/** Chi tiết lộ trình cho HR (soạn, sửa, gửi duyệt) và Reviewer (kiểm định, sửa, duyệt/trả về) */
+/** Path detail for HR (draft, edit, submit for review) and Reviewer (audit, revise, approve/reject) */
 export default function PathDetail({ basePath }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -94,7 +94,7 @@ export default function PathDetail({ basePath }) {
   const TABS = [
     ["content", t("tab_content")],
     ["checks", t("tab_checks"), checks.final_status !== "verified" ? "!" : null],
-    ["comparison", t("tab_dual_comparison") || "Đối chiếu 2 Pipeline (Table 1)"],
+    ["comparison", t("tab_dual_comparison") || "Dual-Pipeline Comparison (Table 1)"],
     ["comments", t("tab_comments"), openComments || null],
     ...(path.generation ? [["generation", t("tab_generation")]] : []),
     ["history", t("tab_history")],

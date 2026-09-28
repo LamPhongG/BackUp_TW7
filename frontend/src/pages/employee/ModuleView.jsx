@@ -9,7 +9,7 @@ import { useDocuments, openStoredFile } from "../../contexts/DocumentsContext";
 import { useMyPaths } from "../../hooks/useMyPaths";
 import { moduleProgress, nextModule, PASS_RATIO, stageUnlocked } from "../../utils/progress";
 
-/** Học một học phần: đọc bài (kèm tài liệu gốc), làm nhiệm vụ, làm bài kiểm tra */
+/** Study a module: read lessons (with source document references), complete tasks, take quiz */
 export default function ModuleView() {
   const { id, moduleId } = useParams();
   const navigate = useNavigate();
@@ -144,7 +144,7 @@ function QuizBlock({ module, best, onSubmit }) {
   const [result, setResult] = useState(null);
   const [sending, setSending] = useState(false);
   const allAnswered = module.quiz.every(q => answers[q.id] !== undefined);
-  // Chế độ backend chấm bài ở server; lỗi mạng hiện ở thông báo của trang, giữ nguyên bài đang làm
+  // Backend mode grades quiz on server; network errors shown in page alert while keeping quiz state
   const submit = async () => {
     setSending(true);
     try {
@@ -177,14 +177,14 @@ function QuizBlock({ module, best, onSubmit }) {
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, color: "#b45309", marginBottom: 6, fontSize: 13.5 }}>
               <CircleAlert size={16} />
-              Nhận diện Vùng kiến thức cần củng cố (Weak-Area Detected · {scorePercent}%)
+              Weak-Area Detected · {scorePercent}%
             </div>
             <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5 }}>
-              Điểm số bài kiểm tra chưa đạt ngưỡng chuẩn vững vàng (≥ 70%). Hệ thống kích hoạt Khuyến nghị học tập thích ứng (Adaptive Recommendations - SRS Step 55 & 56):
+              Quiz score is below the mastery threshold (≥ 70%). Follow the recommendations below to reinforce your knowledge:
               <ul style={{ margin: "6px 0 0 18px", padding: 0 }}>
-                <li><strong>Ôn lại lý thuyết:</strong> Đọc lại các bài học trong học phần này trước khi thử lại.</li>
-                <li><strong>Đối chiếu quy chuẩn:</strong> Xem kỹ trích dẫn nguồn SOP và giải thích chi tiết ở các câu trả lời sai bên dưới.</li>
-                <li><strong>Làm lại bài kiểm tra:</strong> Nhấn nút <em>"Làm lại bài kiểm tra"</em> bên dưới để cải thiện điểm số và hoàn tất điều kiện học phần.</li>
+                <li><strong>Review Theory:</strong> Re-read the lessons in this module before re-attempting.</li>
+                <li><strong>Verify Standards:</strong> Review the SOP citations and detailed explanations for any incorrect answers below.</li>
+                <li><strong>Retake Quiz:</strong> Click <em>"Retake Quiz"</em> below to improve your score and fulfill the module requirements.</li>
               </ul>
             </div>
           </div>
@@ -203,7 +203,7 @@ function QuizBlock({ module, best, onSubmit }) {
             fontSize: 13
           }}>
             <CircleCheck size={16} style={{ color: "#10b981" }} />
-            Đạt chuẩn kiến thức xuất sắc ({scorePercent}%). Đủ điều kiện ghi nhận hoàn thành mục tiêu học tập!
+            Achieved mastery score ({scorePercent}%). Eligible for completion credit!
           </div>
         )}
 
@@ -217,7 +217,7 @@ function QuizBlock({ module, best, onSubmit }) {
                 {!ok && <> · {t("correct_answer")}: <b>{q.options[q.answer]}</b></>}
               </span>
               {q.explanation && <span className="cell-sub">{t("quiz_explanation")}: {q.explanation}</span>}
-              {/* Trích nguyên văn chỉ hiện sau khi nộp bài để không lộ đáp án */}
+              {/* Citation displayed after submission to avoid revealing answers */}
               <Citation reference={q.source_reference} compact verify={false} />
             </div>
           );

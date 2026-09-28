@@ -1,6 +1,4 @@
-"""Pipeline 2 (thuần Python): kiểm tra thứ tự tiên quyết giữa các module (SRS Step 26-27).
-
-Không import bất kỳ AI SDK nào.
+"""Pure Python rule pipeline: check prerequisite order between modules.
 """
 from src.genai_pipeline.response_schemas import OnboardingPlanSchema
 
@@ -13,11 +11,11 @@ def _rows_with_prerequisite(role: str, matrix_rows: list[dict]) -> list[dict]:
 
 
 def check_prerequisites(plan: OnboardingPlanSchema, matrix_rows: list[dict], role: str) -> list[str]:
-    """Trả về danh sách lỗi thứ tự (rỗng nếu hợp lệ).
+    """Return list of ordering errors (empty if valid).
 
-    Với mỗi cặp (topic tiên quyết, topic phụ thuộc) khai báo trong ma trận cho role này: tìm module
-    chứa mỗi topic (theo title/description), rồi so `order_index`. Cặp nào chưa xuất hiện đủ trong
-    plan thì bỏ qua — coverage_scorer đã báo thiếu ở chỗ khác, không lặp lại lỗi ở đây.
+    For each (prerequisite topic, dependent topic) pair declared in the matrix for this role:
+    find module containing each topic (by title/description), then compare `order_index`.
+    Pairs not yet present in plan are skipped (coverage_scorer reports missing topics elsewhere).
     """
     rows = _rows_with_prerequisite(role, matrix_rows)
     if not rows:
@@ -38,7 +36,7 @@ def check_prerequisites(plan: OnboardingPlanSchema, matrix_rows: list[dict], rol
             continue
         if module_order[prereq_module] >= module_order[dependent_module]:
             errors.append(
-                f"Module chứa '{row['topic']}' (order_index={module_order[prereq_module]}) phải học "
-                f"trước module chứa '{row['prerequisite_of']}' (order_index={module_order[dependent_module]})"
+                f"Module containing '{row['topic']}' (order_index={module_order[prereq_module]}) must be taken "
+                f"before module containing '{row['prerequisite_of']}' (order_index={module_order[dependent_module]})"
             )
     return errors

@@ -138,7 +138,7 @@ export default function App() {
                     <Route path="profile" element={<Profile />} />
                   </Route>
 
-                  {/* Đường dẫn cũ trước khi đổi tên vai trò */}
+                  {/* Legacy route before role rename */}
                   <Route path="/manager/*" element={<Navigate to="/reviewer/dashboard" replace />} />
                   <Route index element={<Navigate to={auth.user ? HOME_PATH[auth.user.userRole] : "/login"} replace />} />
                   <Route path="*" element={<NotFound user={auth.user} />} />

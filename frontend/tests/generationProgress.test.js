@@ -3,7 +3,7 @@ import { jobPercent, STEPS } from "../src/components/path/GenerationProgress";
 
 const job = (steps, modules = [], status = "running") => ({ status, state: { steps: Object.fromEntries(STEPS.map(s => [s, steps[s] || "pending"])), modules } });
 
-describe("jobPercent — phần trăm theo tiến độ thật của job", () => {
+describe("jobPercent — percentage based on actual job progress", () => {
   it("starts near zero and never shows 100% before the job is done", () => {
     expect(jobPercent(null)).toBe(0);
     expect(jobPercent(job({ sources: "active" }))).toBe(3);
@@ -28,14 +28,14 @@ describe("jobPercent — phần trăm theo tiến độ thật của job", () =>
   });
 });
 
-describe("llmErrorLabel — mã lỗi AI thành câu dễ hiểu", () => {
-  const dict = { llm_error_QUOTA_EXCEEDED: "hết hạn mức", llm_error_BLOCKED: "bị chặn" };
+describe("llmErrorLabel — AI error codes to human-friendly labels", () => {
+  const dict = { llm_error_QUOTA_EXCEEDED: "Quota exceeded", llm_error_BLOCKED: "Blocked" };
   const t = key => dict[key] ?? key;
 
   it("translates known codes, groups every BLOCKED_* reason, keeps unknown codes", async () => {
     const { llmErrorLabel } = await import("../src/components/path/GenerationProgress");
-    expect(llmErrorLabel(t, "QUOTA_EXCEEDED")).toBe("hết hạn mức");
-    expect(llmErrorLabel(t, "BLOCKED_SAFETY")).toBe("bị chặn");
+    expect(llmErrorLabel(t, "QUOTA_EXCEEDED")).toBe("Quota exceeded");
+    expect(llmErrorLabel(t, "BLOCKED_SAFETY")).toBe("Blocked");
     expect(llmErrorLabel(t, "SOMETHING_NEW")).toBe("SOMETHING_NEW");
     expect(llmErrorLabel(t, null)).toBe("");
   });

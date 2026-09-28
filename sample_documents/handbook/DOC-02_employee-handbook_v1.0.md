@@ -2,7 +2,6 @@
 document_id: DOC-02
 family: employee-handbook
 title_en: Employee Handbook (obsolete)
-title_vi: Sổ tay nhân viên (bản cũ)
 category: Handbook
 department: Company-wide
 version: 1.0

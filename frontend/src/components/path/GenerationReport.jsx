@@ -5,9 +5,9 @@ import { llmErrorLabel } from "./GenerationProgress";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 /**
- * Báo cáo Pipeline 1 do backend trả về (path.generation): model, token, thời gian, và từng học phần
- * do Gemini viết hay phải dùng bản nháp, AI bị loại bao nhiêu mục vì không trích được từ tài liệu.
- * Giúp Reviewer biết nên soi kỹ phần nào.
+ * Pipeline 1 report returned by backend (path.generation): model, tokens, duration, and whether each module
+ * was authored by Gemini or used local draft, and how many items were pruned due to unverifiable citations.
+ * Helps Reviewers identify which sections require closer scrutiny.
  */
 export default function GenerationReport({ generation }) {
   const { t } = useLanguage();
@@ -29,13 +29,13 @@ export default function GenerationReport({ generation }) {
         <dt>{t("gen_engine")}</dt>
         <dd><EngineBadge engine={generation.engine} /> {generation.model && <span className="cell-sub">{generation.model}</span>}</dd>
         <dt>{t("prompt_version")}</dt><dd>{generation.prompt_version}</dd>
-        <dt>{t("gen_language")}</dt><dd>{generation.language === "en" ? "English" : "Tiếng Việt"}</dd>
+        <dt>{t("gen_language")}</dt><dd>English</dd>
         <dt>{t("gen_duration")}</dt><dd>{(generation.duration_ms / 1000).toFixed(1)} s</dd>
         {generation.engine === "gemini" && <><dt>{t("gen_tokens")}</dt><dd>{t("gen_tokens_value", { input: generation.tokens?.input ?? 0, output: generation.tokens?.output ?? 0 })}</dd></>}
         {generation.engine === "gemini" && <><dt>{t("gen_grounding")}</dt><dd>{t("gen_grounding_value", { dropped, repaired })}</dd></>}
         {coverage && <><dt>{t("gen_requirements")}</dt><dd>{t("gen_requirements_value", { taught: coverage.taught.length, assessed: coverage.assessed.length, total: coverage.total, mandatory: coverage.mandatory })}</dd></>}
       </dl>
-      {/* Python tự đối chiếu mục ↔ ma trận theo mục tài liệu, không tin mô hình tự khai */}
+      {/* Python independently maps section ↔ matrix according to document section, ignoring self-reported model claims */}
       {generation.mandatory_omitted?.length > 0 && (
         <div className="notice notice--warning"><CircleAlert size={16} /><span>{t("gen_mandatory_omitted", { list: generation.mandatory_omitted.join(", ") })}</span></div>
       )}
@@ -46,7 +46,7 @@ export default function GenerationReport({ generation }) {
         <div className="notice notice--info"><CircleAlert size={16} /><span>{t("gen_requirements_not_assessed", { list: coverage.mandatory_not_assessed.join(", ") })}</span></div>
       )}
       {offRole.length > 0 && (
-        // Mục dành cho vị trí khác không được gửi cho AI: Reviewer thấy rõ đã bỏ gì và vì sao
+        // Sections for other roles are not sent to AI: Reviewer can clearly see what was dropped and why
         <details className="gen-offrole">
           <summary>{t("gen_off_role_title", { n: offRole.length })}</summary>
           <ul>{offRole.map(s => <li key={`${s.doc}-${s.section}`}><b>{s.doc} §{s.section}</b> {s.heading} <span className="cell-sub">· {t("gen_off_role_chunks", { n: s.chunks })}</span></li>)}</ul>

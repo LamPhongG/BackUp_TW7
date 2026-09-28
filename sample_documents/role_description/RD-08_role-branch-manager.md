@@ -3,7 +3,6 @@ document_id: RD-08
 role_id: branch-manager
 family: role-description-branch-manager
 title_en: Role Description – Branch Manager
-title_vi: Mô tả công việc – Giám quản Chi nhánh
 category: Role Description
 department: Branch Management
 version: 1.0

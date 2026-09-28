@@ -1,17 +1,15 @@
-"""Quy tắc phân cấp ưu tiên chính sách (Policy Precedence, SRS Step 34).
+"""Policy precedence resolution.
 
-Thuần Python, không dùng AI SDK. Khi 2 tài liệu cùng liên quan đến một yêu cầu nhưng khác cấp bậc
-hoặc khác version, hàm ở đây quyết định tài liệu nào có thẩm quyền cao hơn — không tự phát hiện
-mâu thuẫn (đó là việc của kiểm tra trích dẫn ở path_checks.py), chỉ xếp hạng khi đã có ứng viên.
+When documents relate to the same requirement but differ in precedence
+tier or version, this module determines which document has higher authority.
 """
 from functools import cmp_to_key
 
 from app.ingestion.validation import compare_versions
 from app.models import Document
 
-# Bậc 1 (cao nhất): chính sách toàn công ty. Bậc 2: quy trình/mô tả theo phòng ban. Bậc 3: FAQ
-# (hướng dẫn không chính thức). Category lạ (vd "Test Case") rơi vào bậc thấp nhất, không có tiếng
-# nói khi so ưu tiên.
+# Tier 1 (highest): Company-wide policies and compliance. Tier 2: Department SOPs and process manuals.
+# Tier 3: FAQs (informational guidance). Unknown categories default to the lowest tier.
 PRECEDENCE_TIER = {
     "Handbook": 1,
     "Policy": 1,
@@ -29,7 +27,7 @@ def precedence_tier(document: Document) -> int:
 
 
 def resolve_precedence(doc_a: Document, doc_b: Document) -> Document:
-    """Tài liệu cấp bậc cao hơn (số bậc nhỏ hơn) thắng; cùng bậc thì version mới hơn thắng."""
+    """Document with higher tier (smaller number) wins; ties broken by higher version."""
     tier_a, tier_b = precedence_tier(doc_a), precedence_tier(doc_b)
     if tier_a != tier_b:
         return doc_a if tier_a < tier_b else doc_b
@@ -37,7 +35,7 @@ def resolve_precedence(doc_a: Document, doc_b: Document) -> Document:
 
 
 def _compare(doc_a: Document, doc_b: Document) -> int:
-    """>0 nếu doc_a có thẩm quyền thấp hơn doc_b (dùng cho sorted(): thẩm quyền cao đứng trước)."""
+    """>0 if doc_a has lower precedence than doc_b (used for sorted(): higher precedence first)."""
     tier_a, tier_b = precedence_tier(doc_a), precedence_tier(doc_b)
     if tier_a != tier_b:
         return tier_a - tier_b
@@ -45,5 +43,6 @@ def _compare(doc_a: Document, doc_b: Document) -> int:
 
 
 def sort_by_precedence(documents: list[Document]) -> list[Document]:
-    """Sắp xếp theo thẩm quyền: bậc cao hơn trước, cùng bậc thì version mới hơn trước."""
+    """Sort by precedence: higher tier first, ties broken by newer version."""
     return sorted(documents, key=cmp_to_key(_compare))
+

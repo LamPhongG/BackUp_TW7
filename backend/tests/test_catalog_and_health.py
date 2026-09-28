@@ -15,7 +15,7 @@ def test_departments_match_frontend_keys(client, hr_headers):
     assert res.status_code == 200
     by_code = {d["code"]: d for d in res.json()}
     assert len(by_code) == 10
-    assert by_code["Company-wide"]["name"] == "Toàn công ty"
+    assert by_code["Company-wide"]["name"] == "Company-wide"
     assert by_code["Engineering"]["name_en"] == "Engineering"
 
 

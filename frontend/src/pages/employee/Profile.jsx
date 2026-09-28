@@ -32,7 +32,7 @@ export default function Profile() {
             <dt><Mail size={14} /> Email</dt><dd>{user.email}</dd>
           </dl>
         </Card>
-        {/* Có backend thì vị trí là dữ liệu thật trong DB, không đổi thử ở đây */}
+        {/* When backend is connected, position comes from DB; do not mutate demo position here */}
         {!backendEnabled() && (
           <Card>
             <SectionHeader title={t("demo_position_title")} subtitle={t("demo_position_desc")} />

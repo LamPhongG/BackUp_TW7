@@ -2,7 +2,6 @@
 document_id: DOC-22
 family: sop-digital-campaign-operations
 title_en: SOP – Digital Campaign Operations
-title_vi: Quy trình vận hành chiến dịch marketing số
 category: SOP
 department: Marketing
 version: 1.0

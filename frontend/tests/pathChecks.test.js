@@ -4,7 +4,7 @@ import { checkFlow, checkKnowledge, runPathChecks } from "../src/utils/pathCheck
 import { scanChunks } from "../src/utils/injectionScan";
 import { role, docs, chunksByDocId, deployment } from "./fixtures";
 
-// Như trong ứng dụng: chunk bị gắn cờ injection được loại trước khi sinh
+// As in the application: chunks flagged for injection are excluded before generation
 const flagsByDocId = { d10: scanChunks(deployment.chunks) };
 const build = () => ({
   id: "LP-T", purpose: "onboarding", target: { role_id: role.id },
@@ -18,7 +18,7 @@ function edit(path, fn) {
   return copy;
 }
 
-describe("checkKnowledge — đúng kiến thức", () => {
+describe("checkKnowledge — knowledge correctness", () => {
   it("verifies every generated item against the source", () => {
     expect(checkKnowledge(build(), ctx).every(k => k.status === "verified")).toBe(true);
   });
@@ -49,7 +49,7 @@ describe("checkKnowledge — đúng kiến thức", () => {
   });
 });
 
-describe("checkFlow — đúng luồng", () => {
+describe("checkFlow — workflow correctness", () => {
   it("accepts the generated order", () => {
     expect(checkFlow(build()).filter(f => f.severity === "error")).toEqual([]);
   });
@@ -78,7 +78,7 @@ describe("checkFlow — đúng luồng", () => {
   });
 });
 
-describe("runPathChecks — trạng thái cuối", () => {
+describe("runPathChecks — final status", () => {
   it("is not blocking for clean generated content", () => {
     const r = runPathChecks(build(), ctx);
     expect(r.blocking).toBe(false);

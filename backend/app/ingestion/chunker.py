@@ -12,11 +12,10 @@ from app.ingestion.extract import Block
 
 MAX_CHUNK_CHARS = 1200
 
-# Headings common in policy documents: "1.", "2.3 Title", "Section 4", "Điều 5", "Chương II", markdown "#"
+# Headings common in policy documents: "1.", "2.3 Title", "Section 4", "Article 5", "Chapter II", markdown "#"
 _HEADING_PATTERNS = [
     re.compile(r"^#{1,6}\s+\S"),
-    re.compile(r"^(section|chapter|part|article|appendix)\s+[\dIVXLC]+\b", re.IGNORECASE),
-    re.compile(r"^(điều|chương|mục|phần|phụ lục)\s+[\dIVXLC]+\b", re.IGNORECASE),
+    re.compile(r"^(section|chapter|part|article|appendix|điều|chương|phần|phụ lục)\s+[\dIVXLC]+\b", re.IGNORECASE),
 ]
 # Numbered headings start with a capital letter (JS: \p{Lu}), contain no sentence break and are at most 80
 # characters after the number. Wrapped PDF body lines such as "5 days until 31 March…" or

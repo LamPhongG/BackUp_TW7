@@ -14,7 +14,7 @@ from app.services.progress import PASS_RATIO
 router = APIRouter(tags=["enrollments"])
 
 Employee = Annotated[User, Depends(require_roles(UserRole.EMPLOYEE))]
-# Learner progress: HR and Reviewers follow it, Admins oversee it (SRS Step 51).
+# Learner progress endpoints accessible to staff and admin users.
 Staff = Annotated[User, Depends(require_roles(UserRole.HR, UserRole.REVIEWER, UserRole.ADMIN))]
 
 

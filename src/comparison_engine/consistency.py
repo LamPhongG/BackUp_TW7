@@ -1,8 +1,7 @@
-"""Generation Consistency Score (SRS Step 44-45).
+"""Generation Consistency Score.
 
-So 2 lần chạy Pipeline 1 với cùng input theo cấu trúc nghiệp vụ (nguồn trích dẫn, số lượng
-module/task, câu hỏi trùng id) — không so câu chữ, vì GenAI không được kỳ vọng sinh ra đúng từng
-chữ giống nhau ở 2 lần chạy khác nhau. Thuần Python, không dùng AI SDK.
+Compares repeated runs of generation with identical input by business structure (cited sources,
+module/task counts, matching question IDs). Pure Python comparison logic.
 """
 from src.genai_pipeline.response_schemas import OnboardingPlanSchema
 
@@ -32,7 +31,7 @@ def _count_similarity(a: int, b: int) -> float:
 
 
 def calculate_consistency_score(plan_a: OnboardingPlanSchema, plan_b: OnboardingPlanSchema) -> dict:
-    """Trả về `{consistency_score (0-100), matched_doc_ids, mismatched_doc_ids, module_count_diff}`."""
+    """Return `{consistency_score (0-100), matched_doc_ids, mismatched_doc_ids, module_count_diff}`."""
     doc_ids_a, doc_ids_b = _doc_ids(plan_a), _doc_ids(plan_b)
     question_ids_a = {q.question_id for m in plan_a.modules for q in m.quizzes}
     question_ids_b = {q.question_id for m in plan_b.modules for q in m.quizzes}

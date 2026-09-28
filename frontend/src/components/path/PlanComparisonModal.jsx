@@ -10,9 +10,9 @@ import { ROLES as JOB_ROLES } from "../../data/company";
 import { PathStatusBadge } from "./Badges";
 
 /**
- * Modal So sánh Lộ trình học (Training Plan Comparison View - SRS Step 60).
- * Cho phép HR / Reviewer so sánh trực quan 2 lộ trình hoặc 2 phiên bản cạnh nhau:
- * Thời lượng, modules, bài tập, câu hỏi đánh giá, tài liệu đối chiếu và độ phủ kỹ năng.
+ * Training Plan Comparison Modal (Dual-Pipeline Comparison View).
+ * Allows HR / Reviewers to visually compare 2 training plans or revisions side-by-side:
+ * Duration, modules, tasks, assessment quizzes, source documents, and skill coverage.
  */
 export default function PlanComparisonModal({ open, onClose, defaultPathAId, defaultPathBId }) {
   const { t, tv, pick, locale } = useLanguage();
@@ -26,7 +26,7 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
 
   if (!open || !pathA || !pathB) return null;
 
-  // Trích xuất số liệu thống kê của từng Lộ trình
+  // Extract statistics for each path
   const statsA = {
     stagesCount: (pathA.stages || []).length,
     modulesCount: (pathA.stages || []).reduce((acc, s) => acc + (s.modules || []).length, 0),
@@ -52,13 +52,13 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
 
   const diffLabel = (valA, valB, suffix = "") => {
     const diff = valA - valB;
-    if (diff === 0) return <span style={{ color: "var(--muted)" }}>Bằng nhau</span>;
-    if (diff > 0) return <span style={{ color: "#10b981", fontWeight: 700 }}>A nhiều hơn +{diff}{suffix}</span>;
-    return <span style={{ color: "#6366f1", fontWeight: 700 }}>B nhiều hơn +{Math.abs(diff)}{suffix}</span>;
+    if (diff === 0) return <span style={{ color: "var(--muted)" }}>Equal</span>;
+    if (diff > 0) return <span style={{ color: "#10b981", fontWeight: 700 }}>Plan A +{diff}{suffix}</span>;
+    return <span style={{ color: "#6366f1", fontWeight: 700 }}>Plan B +{Math.abs(diff)}{suffix}</span>;
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="So sánh 2 Lộ trình đào tạo (Plan Comparison View)" size="xl">
+    <Modal open={open} onClose={onClose} title="Dual-Pipeline Training Plan Comparison" size="xl">
       <div style={{ padding: "0 4px" }}>
         {/* 1. Header Selector */}
         <div style={{
@@ -74,7 +74,7 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
         }}>
           <div>
             <label style={{ display: "block", fontSize: 12, fontWeight: 700, textTransform: "uppercase", color: "var(--muted)", marginBottom: 6 }}>
-              Lộ trình A (Chuẩn / Gốc)
+              Plan A (Baseline / Reference)
             </label>
             <select
               className="input-select"
@@ -94,7 +94,7 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
 
           <div>
             <label style={{ display: "block", fontSize: 12, fontWeight: 700, textTransform: "uppercase", color: "var(--muted)", marginBottom: 6 }}>
-              Lộ trình B (Đối chiếu)
+              Plan B (Comparison)
             </label>
             <select
               className="input-select"
@@ -112,7 +112,7 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
         {/* 2. Top Metric Cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 20 }}>
           <div className="card" style={{ padding: 12, textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Tổng Học phần</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Total Modules</div>
             <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4 }}>
               <span style={{ color: "#3b82f6" }}>{statsA.modulesCount}</span> vs <span style={{ color: "#8b5cf6" }}>{statsB.modulesCount}</span>
             </div>
@@ -120,7 +120,7 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
           </div>
 
           <div className="card" style={{ padding: 12, textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Nhiệm vụ thực tế</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Practical Tasks</div>
             <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4 }}>
               <span style={{ color: "#3b82f6" }}>{statsA.tasksCount}</span> vs <span style={{ color: "#8b5cf6" }}>{statsB.tasksCount}</span>
             </div>
@@ -128,7 +128,7 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
           </div>
 
           <div className="card" style={{ padding: 12, textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Câu hỏi Quiz</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Quiz Questions</div>
             <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4 }}>
               <span style={{ color: "#3b82f6" }}>{statsA.quizzesCount}</span> vs <span style={{ color: "#8b5cf6" }}>{statsB.quizzesCount}</span>
             </div>
@@ -136,7 +136,7 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
           </div>
 
           <div className="card" style={{ padding: 12, textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Tài liệu áp dụng</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Referenced Docs</div>
             <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4 }}>
               <span style={{ color: "#3b82f6" }}>{statsA.sourcesCount}</span> vs <span style={{ color: "#8b5cf6" }}>{statsB.sourcesCount}</span>
             </div>
@@ -146,7 +146,7 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
           <div className="card" style={{ padding: 12, textAlign: "center" }}>
             <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Coverage Score</div>
             <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4 }}>
-              <span style={{ color: "#3b82f6" }}>{statsA.coverage != null ? `${statsA.coverage}%` : "Chưa tính"}</span> vs <span style={{ color: "#8b5cf6" }}>{statsB.coverage != null ? `${statsB.coverage}%` : "Chưa tính"}</span>
+              <span style={{ color: "#3b82f6" }}>{statsA.coverage != null ? `${statsA.coverage}%` : "Not calculated"}</span> vs <span style={{ color: "#8b5cf6" }}>{statsB.coverage != null ? `${statsB.coverage}%` : "Not calculated"}</span>
             </div>
             <div style={{ fontSize: 11, marginTop: 2 }}>{statsA.coverage != null && statsB.coverage != null ? diffLabel(statsA.coverage, statsB.coverage, "%") : ""}</div>
           </div>
@@ -157,71 +157,71 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
           <table className="data-table" style={{ width: "100%", fontSize: 13 }}>
             <thead>
               <tr>
-                <th style={{ width: "25%" }}>Tiêu chí So sánh</th>
-                <th style={{ width: "35%", background: "rgba(59, 130, 246, 0.05)" }}>Lộ trình A: {pick(pathA, "title")}</th>
-                <th style={{ width: "35%", background: "rgba(139, 92, 246, 0.05)" }}>Lộ trình B: {pick(pathB, "title")}</th>
-                <th style={{ width: "15%" }}>Đánh giá khác biệt</th>
+                <th style={{ width: "25%" }}>Comparison Criteria</th>
+                <th style={{ width: "35%", background: "rgba(59, 130, 246, 0.05)" }}>Plan A: {pick(pathA, "title")}</th>
+                <th style={{ width: "35%", background: "rgba(139, 92, 246, 0.05)" }}>Plan B: {pick(pathB, "title")}</th>
+                <th style={{ width: "15%" }}>Evaluation</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><strong>Mã & Phiên bản</strong></td>
+                <td><strong>ID & Revision</strong></td>
                 <td><code>{pathA.id}</code> (v{pathA.revision || 1})</td>
                 <td><code>{pathB.id}</code> (v{pathB.revision || 1})</td>
-                <td>{pathA.revision === pathB.revision ? "Cùng phiên bản" : "Khác phiên bản"}</td>
+                <td>{pathA.revision === pathB.revision ? "Same revision" : "Different revision"}</td>
               </tr>
               <tr>
-                <td><strong>Vị trí & Phòng ban</strong></td>
+                <td><strong>Role & Department</strong></td>
                 <td>{pick(roleA, "name") || pathA.target?.role_id} · {pathA.target?.department}</td>
                 <td>{pick(roleB, "name") || pathB.target?.role_id} · {pathB.target?.department}</td>
-                <td>{pathA.target?.role_id === pathB.target?.role_id ? "Cùng vị trí chức danh" : "Khác vị trí chức danh"}</td>
+                <td>{pathA.target?.role_id === pathB.target?.role_id ? "Same target role" : "Different target role"}</td>
               </tr>
               <tr>
-                <td><strong>Cấp độ nhân sự</strong></td>
+                <td><strong>Target Level</strong></td>
                 <td><Badge tone="purple">{pathA.level || "Standard"}</Badge></td>
                 <td><Badge tone="purple">{pathB.level || "Standard"}</Badge></td>
-                <td>{pathA.level === pathB.level ? "Tương đương" : "Khác trình độ"}</td>
+                <td>{pathA.level === pathB.level ? "Equivalent level" : "Different level"}</td>
               </tr>
               <tr>
-                <td><strong>Trạng thái Phê duyệt</strong></td>
+                <td><strong>Approval Status</strong></td>
                 <td><PathStatusBadge status={pathA.status} /></td>
                 <td><PathStatusBadge status={pathB.status} /></td>
-                <td>{pathA.status === pathB.status ? "Đồng nhất trạng thái" : "Khác trạng thái workflow"}</td>
+                <td>{pathA.status === pathB.status ? "Matching status" : "Different workflow status"}</td>
               </tr>
               <tr>
-                <td><strong>Công nghệ sinh AI (Engine)</strong></td>
+                <td><strong>AI Engine</strong></td>
                 <td><code>{pathA.engine || "gemini-2.5-flash"}</code></td>
                 <td><code>{pathB.engine || "gemini-2.5-flash"}</code></td>
-                <td>{pathA.engine === pathB.engine ? "Cùng mô hình AI" : "Khác mô hình AI"}</td>
+                <td>{pathA.engine === pathB.engine ? "Identical AI model" : "Different AI model"}</td>
               </tr>
               <tr>
-                <td><strong>Số Giai đoạn (Stages)</strong></td>
-                <td><strong>{statsA.stagesCount}</strong> giai đoạn</td>
-                <td><strong>{statsB.stagesCount}</strong> giai đoạn</td>
-                <td>{diffLabel(statsA.stagesCount, statsB.stagesCount, " giai đoạn")}</td>
+                <td><strong>Number of Stages</strong></td>
+                <td><strong>{statsA.stagesCount}</strong> stages</td>
+                <td><strong>{statsB.stagesCount}</strong> stages</td>
+                <td>{diffLabel(statsA.stagesCount, statsB.stagesCount, " stages")}</td>
               </tr>
               <tr>
-                <td><strong>Tổng số Bài học</strong></td>
-                <td><strong>{statsA.lessonsCount}</strong> bài học</td>
-                <td><strong>{statsB.lessonsCount}</strong> bài học</td>
-                <td>{diffLabel(statsA.lessonsCount, statsB.lessonsCount, " bài")}</td>
+                <td><strong>Total Lessons</strong></td>
+                <td><strong>{statsA.lessonsCount}</strong> lessons</td>
+                <td><strong>{statsB.lessonsCount}</strong> lessons</td>
+                <td>{diffLabel(statsA.lessonsCount, statsB.lessonsCount, " lessons")}</td>
               </tr>
               <tr>
-                <td><strong>Nhiệm vụ Thực hành</strong></td>
-                <td><strong>{statsA.tasksCount}</strong> nhiệm vụ</td>
-                <td><strong>{statsB.tasksCount}</strong> nhiệm vụ</td>
-                <td>{diffLabel(statsA.tasksCount, statsB.tasksCount, " task")}</td>
+                <td><strong>Practical Tasks</strong></td>
+                <td><strong>{statsA.tasksCount}</strong> tasks</td>
+                <td><strong>{statsB.tasksCount}</strong> tasks</td>
+                <td>{diffLabel(statsA.tasksCount, statsB.tasksCount, " tasks")}</td>
               </tr>
               <tr>
-                <td><strong>Bài kiểm tra Đánh giá</strong></td>
-                <td><strong>{statsA.quizzesCount}</strong> câu hỏi trắc nghiệm</td>
-                <td><strong>{statsB.quizzesCount}</strong> câu hỏi trắc nghiệm</td>
-                <td>{diffLabel(statsA.quizzesCount, statsB.quizzesCount, " câu")}</td>
+                <td><strong>Quiz Questions</strong></td>
+                <td><strong>{statsA.quizzesCount}</strong> questions</td>
+                <td><strong>{statsB.quizzesCount}</strong> questions</td>
+                <td>{diffLabel(statsA.quizzesCount, statsB.quizzesCount, " questions")}</td>
               </tr>
               <tr>
-                <td><strong>Độ phủ Kỹ năng (Ground Truth)</strong></td>
-                <td><strong style={{ color: "#10b981" }}>{statsA.coverage != null ? `${statsA.coverage}%` : "Chưa tính"}</strong></td>
-                <td><strong style={{ color: "#10b981" }}>{statsB.coverage != null ? `${statsB.coverage}%` : "Chưa tính"}</strong></td>
+                <td><strong>Skill Coverage (Ground Truth)</strong></td>
+                <td><strong style={{ color: "#10b981" }}>{statsA.coverage != null ? `${statsA.coverage}%` : "Not calculated"}</strong></td>
+                <td><strong style={{ color: "#10b981" }}>{statsB.coverage != null ? `${statsB.coverage}%` : "Not calculated"}</strong></td>
                 <td>{statsA.coverage != null && statsB.coverage != null ? diffLabel(statsA.coverage, statsB.coverage, "%") : "—"}</td>
               </tr>
             </tbody>
@@ -230,24 +230,24 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
 
         {/* 4. Stage & Module Breakdown Comparison */}
         <h3 style={{ fontSize: 15, fontWeight: 700, margin: "16px 0 10px" }}>
-          Phân bổ Giai đoạn & Danh mục Học phần
+          Stage Breakdown & Module Catalog
         </h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <div style={{ background: "#f8fafc", padding: 14, borderRadius: 8, border: "1px solid var(--border)" }}>
             <div style={{ fontWeight: 700, color: "#2563eb", marginBottom: 8, fontSize: 13 }}>
-              Cấu trúc Lộ trình A: {pick(pathA, "title")}
+              Plan A Structure: {pick(pathA, "title")}
             </div>
             {(pathA.stages || []).map((s, idx) => (
               <div key={idx} style={{ marginBottom: 10 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>
-                  {s.name || `Giai đoạn ${idx + 1}`} ({s.duration || "2 tuần"})
+                  {s.name || `Stage ${idx + 1}`} ({s.duration || "2 weeks"})
                 </div>
                 <ul style={{ margin: "4px 0 0 16px", padding: 0, fontSize: 12.5 }}>
                   {(s.modules || []).map((m, mIdx) => (
                     <li key={mIdx} style={{ margin: "3px 0" }}>
                       <strong>{pick(m, "title")}</strong>
                       <span className="cell-sub" style={{ marginLeft: 6 }}>
-                        ({(m.lessons || []).length} bài, {(m.tasks || []).length} task, {(m.quiz || []).length} câu hỏi)
+                        ({(m.lessons || []).length} lessons, {(m.tasks || []).length} tasks, {(m.quiz || []).length} questions)
                       </span>
                     </li>
                   ))}
@@ -258,19 +258,19 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
 
           <div style={{ background: "#f8fafc", padding: 14, borderRadius: 8, border: "1px solid var(--border)" }}>
             <div style={{ fontWeight: 700, color: "#7c3aed", marginBottom: 8, fontSize: 13 }}>
-              Cấu trúc Lộ trình B: {pick(pathB, "title")}
+              Plan B Structure: {pick(pathB, "title")}
             </div>
             {(pathB.stages || []).map((s, idx) => (
               <div key={idx} style={{ marginBottom: 10 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>
-                  {s.name || `Giai đoạn ${idx + 1}`} ({s.duration || "2 tuần"})
+                  {s.name || `Stage ${idx + 1}`} ({s.duration || "2 weeks"})
                 </div>
                 <ul style={{ margin: "4px 0 0 16px", padding: 0, fontSize: 12.5 }}>
                   {(s.modules || []).map((m, mIdx) => (
                     <li key={mIdx} style={{ margin: "3px 0" }}>
                       <strong>{pick(m, "title")}</strong>
                       <span className="cell-sub" style={{ marginLeft: 6 }}>
-                        ({(m.lessons || []).length} bài, {(m.tasks || []).length} task, {(m.quiz || []).length} câu hỏi)
+                        ({(m.lessons || []).length} lessons, {(m.tasks || []).length} tasks, {(m.quiz || []).length} questions)
                       </span>
                     </li>
                   ))}
@@ -282,10 +282,11 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
           <Button variant="primary" onClick={onClose}>
-            Đóng bảng so sánh
+            Close Comparison
           </Button>
         </div>
       </div>
     </Modal>
   );
 }
+

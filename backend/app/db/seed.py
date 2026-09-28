@@ -30,29 +30,29 @@ from app.models import (
 from app.services.role_matrix import ImportReport, import_csv
 
 DEPARTMENTS = [
-    ("Company-wide", "Toàn công ty"),
-    ("Sales", "Kinh doanh"),
-    ("Customer Support", "Chăm sóc khách hàng"),
-    ("Human Resources", "Nhân sự"),
-    ("Finance", "Tài chính - Kế toán"),
-    ("Operations", "Vận hành"),
+    ("Company-wide", "Company-wide"),
+    ("Sales", "Sales"),
+    ("Customer Support", "Customer Support"),
+    ("Human Resources", "Human Resources"),
+    ("Finance", "Finance"),
+    ("Operations", "Operations"),
     ("Marketing", "Marketing"),
-    ("Engineering", "Kỹ thuật"),
-    ("Branch Management", "Quản lý chi nhánh"),
-    ("Data", "Dữ liệu"),
+    ("Engineering", "Engineering"),
+    ("Branch Management", "Branch Management"),
+    ("Data", "Data"),
 ]
 
 JOB_POSITIONS = [
-    ("sales-exec", "Nhân viên Kinh doanh phần mềm B2B", "Sales Executive", "Sales"),
-    ("cs-exec", "Nhân viên Chăm sóc khách hàng", "Customer Support Executive", "Customer Support"),
-    ("hr-exec", "Nhân viên Nhân sự / Tuyển dụng & Onboarding", "HR Executive", "Human Resources"),
-    ("finance-associate", "Chuyên viên Tài chính - Kế toán", "Finance Associate", "Finance"),
-    ("ops-coordinator", "Điều phối viên Vận hành hệ thống", "Operations Coordinator", "Operations"),
-    ("marketing-exec", "Nhân viên Tiếp thị kỹ thuật số", "Marketing Executive", "Marketing"),
-    ("support-engineer", "Kỹ sư Hỗ trợ Kỹ thuật phần mềm", "Software Support Engineer", "Engineering"),
-    ("branch-manager", "Giám quản Chi nhánh", "Branch Manager", "Branch Management"),
-    ("data-analyst", "Chuyên viên Phân tích dữ liệu doanh nghiệp", "Data Analyst", "Data"),
-    ("team-leader", "Trưởng nhóm Kỹ thuật / Phát triển sản phẩm", "Team Leader / Tech Lead", "Engineering"),
+    ("sales-exec", "Sales Executive", "Sales Executive", "Sales"),
+    ("cs-exec", "Customer Support Executive", "Customer Support Executive", "Customer Support"),
+    ("hr-exec", "HR Executive", "HR Executive", "Human Resources"),
+    ("finance-associate", "Finance Associate", "Finance Associate", "Finance"),
+    ("ops-coordinator", "Operations Coordinator", "Operations Coordinator", "Operations"),
+    ("marketing-exec", "Marketing Executive", "Marketing Executive", "Marketing"),
+    ("support-engineer", "Software Support Engineer", "Software Support Engineer", "Engineering"),
+    ("branch-manager", "Branch Manager", "Branch Manager", "Branch Management"),
+    ("data-analyst", "Data Analyst", "Data Analyst", "Data"),
+    ("team-leader", "Team Leader / Tech Lead", "Team Leader / Tech Lead", "Engineering"),
 ]
 
 # Demo password is public in the frontend source, so these accounts are for local/demo databases only.

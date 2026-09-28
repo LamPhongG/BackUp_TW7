@@ -7,7 +7,7 @@ import { useAuth } from "../hooks/useAuth";
 const MIN_LENGTH = 8;
 const EMPTY = { current: "", next: "", confirm: "" };
 
-/** Đổi mật khẩu của người đang đăng nhập (mọi vai trò). `onDone` nhận thông báo để trang hiện Toast. */
+/** Change password for current logged-in user (all roles). `onDone` receives status message to show Toast. */
 export default function ChangePasswordModal({ open, onClose, onDone }) {
   const { t } = useLanguage();
   const { changePassword } = useAuth();

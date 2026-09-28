@@ -3,7 +3,6 @@ document_id: RD-09
 role_id: data-analyst
 family: role-description-data-analyst
 title_en: Role Description – Data Analyst
-title_vi: Mô tả công việc – Chuyên viên Phân tích dữ liệu doanh nghiệp
 category: Role Description
 department: Data
 version: 1.0

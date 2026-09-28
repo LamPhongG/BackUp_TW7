@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
-import { useLanguage, LanguageToggle } from "../contexts/LanguageContext";
+import { useLanguage } from "../contexts/LanguageContext";
 
-/** Nửa trái giới thiệu sản phẩm, nửa phải là nền gradient cho thẻ đăng nhập dạng kính */
+/** Left side showcases product visuals, right side features glassmorphism login card */
 export default function AuthLayout() {
   const { t } = useLanguage();
   return (
@@ -25,7 +25,6 @@ export default function AuthLayout() {
         <span className="glass-blob glass-blob--1" aria-hidden="true" />
         <span className="glass-blob glass-blob--2" aria-hidden="true" />
         <span className="glass-blob glass-blob--3" aria-hidden="true" />
-        <LanguageToggle className="glass-lang" />
         <Outlet />
       </section>
     </div>

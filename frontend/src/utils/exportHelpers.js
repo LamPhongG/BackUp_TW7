@@ -1,12 +1,12 @@
 /**
- * Tiện ích xuất dữ liệu (CSV & in/lưu PDF) cho Trung tâm Báo cáo (SRS Step 62, 63 & Deliverables 1.10).
+ * Data export utilities (CSV & print/save PDF) for the Reports Center (SRS Step 62, 63 & Deliverables 1.10).
  */
 
 /**
- * Xuất dữ liệu ra file CSV tương thích chuẩn với Microsoft Excel và Google Sheets (UTF-8 with BOM).
- * @param {string} filename Tên file cần lưu (ví dụ: "Bao_cao_tien_do.csv")
- * @param {string[]} headers Danh sách tiêu đề cột
- * @param {(string|number)[][]} rows Danh sách các hàng dữ liệu
+ * Export data to a standard CSV file compatible with Microsoft Excel and Google Sheets (UTF-8 with BOM).
+ * @param {string} filename Name of file to save (e.g. "Progress_Report.csv")
+ * @param {string[]} headers Array of column header strings
+ * @param {(string|number)[][]} rows Array of data rows
  */
 export function exportToCsv(filename, headers, rows) {
   const escapeCell = (val) => {
@@ -20,7 +20,7 @@ export function exportToCsv(filename, headers, rows) {
     ...rows.map(row => row.map(escapeCell).join(","))
   ];
 
-  // BOM \uFEFF giúp Excel nhận diện chính xác encoding UTF-8 (tiếng Việt có dấu không bị vỡ)
+  // BOM \uFEFF enables Excel to recognize UTF-8 encoding
   const csvContent = "\uFEFF" + csvRows.join("\r\n");
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -35,14 +35,14 @@ export function exportToCsv(filename, headers, rows) {
 }
 
 /**
- * Tạo bản in và lưu PDF chuẩn báo cáo doanh nghiệp thông qua iframe ẩn.
+ * Generate print preview and save PDF via a hidden iframe.
  * @param {Object} options
- * @param {string} options.title Tiêu đề báo cáo
- * @param {string} options.subtitle Mô tả phụ / ngữ cảnh báo cáo
- * @param {Array<{label: string, value: string|number}>} [options.kpis] Các thẻ chỉ số tổng quan
- * @param {string[]} options.headers Tiêu đề cột
- * @param {(string|number)[][]} options.rows Hàng dữ liệu
- * @param {Object} [options.metadata] Metadata bổ sung (Người xuất, thời gian, phòng ban...)
+ * @param {string} options.title Report title
+ * @param {string} options.subtitle Report subtitle / context
+ * @param {Array<{label: string, value: string|number}>} [options.kpis] KPI metric cards
+ * @param {string[]} options.headers Column headers
+ * @param {(string|number)[][]} options.rows Data rows
+ * @param {Object} [options.metadata] Supplementary metadata (exporter, timestamp, department...)
  */
 export function printReportToPdf({ title, subtitle, kpis = [], headers = [], rows = [], metadata = {} }) {
   const existingFrame = document.getElementById("report-print-iframe");
@@ -209,8 +209,8 @@ export function printReportToPdf({ title, subtitle, kpis = [], headers = [], row
             <div class="tagline">Enterprise Knowledge & Intelligent Onboarding Platform</div>
           </div>
           <div class="meta">
-            <div><strong>Thời gian xuất:</strong> ${now}</div>
-            <div><strong>Hệ thống:</strong> Production Verified</div>
+            <div><strong>Export Date:</strong> ${now}</div>
+            <div><strong>System:</strong> Production Verified</div>
             ${Object.entries(metadata).map(([k, v]) => `<div><strong>${k}:</strong> ${v}</div>`).join("")}
           </div>
         </div>
@@ -233,7 +233,7 @@ export function printReportToPdf({ title, subtitle, kpis = [], headers = [], row
 
         <div class="footer">
           <div>SkillSprint AI · Confidential & Internal Compliance Report</div>
-          <div>Trang 1 / 1 · Xác thực chữ ký số nền tảng</div>
+          <div>Page 1 / 1 · Platform Digital Signature Verified</div>
         </div>
       </body>
     </html>

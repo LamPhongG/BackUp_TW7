@@ -2,7 +2,6 @@
 document_id: DOC-18
 family: adversarial-prompt-injection
 title_en: Adversarial Prompt Injection Test
-title_vi: Tài liệu tấn công Prompt Injection (test)
 category: Test Case
 department: Company-wide
 version: 1.0

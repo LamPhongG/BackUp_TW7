@@ -1,4 +1,4 @@
-/* Tính năng: kho tài liệu, ma trận vị trí, kiểm định, lộ trình học, trang học của nhân viên */
+/* Features: document repository, role matrix, audit, learning paths, employee learning page */
 .text-danger{color:var(--red)!important}.text-warning{color:var(--orange)}
 .heading-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .nav-count{margin-left:auto;font-style:normal;font-size:12px;font-weight:700;min-width:22px;height:20px;padding:0 6px;border-radius:10px;background:#f59e0b;color:#1f1300;display:grid;place-items:center}
@@ -91,7 +91,7 @@
   .meta-list{grid-template-columns:1fr}
 }
 
-/* Nút nguồn đang chọn tô nền cho mọi span (ô checkbox) — trả lại màu chữ thường cho tiêu đề */
+/* Selected source button applies background to all spans (checkbox cell) — reset default text color for title */
 .source-select button.selected span.source-select__title,.source-select button.selected span.source-select__sub{background:transparent;border:0;color:inherit}
 .source-select button.selected span.source-select__sub{color:var(--muted)}
 .ai-studio-grid label textarea{display:block;width:100%;margin-top:6px}
@@ -215,7 +215,7 @@
 .crash__actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 .crash__hint{font-size:13px;color:var(--muted)!important;margin-bottom:0}
 
-/* Trang đăng nhập: nửa trái giới thiệu, nửa phải thẻ kính (glassmorphism) */
+/* Login page: left half hero introduction, right half glassmorphism card */
 .auth-hero{margin:10vh auto 0}
 .auth-roles{list-style:none;padding:0;margin:28px 0 0;display:grid;gap:14px}
 .auth-roles li{display:flex;gap:12px;align-items:flex-start}
@@ -265,7 +265,7 @@
 .glass-demo small{display:block;opacity:.85}
 .glass-chip{padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.38);color:#fff;font-size:13px;font-weight:600}
 .glass-chip:hover{background:rgba(255,255,255,.3)}
-/* Tạo lộ trình: tài liệu bắt buộc theo ma trận, độ dài lộ trình */
+/* Path creation: mandatory documents per role matrix, duration selector */
 .notice--info{background:var(--blue-bg);color:#1f5fae;align-items:center}
 .source-select button.is-mandatory{border-color:#b9b2ff}
 .source-select button.is-omitted{border-color:var(--orange);border-style:dashed;background:#fff8ed}
@@ -286,7 +286,7 @@
 .gen-offrole{margin:0 0 12px;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:#fafbfd;font-size:14px}
 .gen-offrole summary{cursor:pointer;font-weight:600;color:#465066}
 .gen-offrole ul{margin:8px 0 2px;padding-left:18px}
-/* Tiến độ AI soạn lộ trình */
+/* AI path drafting progress */
 .gen-progress{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 10px 30px #1016290d}
 .gen-progress--compact{border:0;box-shadow:none;padding:0}
 .gen-progress__head{display:flex;align-items:center;gap:14px}
@@ -345,14 +345,14 @@
   .glass-card h2{font-size:30px}
 }
 
-/* Tài khoản nhân viên tạo bởi HR (mời nhân viên) */
+/* Employee accounts created by HR (invite employee) */
 .invite-list{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:10px}
 .invite-item{display:flex;gap:16px;align-items:flex-start;padding:14px 16px;border:1px solid var(--line);border-radius:10px}
 .invite-item__info{flex:1;min-width:0;display:grid;gap:4px}
 .invite-item__top{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .invite-item__line{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--muted)}
 
-/* Khám phá lộ trình của phòng ban */
+/* Department learning path exploration */
 .explore-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .explore-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .explore-stage{margin:14px 0 0}
@@ -364,8 +364,8 @@
 
 .glass-float input:-webkit-autofill, .glass-float input:-webkit-autofill:hover, .glass-float input:-webkit-autofill:focus, .glass-float input:-webkit-autofill:active { transition: background-color 5000s ease-in-out 0s; -webkit-text-fill-color: #fff !important; text-shadow: none !important; caret-color: #fff; }
 
-/* Form tạo tài khoản từ CV: 2 cột đều trong modal (minmax 0 để ô nhập dài không đẩy modal tràn ngang),
-   không để ô thứ 3 chiếm cả hàng như .form-grid mặc định */
+/* Create account from CV form: 2 equal columns in modal (minmax 0 prevents overflow),
+   ensuring the 3rd field does not span the entire row unlike default .form-grid */
 .cv-modal{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
 .cv-form{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 .cv-form label:nth-child(3){grid-column:auto}

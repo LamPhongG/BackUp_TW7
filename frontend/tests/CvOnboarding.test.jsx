@@ -10,16 +10,16 @@ vi.mock("../src/services/apiClient", () => ({
 }));
 const changePassword = vi.fn();
 vi.mock("../src/hooks/useAuth", () => ({ useAuth: () => ({ changePassword }) }));
-const lang = { t: (k, vars) => (vars ? `${k}:${JSON.stringify(vars)}` : k), tv: k => k, pick: (o, f) => o?.[f], locale: "vi" };
+const lang = { t: (k, vars) => (vars ? `${k}:${JSON.stringify(vars)}` : k), tv: k => k, pick: (o, f) => o?.[f], locale: "en" };
 vi.mock("../src/contexts/LanguageContext", () => ({ useLanguage: () => lang }));
 
 const DRAFT = {
-  name: "Nguyễn Văn An", email: "an.nguyen@gmail.com", years_of_experience: 3, experience_level: "Intermediate",
-  previous_experience: "Công ty ABC", competencies: ["Giao tiếp", "CRM"], warnings: ["cv_warn_no_skills"],
+  name: "John Doe", email: "john.doe@gmail.com", years_of_experience: 3, experience_level: "Intermediate",
+  previous_experience: "ABC Corp", competencies: ["Communication", "CRM"], warnings: ["cv_warn_no_skills"],
 };
-const USER = { id: "USR-1", email: "an.nguyen@gmail.com", name: "Nguyễn Văn An", user_role: "employee", password_is_temporary: true };
+const USER = { id: "USR-1", email: "john.doe@gmail.com", name: "John Doe", user_role: "employee", password_is_temporary: true };
 
-// Vitest không bật globals nên Testing Library không tự dọn DOM; hàng đợi mockResolvedValueOnce cũng phải xoá giữa các test
+// Vitest globals not enabled so Testing Library does not auto-cleanup DOM; reset mocks between tests
 beforeEach(() => { vi.clearAllMocks(); apiClient.apiRequest.mockReset(); changePassword.mockReset(); });
 afterEach(cleanup);
 
@@ -37,10 +37,10 @@ test("the CV draft prefills an editable form and the warnings are shown", async 
   const [url, init] = apiClient.apiRequest.mock.calls[0];
   expect(url).toBe("/users/cv/parse");
   expect(init.body).toBeInstanceOf(FormData);
-  expect(container.querySelector("#cv-name").value).toBe("Nguyễn Văn An");
-  expect(container.querySelector("#cv-email").value).toBe("an.nguyen@gmail.com");
+  expect(container.querySelector("#cv-name").value).toBe("John Doe");
+  expect(container.querySelector("#cv-email").value).toBe("john.doe@gmail.com");
   expect(container.querySelector("#cv-level").value).toBe("Intermediate");
-  expect(container.querySelector("#cv-skills").value).toBe("Giao tiếp, CRM");
+  expect(container.querySelector("#cv-skills").value).toBe("Communication, CRM");
   expect(container.textContent).toContain("cv_warn_no_skills");
 });
 
@@ -58,14 +58,14 @@ test("creating the account sends the edited fields and shows the password only w
   });
   const { container, onCreated } = await uploadCv();
   fireEvent.change(container.querySelector("#cv-position"), { target: { value: "cs-exec" } });
-  fireEvent.change(container.querySelector("#cv-skills"), { target: { value: "Giao tiếp, , CRM " } });
+  fireEvent.change(container.querySelector("#cv-skills"), { target: { value: "Communication, , CRM " } });
   await act(async () => { fireEvent.submit(container.querySelector("form")); });
 
   const [url, init] = apiClient.apiRequest.mock.calls[1];
   expect(url).toBe("/users/from-cv");
   expect(init.body).toEqual({
-    name: "Nguyễn Văn An", email: "an.nguyen@gmail.com", job_position_id: "cs-exec",
-    experience_level: "Intermediate", previous_experience: "Công ty ABC", competencies: ["Giao tiếp", "CRM"],
+    name: "John Doe", email: "john.doe@gmail.com", job_position_id: "cs-exec",
+    experience_level: "Intermediate", previous_experience: "ABC Corp", competencies: ["Communication", "CRM"],
   });
   expect(onCreated).toHaveBeenCalled();
   expect(screen.getByTestId("cv-email-failed")).toBeTruthy();

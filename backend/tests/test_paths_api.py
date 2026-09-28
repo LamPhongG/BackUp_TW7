@@ -60,7 +60,7 @@ def test_hr_creates_a_draft(client, hr_headers, draft, source):
     assert draft["id"].startswith("LP-")
     assert draft["status"] == "draft"
     assert draft["revision"] == 1
-    assert draft["title"] == "Hội nhập — Kỹ sư Hỗ trợ Kỹ thuật phần mềm"
+    assert draft["title"] == "Onboarding — Software Support Engineer"
     assert draft["title_en"] == "Onboarding — Software Support Engineer"
     assert draft["target"] == {"job_position_id": "support-engineer", "department_code": "Engineering"}
     assert draft["prompt"] == "Focus on customer escalation"
@@ -160,9 +160,8 @@ def test_regenerate_replaces_content_and_sources(client, hr_headers, draft):
 
 
 def test_submit_moves_to_review_with_note(client, hr_headers, reviewer_headers, draft):
-    # Thêm một tài liệu Engineering bắt buộc nhưng không được trích dẫn, rồi "edit" lại đúng nội
-    # dung cũ để Pipeline 2 tính lại coverage — đảm bảo coverage < 100% một cách tất định, không
-    # phụ thuộc các test khác đã upload gì trước đó trong cùng phiên chạy test.
+    # Add a mandatory Engineering document that is not cited, then "edit" back the exact
+    # old content so Pipeline 2 recomputes coverage — ensures coverage < 100% deterministically.
     upload_ready_pdf(client, hr_headers, category="SOP", department_code="Engineering")
     client.patch(f"/api/paths/{draft['id']}", headers=hr_headers, json={"stages": draft["stages"]})
 
@@ -177,7 +176,7 @@ def test_submit_moves_to_review_with_note(client, hr_headers, reviewer_headers, 
     assert path["comments"][0]["author"]["role"] == "hr"
     assert set(path["allowed_actions"]) == {"comment"}
 
-    # Kết quả là phán quyết của server (coverage từ Pipeline 2 chưa đạt 100%), không phải giá trị client gửi lên.
+    # Result is server's judgment (coverage from Pipeline 2 below 100%), not the client-supplied value.
     log = _audit(client, reviewer_headers, draft["id"])[0]
     assert (log["action"], log["status_before"], log["status_after"], log["final_status"]) == (
         "submit", "draft", "in_review", "manual_review")

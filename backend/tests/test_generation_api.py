@@ -58,7 +58,7 @@ def test_gemini_generation_is_stored_with_report(client, hr_headers, fake_gemini
     assert report["modules"][0]["engine"] == "gemini"
     assert report["tokens"]["input"] > 0
     module = path["stages"][0]["modules"][0]
-    assert module["lessons"][0]["content"].startswith("Giải thích:")
+    assert module["lessons"][0]["content"].startswith("Explanation:")
     assert all(q["kind"] == "ai" and q["explanation"] for q in module["quiz"])
     assert "Stress payment deadlines" in fake_gemini.calls[0]["prompt"]
     # Server checks agree the AI content is grounded: nothing blocks review.
@@ -95,9 +95,8 @@ def test_sources_with_only_flagged_text_cannot_generate(client, hr_headers):
 
 @pytest.fixture
 def in_review(client, hr_headers, fake_gemini, expense_doc):
-    # Thêm một tài liệu Finance bắt buộc nhưng không đưa vào nguồn sinh nội dung, để Pipeline 2
-    # luôn tính coverage < 100% một cách tất định — không phụ thuộc DB test đã tích lũy gì từ
-    # những test khác chạy trước đó.
+    # Add a mandatory Finance document not included in generation sources, so Pipeline 2
+    # always computes coverage < 100% deterministically.
     upload_ready_pdf(client, hr_headers, category="Policy", department_code="Finance")
     path = _generate(client, hr_headers, [expense_doc["id"]]).json()
     res = client.post(f"/api/paths/{path['id']}/submit", headers=hr_headers, json={"note": "Ready for review"})
@@ -137,7 +136,7 @@ def test_publish_needs_reason_when_not_fully_verified(client, reviewer_headers, 
     path = res.json()
     assert path["status"] == "published"
     assert path["published_to"] == {"departments": ["Finance"], "job_positions": ["support-engineer"]}
-    # Coverage < 100% (một tài liệu Finance bắt buộc chưa được trích dẫn) → cần lý do mới publish được.
+    # Coverage < 100% (mandatory Finance document uncited) -> reason required to publish.
     assert path["approval"]["final_status"] == "manual_review"
     assert path["approval"]["by"]["name"] == "Sarah Chen"
     # Alex (support-engineer, Engineering) is targeted by position.

@@ -1,4 +1,4 @@
-# Unit tests for Generation Consistency Score (SRS Step 44-45).
+# Unit tests for generation consistency scoring.
 
 from src.comparison_engine.consistency import calculate_consistency_score
 from src.genai_pipeline.response_schemas import (
@@ -47,7 +47,7 @@ def test_identical_plans_score_100():
 
 
 def test_completely_different_plans_score_low():
-    # Khác cả nguồn trích dẫn, số module và câu hỏi — không chỉ khác câu chữ.
+    # Differs in citations, module count, and questions — not just wording.
     plan_a = _plan(["doc1", "doc2"], n_tasks=1, question_ids=["Q1"])
     plan_b = _plan(["doc3", "doc4", "doc5"], n_tasks=3, question_ids=["Q9"])
 

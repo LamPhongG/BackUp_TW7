@@ -4,8 +4,8 @@ import { backendEnabled } from "../services/apiClient";
 import { visibleToEmployee } from "../utils/pathWorkflow";
 
 /**
- * Lộ trình của nhân viên đang đăng nhập. Có backend: server chỉ trả về lộ trình đã gán cho người này
- * (bản ghi gán), nên không lọc lại theo phòng ban / vị trí ở đây.
+ * Learning paths for current logged-in employee. When backend is enabled, server returns paths
+ * assigned to this employee (enrollment records), so no client-side department/role re-filtering is needed.
  */
 export function useMyPaths() {
   const { paths } = usePaths();

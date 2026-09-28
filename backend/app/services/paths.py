@@ -61,8 +61,8 @@ from app.services.path_workflow import allowed_actions, check_stage_keys, ensure
 from app.services.visibility import path_filter
 
 TITLES = {
-    PathPurpose.ONBOARDING: ("Hội nhập", "Onboarding"),
-    PathPurpose.PROMOTION: ("Bồi dưỡng thăng chức", "Promotion upskilling"),
+    PathPurpose.ONBOARDING: ("Onboarding", "Onboarding"),
+    PathPurpose.PROMOTION: ("Promotion upskilling", "Promotion upskilling"),
 }
 
 _WITH_RELATIONS = (
@@ -113,8 +113,8 @@ def create(db: Session, actor: User, body: PathCreate, progress: Progress | None
     vi, en = TITLES[body.purpose]
     path = LearningPath(
         id=path_id,
-        title=f"{vi} — {position.name}",
-        title_en=f"{en} — {position.name_en}",
+        title=f"{en} — {position.name_en or position.name}",
+        title_en=f"{en} — {position.name_en or position.name}",
         purpose=body.purpose,
         level=body.level,
         target_job_position_id=position.id,
@@ -126,7 +126,7 @@ def create(db: Session, actor: User, body: PathCreate, progress: Progress | None
         created_by_id=actor.id,
     )
     _apply_content(path, content, gaps)
-    # Pipeline 2 độc lập tự tính coverage — không tin vào giá trị content.coverage do client/AI gửi.
+    # Pipeline 2 independently computes coverage — does not rely on client/AI-supplied content.coverage.
     path.coverage = role_matrix.compute_coverage(db, path.stages, position.id)
     path.sources = _source_rows(docs)
     db.add(path)
@@ -141,11 +141,11 @@ def regenerate(db: Session, actor: User, path: LearningPath, body: PathRegenerat
                progress: Progress | None = None) -> LearningPath:
     """Replace content from (possibly newer) sources. Comments and history are kept.
 
-    Self-Correction Loop (Anti-shortcut compliant):
-    1. Reads missing requirements flagged by the independent Python validation pipeline from the previous draft.
-    2. Automatically pulls in any missing approved company documents from the repository.
-    3. Feeds structured feedback into the prompt so GenAI specifically focuses on the missing requirements.
-    4. Python Pipeline 2 runs independently on the newly generated output to re-verify coverage.
+    Regeneration steps:
+    1. Check missing requirements flagged from previous evaluation.
+    2. Auto-include required documents if requested.
+    3. Include missing requirements in generation prompt for coverage.
+    4. Re-evaluate coverage score on the new draft.
     """
     emit = progress or _silent
     ensure_allowed(actor, "regenerate", path)
@@ -157,7 +157,7 @@ def regenerate(db: Session, actor: User, path: LearningPath, body: PathRegenerat
     prev_coverage = path.coverage or role_matrix.compute_coverage(db, path.stages, path.target_job_position_id)
     missing_req_ids = prev_coverage.get("missing", []) if prev_coverage else []
 
-    # 2. Anti-shortcut Rule 2: Auto-include missing approved documents from the company repository if requested
+    # 2. Auto-include missing approved documents from repository if requested
     auto_added_codes: list[str] = []
     missing_req_objects: list[RoleRequirement] = []
     if missing_req_ids:
@@ -213,7 +213,7 @@ def regenerate(db: Session, actor: User, path: LearningPath, body: PathRegenerat
     check_stage_keys(path.purpose, [s.key for s in content.stages], path.duration_days)
     _apply_content(path, content, gaps)
 
-    # 4. Anti-shortcut Rule 1: Python Pipeline 2 independently evaluates final content
+    # 4. Recompute coverage with rule engine on updated content
     path.coverage = role_matrix.compute_coverage(db, path.stages, path.target_job_position_id)
     path.sources = _source_rows(docs)
 
@@ -234,7 +234,7 @@ def edit(db: Session, actor: User, path: LearningPath, body: PathEdit) -> Learni
     ensure_allowed(actor, "edit", path)
     check_stage_keys(path.purpose, [s.key for s in body.stages], path.duration_days)
     path.stages = _dump_stages(body.stages)
-    # HR chỉnh tay có thể thêm/bớt trích dẫn → phải tính lại coverage, không giữ giá trị cũ.
+    # Manual HR edits may add/remove citations → recompute coverage instead of preserving old score.
     path.coverage = role_matrix.compute_coverage(db, path.stages, path.target_job_position_id)
     audit.record(db, actor, "edit", path, status_before=path.status, status_after=path.status, details=body.details)
     db.commit()

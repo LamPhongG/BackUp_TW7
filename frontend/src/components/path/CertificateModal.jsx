@@ -23,7 +23,7 @@ export default function CertificateModal({ path, employee, enrollment, onClose }
     if (!node) return;
     const content = node.innerHTML;
     
-    // Tạo iframe ẩn để in trực tiếp, không bị popup blocker chặn
+    // Create hidden iframe for direct printing, avoiding popup blocker issues
     let iframe = document.getElementById("certificate-print-frame");
     if (!iframe) {
       iframe = document.createElement("iframe");
@@ -133,7 +133,7 @@ export default function CertificateModal({ path, employee, enrollment, onClose }
       </div>
       <div className="modal-actions" style={{ marginTop: 25, justifyContent: "center", gap: 12 }}>
          <Button onClick={handlePrint} icon={<Download size={16} />}>
-           {t("export_pdf_certificate") || "Xuất file PDF / In chứng nhận"}
+           {t("export_pdf_certificate") || "Export PDF / Print Certificate"}
          </Button>
          <Button variant="secondary" onClick={onClose}>{t("close")}</Button>
       </div>

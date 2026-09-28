@@ -40,8 +40,8 @@ const DEMO_USERS = {
   hr: { id: 7, name: "Jordan Lee", avatar: "JL", userRole: ROLES.HR, role: "HR Executive", department: "Human Resources" },
 };
 
-// Tài khoản demo: không có backend thì kiểm tra ngay trong trình duyệt; có backend thì backend kiểm tra
-// (mật khẩu băm bcrypt trong DB). Mật khẩu nằm trong mã nguồn nên chỉ dùng để trình diễn.
+// Demo accounts: in browser mode, credentials checked client-side; in backend mode, backend verifies
+// (bcrypt hashed passwords in DB). Hardcoded in source code for demonstration only.
 export const DEMO_PASSWORD = "Demo@123";
 export const DEMO_ACCOUNTS = [
   { email: "admin@fourangrybirds.vn", roleKey: ROLES.ADMIN, label: "Admin" },
@@ -59,13 +59,13 @@ export const DEMO_ACCOUNTS = [
   { email: "team.lead@fourangrybirds.vn", roleKey: ROLES.EMPLOYEE, roleId: "team-leader", label: "Tech Lead" },
 ];
 
-// Không ghi nhớ: phiên ở sessionStorage, đóng tab là hết. Ghi nhớ: ở localStorage, còn sau khi đóng trình duyệt.
-// Phiên luôn được giữ qua lần tải lại trang để audit log biết ai thao tác.
+// Do not remember: session in sessionStorage, cleared upon tab close. Remember: localStorage, persists across browser restarts.
+// Session is always maintained across reloads so audit log tracks the actor.
 const SESSION_KEY = "skillsprint.session.v2";
 
 function build(session) {
   if (!session || typeof session !== "object") return null;
-  // Chế độ backend: hồ sơ người dùng do API trả về lúc đăng nhập
+  // Backend mode: user profile returned by API upon login
   if (session.token) return session.user && typeof session.user === "object" ? session.user : null;
   if (session.roleKey === ROLES.EMPLOYEE) return employeeUser(session.roleId);
   return DEMO_USERS[session.roleKey] || null;
@@ -75,10 +75,10 @@ function readSession() {
   for (const storage of [() => sessionStorage, () => localStorage]) {
     try {
       const value = JSON.parse(storage().getItem(SESSION_KEY));
-      // Phiên của chế độ khác (có/không backend) không dùng được ở chế độ hiện tại
+      // Sessions from different modes (with/without backend) are incompatible with current mode
       if (value && !!value.token === backendEnabled()) return value;
     } catch {
-      // Storage bị chặn hoặc dữ liệu hỏng — thử nơi lưu còn lại
+      // Storage blocked or corrupted — attempt alternative storage
     }
   }
   return null;
@@ -90,14 +90,14 @@ function writeSession(session) {
     localStorage.removeItem(SESSION_KEY);
     if (session) (session.remember ? localStorage : sessionStorage).setItem(SESSION_KEY, JSON.stringify(session));
   } catch {
-    // Storage bị chặn — phiên chỉ sống trong bộ nhớ
+    // Storage blocked — session persists in memory only
   }
 }
 
 export function useAuthProvider() {
   const [session, setSession] = useState(() => {
     const stored = readSession();
-    // Đặt token ngay khi khởi tạo để các provider con gọi API được ở lần render đầu
+    // Set token immediately on initialization so child providers can make API calls on first render
     setAuthToken(stored?.token);
     return stored;
   });
@@ -115,8 +115,8 @@ export function useAuthProvider() {
   }, [persist]);
 
   /**
-   * @returns {string|null|Promise<string|null>} vai trò khi đúng email + mật khẩu, null khi sai.
-   *   Có backend thì trả Promise; lỗi mạng được ném ra để trang báo đúng nguyên nhân.
+   * @returns {string|null|Promise<string|null>} role when email + password match, null when invalid.
+   *   Returns Promise in backend mode; network errors are thrown so page reports the exact cause.
    */
   const login = (email, password, { remember = false } = {}) => {
     if (backendEnabled()) {
@@ -139,12 +139,12 @@ export function useAuthProvider() {
 
   const logout = () => persist(null);
 
-  // Chỉ dùng cho demo trong trình duyệt: có backend thì vị trí là dữ liệu thật trong DB, không đổi ở đây
+  // Browser demo only: in backend mode, job position is real DB data and not modified here
   const setEmployeePosition = (roleId) => {
     if (!backendEnabled() && session?.roleKey === ROLES.EMPLOYEE) persist({ ...session, roleId });
   };
 
-  // Đổi mật khẩu của chính mình (chỉ khi có backend). Lỗi được ném ra để modal hiện đúng lý do.
+  // Change password for logged-in user (backend mode only). Errors are thrown for modal display.
   const changePassword = (currentPassword, newPassword) =>
     apiRequest("/auth/change-password", {
       method: "POST", body: { current_password: currentPassword, new_password: newPassword },

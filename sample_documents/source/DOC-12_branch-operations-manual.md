@@ -2,7 +2,6 @@
 document_id: DOC-12
 family: branch-operations-manual
 title_en: Branch Management Operations Manual
-title_vi: Sổ tay vận hành chi nhánh
 category: Process Manual
 department: Branch Management
 version: 1.0
@@ -15,7 +14,7 @@ owner: Branch Manager (Ho Chi Minh City headquarters)
 
 ## 1. Purpose & Scope
 
-This manual describes how the Company's two sites — the Ho Chi Minh City headquarters and the Đà Nẵng office opened in 2025 — are run day to day. It sets out the authority of the Branch Manager, the operational duties of the Operations Coordinator, and the routines both roles use to keep sales, customer support and partner-school programmes running. It applies to everyone who works at, or on behalf of, a branch.
+This manual describes how the Company's two sites — the Ho Chi Minh City headquarters and the Da Nang office opened in 2025 — are run day to day. It sets out the authority of the Branch Manager, the operational duties of the Operations Coordinator, and the routines both roles use to keep sales, customer support and partner-school programmes running. It applies to everyone who works at, or on behalf of, a branch.
 
 Where this manual repeats an approval limit or deadline defined in another document, the other document is the authoritative source and is named in brackets.
 
@@ -24,7 +23,7 @@ Where this manual repeats an approval limit or deadline defined in another docum
 Each branch is led by a Branch Manager who reports to the Chief Operating Officer. The functions present at a branch report to the Branch Manager for day-to-day operations and to their department head for professional standards.
 
 - **Ho Chi Minh City headquarters**: all nine functions of DOC-01 §2; hosts the central IT Security and Finance teams.
-- **Đà Nẵng office**: Sales, Customer Support, Operations and a small Engineering team; shares Finance, HR and IT Security with headquarters.
+- **Da Nang office**: Sales, Customer Support, Operations and a small Engineering team; shares Finance, HR and IT Security with headquarters.
 
 ## 3. Branch Manager Authority [ROLE-SPECIFIC: Branch Manager]
 

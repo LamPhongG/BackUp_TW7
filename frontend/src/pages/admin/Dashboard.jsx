@@ -96,7 +96,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="dashboard-grid">
-        {/* Phân bổ 4 vai trò */}
+        {/* 4 Roles Distribution */}
         <Card>
           <SectionHeader
             title={t("admin_role_distribution")}
@@ -147,7 +147,7 @@ export default function AdminDashboard() {
           </div>
         </Card>
 
-        {/* Phân bổ theo phòng ban */}
+        {/* Department Distribution */}
         <Card>
           <SectionHeader
             title={t("admin_distribution_dept")}
@@ -181,7 +181,7 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Danh sách người dùng gần đây */}
+      {/* Recent Users List */}
       <Card style={{ marginTop: "20px" }}>
         <SectionHeader
           title={t("admin_recent_users")}
