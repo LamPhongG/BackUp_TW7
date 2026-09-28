@@ -1,18 +1,18 @@
-# Hướng dẫn cài đặt và khởi chạy dự án SkillSprint AI
+# SkillSprint AI — Setup & Execution Guide
 
-Tài liệu hướng dẫn chi tiết dành cho thành viên trong nhóm, giảng viên và ban giám khảo khi clone mã nguồn từ GitHub về máy tính mới.
+Comprehensive setup and walkthrough guide for evaluators, team members, and developers to run the SkillSprint AI system from scratch.
 
-## 1. Yêu cầu môi trường tiên quyết (Prerequisites)
+## 1. Prerequisites
 
-- Nếu dùng Docker (Khuyến nghị): Chỉ cần cài đặt **Docker Desktop** (đã bao gồm Docker Compose).
-- Nếu chạy trực tiếp trên máy host:
-  - Python: Phiên bản 3.11, 3.12, 3.13 hoặc 3.14 (`python --version`)
-  - Node.js: Phiên bản 18.x trở lên cùng npm (`node -v` và `npm -v`)
-  - Git: Kiểm tra bằng lệnh `git --version`
+- **Option A: Docker (Recommended)**: Requires only **Docker Desktop** (includes Docker Compose).
+- **Option B: Local Host Environment**:
+  - Python: Version 3.11, 3.12, 3.13, or 3.14 (`python --version`)
+  - Node.js: Version 18.x or newer with npm (`node -v` and `npm -v`)
+  - Git: Installed and available in PATH (`git --version`)
 
-## 2. Bước 1: Clone repository từ GitHub
+## 2. Clone the Repository
 
-Mở terminal và chạy lệnh:
+Open your terminal and run:
 
 ```bash
 git clone https://github.com/LamPhongG/TechWiz7-FourAngryBirds-SkillSprint-AI.git
@@ -21,45 +21,40 @@ cd TechWiz7-FourAngryBirds-SkillSprint-AI
 
 ---
 
-## 3. Cách 1: Khởi chạy 1-Click bằng Docker (Khuyến nghị cho Giám khảo)
+## 3. Option 1: One-Click Docker Execution (Recommended for Evaluators)
 
-Toàn bộ hệ thống (PostgreSQL + Backend FastAPI + Frontend React Nginx) được đóng gói và khởi chạy tự động:
+The full production stack (PostgreSQL 16 + FastAPI Backend + React Nginx Frontend) is containerized and starts with one command:
 
 ```bash
 docker compose up --build -d
 ```
 
-- **Giao diện người dùng (Frontend)**: Truy cập tại `http://localhost:3000`
-- **Swagger API Documentation**: Truy cập tại `http://localhost:8000/api/docs`
-- **Cơ sở dữ liệu PostgreSQL**: Tự động cấu hình, chạy migration, nạp 203 ma trận và 28 tài liệu hoàn chỉnh.
+- **Frontend Web Application**: Access at `http://localhost:3000`
+- **Interactive Swagger API Docs**: Access at `http://localhost:8000/api/docs`
+- **PostgreSQL Database**: Port `5432` (Automatically creates schema, runs migrations, seeds 203 matrix rules, and ingests all 28 documents).
 
-Để dừng hệ thống:
+To stop the containers:
 ```bash
 docker compose down
 ```
 
 ---
 
-## 4. Cách 2: Cài đặt và chạy thủ công trên máy host
+## 4. Option 2: Manual Local Host Setup
 
-### Bước 2.1: Cấu hình môi trường ảo Python và cài đặt thư viện
+### Step 2.1: Python Virtual Environment & Dependencies
 
-Khuyến nghị tạo môi trường ảo (virtual environment) để tránh xung đột thư viện:
+We recommend creating a virtual environment:
 
-Trên Windows (PowerShell):
+On Windows (PowerShell):
 ```powershell
-# Tạo môi trường ảo
 python -m venv .venv
-
-# Kích hoạt môi trường ảo
 .venv\Scripts\Activate.ps1
-
-# Cài đặt toàn bộ thư viện backend và pipeline
 pip install -r backend/requirements.txt
 pip install -r requirements.txt
 ```
 
-Trên macOS / Linux:
+On macOS / Linux:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
@@ -67,49 +62,49 @@ pip install -r backend/requirements.txt
 pip install -r requirements.txt
 ```
 
-## 4. Bước 3: Thiết lập biến môi trường (.env)
+### Step 2.2: Environment Configuration (.env)
 
-Tạo file `.env` cho backend từ file mẫu:
+Create the backend environment file from the provided template:
 
-Trên Windows (PowerShell):
+On Windows (PowerShell):
 ```powershell
 copy backend\.env.example backend\.env
 ```
 
-Trên macOS / Linux:
+On macOS / Linux:
 ```bash
 cp backend/.env.example backend/.env
 ```
 
-Mở file `backend/.env` và cập nhật các thông số cần thiết:
-- `JWT_SECRET`: Chuỗi khóa bảo mật ít nhất 32 ký tự (có thể sinh nhanh bằng lệnh: `python -c "import secrets; print(secrets.token_urlsafe(48))"`).
-- `DATABASE_URL`: Mặc định để trống sẽ tự dùng SQLite tại `backend/skillsprint.db` (không cần cài thêm DB server). Nếu dùng PostgreSQL thì cấu hình chuỗi kết nối tương ứng.
-- `GEMINI_API_KEY`: Điền API Key của Google Gemini nếu muốn gọi trực tiếp mô hình AI thật. Nếu không điền, hệ thống sẽ tự động kích hoạt bộ sinh bản nháp quy chuẩn Python (`local-draft`), bảo đảm 100% chức năng vẫn hoạt động trơn tru.
+Open `backend/.env` to configure optional variables:
+- `JWT_SECRET`: Secret key of at least 32 characters (generate with `python -c "import secrets; print(secrets.token_urlsafe(48))"`).
+- `DATABASE_URL`: Defaults to SQLite (`backend/skillsprint.db`) if left empty, requiring zero server setup. Configure PostgreSQL connection string if running PostgreSQL.
+- `GEMINI_API_KEY`: Enter your Google Gemini API key to call live Gemini models. If omitted, the system activates the pedagogical Python `local-draft` generator, ensuring 100% full application functionality offline.
 
-## 5. Bước 4: Khởi tạo cơ sở dữ liệu và nạp 28 tài liệu tri thức
+### Step 2.3: Database Initialization & Ingestion of 28 Knowledge Documents
 
-Chỉ cần chạy một lệnh duy nhất từ thư mục gốc của dự án:
+Run the unified setup command from the repository root:
 
 ```powershell
 python setup_database.py
 ```
 
-Lệnh này sẽ tự động:
-1. Tạo toàn bộ 13 bảng cơ sở dữ liệu và ràng buộc quan hệ.
-2. Nạp 10 phòng ban và 10 chức vụ chuẩn hóa (SRS Step 2).
-3. Nạp 203 quy định nghiệp vụ từ Role Requirement Matrix (SRS Step 10).
-4. Tạo sẵn các tài khoản demo (Admin, HR, Reviewer, Employee).
-5. Tự động bóc tách và phân đoạn toàn bộ 28 tài liệu tri thức từ `sample_documents/` thành 384 chunk chuẩn và lưu vào cơ sở dữ liệu.
-6. Tạo sẵn 1 lộ trình mẫu và 1 chứng chỉ tốt nghiệp để kiểm tra tính năng Certificate.
+This automated script performs:
+1. Creates all 13 database tables and relational constraints.
+2. Seeds 10 standardized departments and 10 job positions.
+3. Imports all 203 business rules from the Role Requirement Matrix.
+4. Pre-creates default demo accounts (Admin, HR, Reviewer, Employee).
+5. Ingests, parses, and chunks all 28 company documents from `sample_documents/` into searchable text chunks.
+6. Seeds a demo completed learning path and employee certificate for immediate evaluation.
 
-*Mẹo: Nếu muốn xóa sạch dữ liệu cũ và dựng lại từ đầu, chạy lệnh:*
+*Tip: To reset and recreate the database from scratch at any time, run:*
 ```powershell
 python setup_database.py --reset
 ```
 
-## 6. Bước 5: Cài đặt và khởi chạy Frontend
+### Step 2.4: Frontend Installation & Launch
 
-Mở một cửa sổ terminal mới và thực hiện:
+In a new terminal window:
 
 ```bash
 cd frontend
@@ -117,62 +112,68 @@ npm install
 npm run dev
 ```
 
-Frontend sẽ chạy tại địa chỉ: `http://localhost:3000`
+The frontend SPA will be live at `http://localhost:3000`.
 
-## 7. Bước 6: Khởi chạy Backend Server (FastAPI)
+### Step 2.5: Backend Server Launch (FastAPI)
 
-Tại cửa sổ terminal đã kích hoạt môi trường ảo `.venv`:
+In the terminal with `.venv` activated:
 
 ```bash
 cd backend
 uvicorn app.main:app --reload --port 8000
 ```
 
-Backend API sẽ chạy tại địa chỉ: `http://localhost:8000`  
-Tài liệu Swagger UI kiểm tra API: `http://localhost:8000/api/docs`
+- API Base URL: `http://localhost:8000`
+- Swagger UI Documentation: `http://localhost:8000/api/docs`
 
-## 8. Danh sách tài khoản đăng nhập mẫu
+---
 
-Mật khẩu dùng chung cho tất cả tài khoản demo là: `password123` (hoặc `Demo@123`)
+## 5. Demo Login Accounts
 
-| Vai trò | Email đăng nhập | Mật khẩu | Mục đích kiểm thử |
+The default password for all demo accounts is `password123` (or `Demo@123`):
+
+| Role | Login Email | Password | Evaluation Purpose |
 |:---|:---|:---|:---|
-| Admin | `admin@fourangrybirds.vn` | `password123` | Quản trị tài khoản người dùng, xem thống kê hệ thống |
-| HR Manager | `hr@fourangrybirds.vn` | `password123` | Xem 28 tài liệu, tạo lộ trình AI, quản lý danh sách nhân sự |
-| Reviewer | `reviewer@fourangrybirds.vn` | `password123` | Thẩm định lộ trình, xem bảng so sánh Dual-Pipeline, phê duyệt |
-| Employee (Đang học) | `alex.morgan@fourangrybirds.vn` | `password123` | Đọc học phần, làm trắc nghiệm, cập nhật tiến độ học tập |
-| Employee (Đã xong) | `sales.emp@fourangrybirds.vn` | `password123` | Xem lộ trình đã hoàn thành 100%, mở chứng chỉ số Certificate |
+| Admin | `admin@fourangrybirds.vn` | `password123` | User account management, audit logs, system overview |
+| HR Manager | `hr@fourangrybirds.vn` | `password123` | Browse 28 documents, generate AI paths, assign employees |
+| Reviewer | `reviewer@fourangrybirds.vn` | `password123` | Audit paths, Dual-Pipeline Comparison Table, approve/publish |
+| Employee (In Progress) | `alex.morgan@fourangrybirds.vn` | `password123` | Read lessons, submit quizzes, track progress |
+| Employee (Completed) | `sales.emp@fourangrybirds.vn` | `password123` | View 100% completed path, open digital Certificate |
 
-## 9. Hướng dẫn chạy kiểm thử tự động (547 Tests)
+---
 
-Hệ thống được bảo vệ bởi 547 bài kiểm thử tự động, có thể chạy lại bất cứ lúc nào để kiểm tra tính toàn vẹn:
+## 6. Automated Test Suites (586 Tests)
 
-1. Chạy 364 tests kiểm tra Backend API, ma trận vai trò, bảo mật:
+The system is validated by 586 automated tests (100% passing rate):
+
+1. **Backend API, Role Matrix & Authentication (390 tests)**:
 ```powershell
 pytest backend/tests
 ```
 
-2. Chạy 88 tests kiểm tra gói thuật toán lõi, chunking và kiểm thử bẫy Prompt Injection:
+2. **Core Algorithm Package, Chunking & Prompt Injection Defense (88 tests)**:
 ```powershell
-pytest tests
+pytest -o pythonpath=. tests
 ```
 
-3. Chạy 95 tests kiểm tra giao diện Frontend Vitest:
+3. **Frontend Vitest Component & Logic Suite (108 tests)**:
 ```powershell
 cd frontend
 npm test -- --run
 ```
 
-4. Chạy kiểm tra tự động kịch bản Hidden Test của ban giám khảo:
+4. **Evaluator Hidden Document Readiness Test**:
 ```powershell
 python hidden_test_ready/run_hidden_test.py
 ```
 
-## 10. Xử lý các sự cố thường gặp (Troubleshooting)
+---
 
-- Sự cố: Lỗi "Port 8000 already in use" hoặc "Port 3000 already in use":
-  * Khắc phục: Đóng tiến trình đang chiếm cổng hoặc đổi cổng khởi chạy (ví dụ `--port 8001` cho backend).
-- Sự cố: Lỗi không import được thư viện khi chạy pytest:
-  * Khắc phục: Đảm bảo đã kích hoạt môi trường ảo `.venv` và đã cài đủ `pip install -r backend/requirements.txt`.
-- Sự cố: Frontend không gọi được Backend:
-  * Khắc phục: Kiểm tra file `frontend/.env.local` đã có dòng `VITE_API_URL=http://localhost:8000/api` chưa và backend server đang chạy ở port 8000.
+## 7. Troubleshooting
+
+- **Port Conflict (8000 or 3000 already in use)**:
+  - Terminate the conflicting process or launch with an alternative port (e.g. `--port 8001` for backend).
+- **Module Import Error during pytest**:
+  - Verify that your virtual environment `.venv` is activated and `pip install -r backend/requirements.txt` has completed.
+- **Frontend Cannot Connect to Backend**:
+  - Verify `frontend/.env.local` contains `VITE_API_URL=http://localhost:8000/api` and that the backend server is running on port 8000.

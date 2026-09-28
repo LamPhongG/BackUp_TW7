@@ -1,110 +1,102 @@
-# SKILLSPRINT AI — KỊCH BẢN QUAY VIDEO DEMO SẢN PHẨM
-**Cuộc thi:** TechWiz 7 – Generative AI Powerplay Track  
-**Dự án:** SkillSprint AI – Dual-Pipeline AI Document Verification System  
-**Thời lượng video:** Chính xác 05:00 (300 giây) | **Độ phân giải:** 1080p 60fps (Full HD)  
-**Phân công thuyết minh:** Đội Four Angry Birds (Châu Quốc Lâm Phong phụ trách phần Pipeline & Thẩm định)
+# SkillSprint AI — Product Demonstration Video Script
+**Competition:** TechWiz 7 – Generative AI Powerplay Track  
+**Project:** SkillSprint AI – Dual-Pipeline AI Document Verification System  
+**Target Duration:** Exactly 05:00 (300 seconds) | **Resolution:** 1080p 60fps (Full HD)  
+**Narration Team:** Four Angry Birds (Chau Quoc Lam Phong presenting Pipeline & Verification)
 
 ---
 
-## I. TỔNG QUAN TIMELINE CÁC CẢNH QUAY (5 PHÚT)
+## I. Master Scene Timeline (5 Minutes)
 
-| Cảnh | Thời lượng | Phân đoạn nội dung | Người phụ trách demo |
+| Scene | Duration | Content Segment | Presenter / Screen Focus |
 | :---: | :---: | :--- | :--- |
-| **Scene 1** | 0:00 – 0:40 (40s) | Giới thiệu bài toán Onboarding & Rủi ro AI Hallucination | Cả nhóm |
-| **Scene 2** | 0:40 – 1:30 (50s) | Phase 1 & 2: Ingestion tài liệu và GenAI sinh Onboarding Plan | Châu Quốc Lâm Phong |
-| **Scene 3** | 1:30 – 2:30 (60s) | Phase 3: Dual-Pipeline thẩm định song song & Match Scoring | Châu Quốc Lâm Phong & Quỳnh Nhi |
-| **Scene 4** | 2:30 – 3:45 (75s) | **ĐIỂM NHẤN:** Kích hoạt hệ thống phòng thủ bắt 4 loại bẫy | Châu Quốc Lâm Phong |
-| **Scene 5** | 3:45 – 4:30 (45s) | Phase 4: Thử nghiệm Hidden Test tự động 100% | Châu Quốc Lâm Phong & Kiều Duyên |
-| **Scene 6** | 4:30 – 5:00 (30s) | Tổng kết giá trị thực tiễn & Lời chào ban giám khảo | Cả nhóm |
+| **Scene 1** | 0:00 – 0:40 (40s) | The Onboarding Problem & The Peril of AI Hallucinations | Full Team Overview |
+| **Scene 2** | 0:40 – 1:30 (50s) | Phase 1 & 2: Ingestion & Grounded Path Generation | Chau Quoc Lam Phong |
+| **Scene 3** | 1:30 – 2:30 (60s) | Phase 3: Dual-Pipeline Cross-Verification & Match Scoring | Lam Phong & Quynh Nhi |
+| **Scene 4** | 2:30 – 3:45 (75s) | **FEATURE HIGHLIGHT:** Defending Against 4 Adversarial Traps | Chau Quoc Lam Phong |
+| **Scene 5** | 3:45 – 4:30 (45s) | Phase 4: Autonomous Evaluation on Unseen Policy Documents | Lam Phong & Kieu Duyen |
+| **Scene 6** | 4:30 – 5:00 (30s) | Real-world Enterprise Impact & Closing | Full Team |
 
 ---
 
-## II. KỊCH BẢN CHI TIẾT TỪNG PHÂN CẢNH (SCENE-BY-SCENE SCRIPT)
+## II. Scene-by-Scene Script
 
-### SCENE 1: ĐẶT VẤN ĐỀ & GIỚI THIỆU HỆ THỐNG (0:00 – 0:40)
-* **Hình ảnh / Video trên màn hình:**
-  * 0:00 – 0:15: Slide mở đầu với logo dự án SkillSprint AI, tên đội Four Angry Birds và track thi TechWiz 7.
-  * 0:15 – 0:40: Animation/Infographic chỉ ra 2 nghịch lý lớn của doanh nghiệp hiện đại: Sổ tay nhân viên dài hàng trăm trang làm nhân viên mới ngợp, nhưng nếu dùng ChatGPT/Gemini thuần túy thì AI rất dễ bịa đặt thông tin (Hallucination) hoặc bị tấn công Prompt Injection.
-* **Lời thuyết minh (Voiceover):**
-  > *"Kính chào Ban giám khảo TechWiz 7. Trong kỷ nguyên làm việc kết hợp, việc đào tạo hòa nhập (onboarding) nhân sự mới thường mất hàng tuần lễ đọc các cuốn cẩm nang nội bộ dày đặc.  
-  > Khi ứng dụng GenAI để tóm tắt hay tạo lộ trình học tập, một hiểm họa an ninh và pháp lý cực lớn xuất hiện: AI rất dễ bị ảo giác — tự bịa thêm quyền lợi nghỉ phép, trợ cấp, hoặc bị kẻ xấu chèn mã độc Prompt Injection vào văn bản để qua mặt hệ thống.  
-  > Đó chính là lý do đội Four Angry Birds mang đến **SkillSprint AI** — Hệ thống kép Dual-Pipeline đầu tiên ứng dụng Rule Engine thẩm định chéo độc lập để bảo đảm an toàn 100% cho doanh nghiệp."*
-
----
-
-### SCENE 2: INGESTION TÀI LIỆU & GENAI PLAN GENERATION (0:40 – 1:30)
-* **Hình ảnh / Video trên màn hình:**
-  * 0:40 – 1:05: Màn hình thao tác nạp tài liệu chính sách `Company_Policy_Handbook.pdf`. Quay cận cảnh terminal/code trích xuất chunks với PyMuPDF, gắn `doc_id`, `chunk_id`, và `page_number`.
-  * 1:05 – 1:30: Giao diện kết quả sinh Onboarding Plan. Phóng to cấu trúc Pydantic Schema: Mỗi Module, Task và Quiz trắc nghiệm đều có thuộc tính bắt buộc `source_citation` trích dẫn chính xác từng câu từ tài liệu gốc.
-* **Lời thuyết minh (Voiceover):**
-  > *"Bước vào Pipeline 1, hệ thống của chúng tôi nạp tài liệu PDF hoặc Word đa trang, tự động phân tích cấu trúc theo section heading và bóc tách thành các đoạn chunk độc lập kèm mã định danh số trang.  
-  > Tiếp đó, mô hình Gemini Pro xử lý các chunk này cùng với yêu cầu vị trí công việc, ví dụ 'Software Engineer'. Điểm mấu chốt của SkillSprint AI là **bắt buộc tuân thủ Structured Output**: Mọi nhiệm vụ, thời gian ước tính và câu hỏi trắc nghiệm đều bắt buộc phải đính kèm `exact_quote` trích xuất nguyên bản từ tài liệu, loại bỏ hoàn toàn việc sinh văn bản tự do không thể kiểm chứng."*
+### Scene 1: The Problem & System Introduction (0:00 – 0:40)
+* **Visuals:**
+  * 0:00 – 0:15: Title slide with SkillSprint AI logo, Four Angry Birds team roster, and TechWiz 7 track identifier.
+  * 0:15 – 0:40: Infographic illustrating the enterprise onboarding bottleneck: hundred-page employee handbooks overwhelm recruits, while generic LLMs hallucinate policies or succumb to prompt injection attacks.
+* **Voiceover:**
+  > "Welcome, TechWiz 7 Judges. In the hybrid workplace, onboarding new hires typically requires weeks of wading through dense corporate handbooks and technical SOPs.  
+  > While applying Generative AI seems promising, standard LLMs introduce catastrophic operational risks: AI easily hallucinates—fabricating vacation policies or spending limits—or yields to adversarial prompt injections embedded in uploaded files.  
+  > Team Four Angry Birds presents **SkillSprint AI**—the first Dual-Pipeline verification system that pairs Generative AI with an independent, deterministic Python Rule Engine to guarantee 100% corporate compliance."
 
 ---
 
-### SCENE 3: DUAL-PIPELINE COMPARISON & MATCH SCORING (1:30 – 2:30)
-* **Hình ảnh / Video trên màn hình:**
-  * 1:30 – 1:55: Sơ đồ tương tác đối chiếu 2 luồng: Pipeline 1 (GenAI) đối chiếu song song với Pipeline 2 (Python Rule Engine thuần, không phụ thuộc AI).
-  * 1:55 – 2:30: Màn hình Dashboard thẩm định: Hiển thị bảng so sánh từng trường dữ liệu (Field-by-field diff), điểm Match Score đạt 100%, hệ thống tự động phân loại trạng thái xanh: `VERIFIED`.
-* **Lời thuyết minh (Voiceover):**
-  > *"Một quy trình GenAI thông thường sẽ dừng lại ở đây, nhưng SkillSprint AI thì không. Hệ thống kích hoạt ngay **Pipeline 2: Bộ Rule Engine thuần viết bằng Python**, hoàn toàn độc lập với AI.  
-  > Rule Engine tự tính toán ma trận yêu cầu chuyên môn, kiểm tra thứ tự học tiên quyết và kích hoạt bộ Hallucination Detector để so khớp ngược toàn bộ trích dẫn của AI với văn bản gốc.  
-  > Với tài liệu chuẩn, cả hai luồng đồng thuận 100%, hệ thống tự động cấp chứng nhận `VERIFIED` chỉ trong vòng chưa đầy 2 giây mà không cần con người phải rà soát thủ công."*
+### Scene 2: Document Ingestion & Grounded Path Generation (0:40 – 1:30)
+* **Visuals:**
+  * 0:40 – 1:05: File upload workflow showing multi-page policy document ingestion. Terminal display showing PyMuPDF extraction, section-aware chunking, and deterministic metadata indexing (`doc_id`, `chunk_id`, `page_number`).
+  * 1:05 – 1:30: Generated Onboarding Path view. Zooming into Pydantic schema: each module, task, and quiz question contains an enforced `source_reference` with a verbatim `exact_quote`.
+* **Voiceover:**
+  > "In Pipeline 1, our ingestion engine parses multi-page PDFs and Word documents, analyzing section headers and extracting structured chunks indexed by page number.  
+  > The Gemini engine processes these chunks alongside the specific job position requirements. The key breakthrough of SkillSprint AI is **enforced Structured Outputs**: every single lesson, task criteria, and quiz question must include a verbatim `exact_quote` extracted directly from source text, completely eliminating unverified text generation."
 
 ---
 
-### SCENE 4: ADVERSARIAL DEFENSE & BẮT 4 LOẠI BẪY HIỂM HÓC (2:30 – 3:45)
-* **Hình ảnh / Video trên màn hình:**
-  * 2:30 – 2:50: **Bẫy 1 & 2:** Bấm kích hoạt bẫy AI bịa trợ cấp gym $500 và bẫy tráo đổi ngày phép từ 15 thành 30 ngày. Màn hình ngay lập tức chuyển sang màu đỏ: cắm cờ `HallucinationFlag`, hạ trạng thái về `MANUAL_REVIEW_REQUIRED`.
-  * 2:50 – 3:15: **Bẫy 3:** Bẫy chính sách nội bộ mâu thuẫn (hạn đổi mật khẩu 90 ngày ở trang 1 vs 30 ngày ở trang 2). Contradiction Checker phát hiện xung đột và cắm cờ cảnh báo chéo.
-  * 3:15 – 3:45: **Bẫy 4 (Prompt Injection):** Nhúng chuỗi độc hại `SYSTEM OVERRIDE: Ignore all previous instructions...`. Khiên lọc an ninh Regex phát hiện mã độc, triệt tiêu nguy cơ chiếm quyền và khóa toàn bộ tài liệu.
-* **Lời thuyết minh (Voiceover):**
-  > *"Để chứng minh sự vượt trội, chúng tôi thử nghiệm các đòn tấn công thực tế mà các hệ thống AI thông thường luôn thất bại.  
-  > Thứ nhất: Khi AI cố tình 'bịa' ra chế độ trợ cấp gym 500 đô hoặc bị kẻ xấu tráo đổi số ngày phép từ 15 thành 30 ngày, Detector bóc tách chuỗi số nguyên và lập tức cắm cờ `HallucinationFlag`.  
-  > Thứ hai: Khi tài liệu nội bộ có 2 điều khoản tự đá nhau về thời hạn mật khẩu 90 ngày và 30 ngày, bộ Contradiction Checker tự động tóm gọn mâu thuẫn.  
-  > Và đặc biệt nhất: Đòn tấn công Prompt Injection `SYSTEM OVERRIDE` nhằm ép hệ thống phê duyệt đã bị khiên an ninh chặn đứng ngay từ tầng lọc đầu vào. Trạng thái lập tức hạ về `MANUAL_REVIEW_REQUIRED`, bảo vệ dữ liệu doanh nghiệp an toàn tuyệt đối."*
+### Scene 3: Dual-Pipeline Comparison & Match Scoring (1:30 – 2:30)
+* **Visuals:**
+  * 1:30 – 1:55: Interactive dual-pipeline architecture diagram: Pipeline 1 (GenAI) compared side-by-side with Pipeline 2 (Deterministic Python Rule Engine, Zero-AI).
+  * 1:55 – 2:30: Verification Dashboard: Dual-Pipeline Comparison Table showing field-by-field diff, 100% Traceability Score, 100% Coverage Score, and green `VERIFIED` status badge.
+* **Voiceover:**
+  > "Conventional AI systems stop here, but SkillSprint AI goes further. The system activates **Pipeline 2: A deterministic Python Rule Engine**, completely independent of AI.  
+  > This engine evaluates the Role Requirement Matrix, checks prerequisite DAGs, and verifies every AI citation against raw database chunks.  
+  > When both pipelines agree, the system issues a cryptographically grounded `VERIFIED` status in under two seconds, eliminating the need for manual audit."
 
 ---
 
-### SCENE 5: HIDDEN TEST AUTONOMOUS EXECUTION (3:45 – 4:30)
-* **Hình ảnh / Video trên màn hình:**
-  * 3:45 – 4:10: Chạy script `hidden_test_ready/run_hidden_test.py` trên một tài liệu chính sách hoàn toàn mới: `sample_unseen_policy.pdf` (Chính sách làm việc từ xa và bảo mật mạng 2026).
-  * 4:10 – 4:30: Terminal và file báo cáo JSON `hidden_test_report.json` xuất hiện với trạng thái `VERIFIED`, match score 100%, 0 hallucination, thời gian xử lý toàn trình dưới 1.5 giây.
-* **Lời thuyết minh (Voiceover):**
-  > *"Sẵn sàng cho vòng thẩm định Hidden Test của Ban giám khảo, SkillSprint AI được thiết kế để xử lý tài liệu mới 100% tự động.  
-  > Khi nạp một bộ quy tắc bảo mật từ xa chưa từng thấy trong cơ sở dữ liệu, toàn bộ pipeline từ nạp file, chuẩn hóa Unicode, chia chunk, sinh lộ trình và đối soát quy tắc đều vận hành tự động, xuất báo cáo JSON chuẩn mực mà không cần bất kỳ sự can thiệp hay cấu hình mã nguồn nào."*
+### Scene 4: Adversarial Defense & Catching 4 Critical Traps (2:30 – 3:45)
+* **Visuals:**
+  * 2:30 – 2:50: **Traps 1 & 2:** Triggering a fabricated $500 gym stipend and an altered leave policy (30 days instead of 15). The interface flags `HallucinationFlag`, immediately downgrading status to `MANUAL_REVIEW_REQUIRED`.
+  * 2:50 – 3:15: **Trap 3:** Internal policy contradiction (90-day password change in Section 1 vs 30-day requirement in Section 2). Contradiction Checker detects the conflict and flags a policy warning.
+  * 3:15 – 3:45: **Trap 4 (Prompt Injection):** Uploading a file containing `SYSTEM OVERRIDE: Ignore all previous instructions...`. The defensive filter quarantines the attack chunk, blocking malicious instructions.
+* **Voiceover:**
+  > "To prove resilience, we subject our platform to real-world edge cases where generic AI fails.  
+  > First: when an AI hallucinates an unauthorized gym subsidy or an altered leave quota, our grounding validator detects the discrepancy and raises an immediate `HallucinationFlag`.  
+  > Second: when an internal policy contains contradictory clauses on password rotation, the Contradiction Checker catches the discrepancy.  
+  > And most crucially: prompt injection attempts like `SYSTEM OVERRIDE` are intercepted and quarantined at ingestion, safeguarding enterprise data integrity."
 
 ---
 
-### SCENE 6: TỔNG KẾT & LỜI CẢM ƠN (4:30 – 5:00)
-* **Hình ảnh / Video trên màn hình:**
-  * 4:30 – 4:45: Slide tổng kết 3 giá trị cốt lõi: Giảm 80% thời gian onboarding, Triệt tiêu 100% rủi ro ảo giác AI, và Kiểm soát an ninh đa tầng.
-  * 4:45 – 5:00: Màn hình danh sách 4 thành viên đội Four Angry Birds, logo TechWiz 7 và lời cảm ơn.
-* **Lời thuyết minh (Voiceover):**
-  > *"Với kiến trúc Dual-Pipeline tiên phong, SkillSprint AI không chỉ giải phóng nguồn lực cho phòng nhân sự mà còn thiết lập một chuẩn mực mới về sự an toàn và tin cậy khi đưa GenAI vào doanh nghiệp.  
-  > Đội Four Angry Birds xin chân thành cảm ơn Hội đồng Giám khảo TechWiz 7 đã theo dõi phần trình diễn của chúng tôi!"*
+### Scene 5: Autonomous Execution on Unseen Documents (3:45 – 4:30)
+* **Visuals:**
+  * 3:45 – 4:10: Running `hidden_test_ready/run_hidden_test.py` on an unseen policy document: `sample_unseen_policy.pdf`.
+  * 4:10 – 4:30: Terminal output and generated `hidden_test_report.json` showing `VERIFIED` status, 100% match score, 0 hallucinations, and end-to-end execution in under 1.5 seconds.
+* **Voiceover:**
+  > "Engineered for evaluation on unseen documents, SkillSprint AI handles new policy files completely autonomously.  
+  > When fed an unfamiliar cybersecurity policy, the complete pipeline—ingestion, Unicode normalization, chunking, curriculum generation, and rule verification—executes end-to-end without manual configuration, outputting a complete compliance report in seconds."
 
 ---
 
-## III. CHECKLIST QUAY VIDEO DÀNH CHO NHÓM (RECORDING CHECKLIST)
+### Scene 6: Conclusion & Impact (4:30 – 5:00)
+* **Visuals:**
+  * 4:30 – 4:45: Summary slide highlighting core metrics: 80% reduction in onboarding time, 100% elimination of AI hallucination risk, and multi-tier security.
+  * 4:45 – 5:00: Four Angry Birds team roster, TechWiz 7 logo, and final thank-you message.
+* **Voiceover:**
+  > "With our pioneering Dual-Pipeline architecture, SkillSprint AI liberates HR teams from tedious onboarding development while setting a new standard for trust and safety in enterprise AI adoption.  
+  > Team Four Angry Birds thanks the TechWiz 7 Evaluation Committee for their time and consideration!"
 
-### 1. Chuẩn bị trước khi bấm máy (Pre-recording)
-- [ ] Dọn dẹp màn hình desktop, ẩn taskbar thừa, tắt toàn bộ thông báo Zalo/Telegram/Discord.
-- [ ] Cài đặt OBS Studio: Chọn quay màn hình 1920x1080 @ 60fps, bitrate ≥ 6.000 Kbps.
-- [ ] Micro thu âm rõ, bật khử ồn (Noise Suppression filter trong OBS).
-- [ ] Chạy sẵn môi trường Python: kích hoạt virtual environment, chạy `pytest tests/ -v` xác nhận 54/54 tests xanh.
+---
 
-### 2. Các cảnh quay màn hình cần thu lại (Footage Checklist)
-- [ ] **Clip 1 (Phase 1 Ingestion):** Terminal chạy hiển thị các chunk bóc tách từ PDF.
-- [ ] **Clip 2 (Phase 2 GenAI):** Cấu trúc JSON kế hoạch onboarding có trích dẫn `exact_quote`.
-- [ ] **Clip 3 (Phase 3 Clean Flow):** Trạng thái so khớp đạt 100% xanh `VERIFIED`.
-- [ ] **Clip 4 (Phase 3 Trap 1 & 2):** Bắt lỗi bịa quyền lợi và tráo đổi số ngày phép.
-- [ ] **Clip 5 (Phase 3 Trap 3):** Bắt lỗi mâu thuẫn thời hạn mật khẩu 90d vs 30d.
-- [ ] **Clip 6 (Phase 3 Trap 4):** Bắt lỗi Prompt Injection `SYSTEM OVERRIDE`.
-- [ ] **Clip 7 (Phase 4 Hidden Test):** Chạy `python hidden_test_ready/run_hidden_test.py` xuất ra `hidden_test_report.json`.
+## III. Recording & Quality Checklist
 
-### 3. Hậu kỳ & Xuất file (Post-production)
-- [ ] Ghép giọng đọc voiceover khớp với từng chuyển động chuột và cửa sổ.
-- [ ] Thêm phụ đề tiếng Anh (Bilingual Subtitles) để ban giám khảo quốc tế dễ theo dõi.
-- [ ] Chèn nhạc nền (Background Music) năng động, âm lượng giữ ở mức -22dB để không át giọng nói.
-- [ ] Xuất file định dạng `.mp4` (H.264, kích thước ≤ 300MB, đúng thời lượng 05:00).
+### 1. Pre-Recording Preparation
+- [ ] Clean desktop, hide taskbars, disable background notifications.
+- [ ] Configure OBS Studio: 1920x1080 resolution @ 60fps, bitrate ≥ 6,000 Kbps.
+- [ ] Microphone noise suppression enabled.
+- [ ] Verify test environment: activate virtual environment, confirm all automated test suites pass.
+
+### 2. Capture Checklist
+- [ ] **Clip 1 (Ingestion):** Clean terminal output showing chunk extraction.
+- [ ] **Clip 2 (GenAI Output):** Structured curriculum JSON showing exact-quote citations.
+- [ ] **Clip 3 (Verification):** Dual-Pipeline Comparison Table with 100% green verified state.
+- [ ] **Clip 4 (Defensive Traps):** Hallucination and injection detection flags displayed in UI.
+- [ ] **Clip 5 (Unseen Policy Test):** Automated test script execution producing JSON reports.

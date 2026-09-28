@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SkillSprint AI - Prototype & Luồng Hoạt Động Hệ Thống (TechWiz 7)</title>
+  <title>SkillSprint AI - Prototype & Operational Architecture (TechWiz 7)</title>
   <style>
     :root {
       --bg: #0b0f19;
@@ -200,40 +200,44 @@
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      position: relative;
+      display: flex;
+      flex-direction: column;
     }
     .image-container img {
       width: 100%;
       height: auto;
+      max-height: calc(100vh - 220px);
+      object-fit: contain;
       display: block;
-      object-fit: cover;
-      transition: transform 0.3s ease;
+      background: #0d121f;
     }
     .image-caption {
-      padding: 10px 14px;
-      font-size: 0.8rem;
+      padding: 10px 16px;
+      background: rgba(15, 23, 42, 0.8);
+      font-size: 0.85rem;
       color: var(--text-muted);
-      border-top: 1px solid var(--card-border);
-      background: rgba(19, 27, 46, 0.8);
+      border-top: 1px solid rgba(255,255,255,0.06);
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
 
     .info-panel {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
     }
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 10px;
-      padding: 16px;
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
     .card h3 {
-      font-size: 1rem;
-      color: #60a5fa;
+      font-size: 1.05rem;
       margin-bottom: 8px;
+      color: #e2e8f0;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -286,13 +290,13 @@
   <header>
     <div class="brand">
       <span class="brand-badge">TECHWIZ 7</span>
-      <span>SkillSprint AI – Prototype & Luồng Hoạt Động</span>
+      <span>SkillSprint AI — Prototype & Architecture</span>
     </div>
     <div class="nav-controls">
-      <button class="btn" onclick="prevSlide()" title="Phím mũi tên trái">‹ Trước</button>
+      <button class="btn" onclick="prevSlide()" title="Left arrow key">‹ Previous</button>
       <span class="slide-counter" id="slideCounter">Slide 1 / 11</span>
-      <button class="btn btn-primary" onclick="nextSlide()" title="Phím mũi tên phải hoặc phím Space">Tiếp theo ›</button>
-      <button class="btn" onclick="window.print()" title="In hoặc lưu file PDF">🖨️ In PDF</button>
+      <button class="btn btn-primary" onclick="nextSlide()" title="Right arrow key or Spacebar">Next ›</button>
+      <button class="btn" onclick="window.print()" title="Print or save as PDF">🖨️ Print PDF</button>
     </div>
   </header>
 
@@ -303,38 +307,38 @@
 
   <main>
 
-    <!-- Slide 1: Sơ đồ kiến trúc tổng thể -->
+    <!-- Slide 1: Core Dual-Pipeline Architecture -->
     <div class="slide active">
       <div class="slide-header">
         <div>
-          <span class="stage-tag">TỔNG QUAN HỆ THỐNG</span>
-          <h1 class="slide-title">1. Kiến Trúc Cốt Lõi Dual-Pipeline (Trái Tim Dự Án)</h1>
+          <span class="stage-tag">SYSTEM ARCHITECTURE</span>
+          <h1 class="slide-title">1. Dual-Pipeline Core Architecture (System Foundation)</h1>
         </div>
         <span class="role-badge">System Architecture</span>
       </div>
       <div class="slide-body">
         <div class="image-container">
-          <img src="./images/system_workflow_diagram.jpg" alt="Sơ đồ Kiến trúc Dual-Pipeline">
+          <img src="./images/system_workflow_diagram.jpg" alt="Dual-Pipeline Architecture Diagram">
           <div class="image-caption">
-            <span>Sơ đồ kiến trúc luồng dữ liệu 2 Pipeline độc lập</span>
+            <span>Independent Dual-Pipeline Dataflow Architecture</span>
             <span>SRS Item 1.6 & Step 46</span>
           </div>
         </div>
         <div class="info-panel">
           <div class="card">
-            <h3>🎯 Bài toán cốt lõi</h3>
-            <p>Giải quyết triệt để vấn đề <strong>Ảo giác (Hallucination)</strong> và <strong>Bỏ sót kiến thức</strong> trong các kế hoạch Onboarding doanh nghiệp.</p>
+            <h3>🎯 Core Objective</h3>
+            <p>Completely eliminates <strong>AI Hallucination</strong> and <strong>Knowledge Omission</strong> in enterprise employee onboarding curricula.</p>
           </div>
           <div class="card">
-            <h3>⚡ Hai Pipeline độc lập</h3>
+            <h3>⚡ Independent Parallel Pipelines</h3>
             <ul>
-              <li><strong>Pipeline 1 (GenAI Pipeline):</strong> Dùng LLM (Gemini Flash / OpenAI) kết hợp Prompt Engineering v1.1 để sinh cấu trúc bài học, nhiệm vụ và câu hỏi trắc nghiệm có trích dẫn.</li>
-              <li><strong>Pipeline 2 (Python Deterministic Engine - ZERO-AI):</strong> Chạy thuần thuật toán Python, đọc trực tiếp <code>role_matrix.csv</code> để lập Ground-Truth Matrix chuẩn 100%.</li>
+              <li><strong>Pipeline 1 (GenAI Pipeline):</strong> Google Gemini integration using Structured Outputs and prompt engineering v1.1 to synthesize lessons, tasks, and quizzes with exact-quote citations.</li>
+              <li><strong>Pipeline 2 (Python Deterministic Engine - ZERO-AI):</strong> Pure Python rule engine executing against <code>role_matrix.csv</code> to establish a 100% compliant Ground-Truth matrix.</li>
             </ul>
           </div>
           <div class="card">
             <h3>⚖️ Dual-Comparator & Reviewer Queue</h3>
-            <p>Đối chiếu song song từng dòng tại <strong>Table 1</strong>. Nếu đạt 100% Coverage và không có cờ cảnh báo thì chuyển sang khâu thẩm định con người (Human-in-the-Loop).</p>
+            <p>Field-by-field cross-validation in <strong>Table 1</strong>. Upon achieving 100% Coverage and zero blocking alerts, paths advance to Human-in-the-Loop review.</p>
           </div>
         </div>
       </div>
@@ -344,40 +348,40 @@
     <div class="slide">
       <div class="slide-header">
         <div>
-          <span class="stage-tag">GIAI ĐOẠN 1: KHỞI TẠO & PHÂN QUYỀN</span>
-          <h1 class="slide-title">2. Cổng Đăng Nhập & Phân Quyền Vai Trò (RBAC)</h1>
+          <span class="stage-tag">STAGE 1: AUTHENTICATION & RBAC</span>
+          <h1 class="slide-title">2. Sign-In Portal & Role-Based Access Control (RBAC)</h1>
         </div>
-        <span class="role-badge admin">Bảo mật & Xác thực</span>
+        <span class="role-badge admin">Security & Authentication</span>
       </div>
       <div class="slide-body">
         <div class="image-container">
-          <img src="./screenshots/01_login_portal.png" alt="Cổng Đăng Nhập">
+          <img src="./screenshots/01_login_portal.png" alt="Login Portal">
           <div class="image-caption">
-            <span>Màn hình đăng nhập hệ thống (/login)</span>
+            <span>System Login View (/login)</span>
             <span>SRS Item 1.6.i & 1.6.ii</span>
           </div>
         </div>
         <div class="info-panel">
           <div class="card">
-            <h3>🔒 Bảo mật & Xác thực chuẩn Enterprise</h3>
+            <h3>🔒 Enterprise Security Standards</h3>
             <ul>
-              <li>Xác thực qua JWT Token, mật khẩu mã hóa chuẩn bcrypt.</li>
-              <li>Hỗ trợ chuyển đổi song ngữ mượt mà (Tiếng Việt / English).</li>
+              <li>JWT token authentication with bcrypt password hashing.</li>
+              <li>Seamless English and Vietnamese localization support.</li>
             </ul>
           </div>
           <div class="card">
-            <h3>👥 Phân quyền Role-Based Access Control (RBAC)</h3>
-            <p>Hệ thống chia tách rõ 4 vai trò với bảng quyền hạn riêng biệt:</p>
+            <h3>👥 Role-Based Access Control (RBAC)</h3>
+            <p>Strict access boundaries across four distinct user roles:</p>
             <ul>
-              <li><strong>Administrator:</strong> Quản trị tài khoản, phân phòng ban.</li>
-              <li><strong>HR / Training Manager:</strong> Nạp tài liệu, tạo và sinh lại lộ trình.</li>
-              <li><strong>Reviewer:</strong> Thẩm định độc lập, duyệt hoặc yêu cầu chỉnh sửa.</li>
-              <li><strong>Employee:</strong> Học viên theo dõi tiến độ, làm quiz.</li>
+              <li><strong>Administrator:</strong> Account provisioning and department management.</li>
+              <li><strong>HR Specialist:</strong> Document repository management, path generation, and submission.</li>
+              <li><strong>Content Reviewer:</strong> Independent verification, curriculum approval, and feedback.</li>
+              <li><strong>Employee:</strong> Learner portal, progress tracking, and interactive quizzes.</li>
             </ul>
           </div>
           <div class="card">
-            <h3>⚡ Tiện ích Demo</h3>
-            <p>Trang bị các nút bấm điền nhanh tài khoản demo cho cả 4 vai trò để ban giám khảo kiểm thử nhanh chóng.</p>
+            <h3>⚡ Fast Evaluation Convenience</h3>
+            <p>One-click demo account fill buttons allow evaluators to test all four user roles instantly.</p>
           </div>
         </div>
       </div>
@@ -387,33 +391,33 @@
     <div class="slide">
       <div class="slide-header">
         <div>
-          <span class="stage-tag">GIAI ĐOẠN 1: QUẢN TRỊ NHÂN SỰ</span>
-          <h1 class="slide-title">3. Quản Trị Tài Khoản & Điều Chuyển Phòng Ban</h1>
+          <span class="stage-tag">STAGE 1: USER MANAGEMENT</span>
+          <h1 class="slide-title">3. Account Provisioning & Department Transfers</h1>
         </div>
         <span class="role-badge admin">Administrator</span>
       </div>
       <div class="slide-body">
         <div class="image-container">
-          <img src="./screenshots/10_admin_user_management.png" alt="Quản trị người dùng">
+          <img src="./screenshots/10_admin_user_management.png" alt="User Management">
           <div class="image-caption">
-            <span>Giao diện quản lý người dùng (/admin/users)</span>
+            <span>User Administration View (/admin/users)</span>
             <span>SRS Item 1.6.iii & 1.6.iv</span>
           </div>
         </div>
         <div class="info-panel">
           <div class="card">
-            <h3>🏢 Quản trị Danh mục Nhân viên</h3>
+            <h3>🏢 Employee Directory Management</h3>
             <ul>
-              <li>Quản lý danh sách nhân sự gắn liền với 10 vị trí công việc mẫu (Software Engineer, Sales, CS, Finance...).</li>
-              <li>Tạo link mời đăng ký nhanh (Invitation link) tự động gán phòng ban.</li>
+              <li>Manage employee rosters across 10 standardized corporate roles (Software Engineer, Sales, CS, Finance, etc.).</li>
+              <li>Generate single-use invitation tokens with automatic department assignment.</li>
             </ul>
           </div>
           <div class="card">
-            <h3>🔄 Cơ chế Đồng bộ khi Điều chuyển Nhân sự</h3>
-            <p><span class="highlight-badge">TÍNH NĂNG NÂNG CAO</span> Khi nhân viên được HR hoặc Admin chuyển từ phòng ban này sang phòng ban khác:</p>
+            <h3>🔄 Department Transfer Synchronization</h3>
+            <p><span class="highlight-badge">ADVANCED CAPABILITY</span> When an employee transfers between corporate departments:</p>
             <ul>
-              <li>Hệ thống tự động hủy các bản ghi lộ trình cũ của phòng ban trước.</li>
-              <li>Tự động ghi danh (Enrollment) nhân viên vào lộ trình Onboarding đang phát hành của phòng ban mới.</li>
+              <li>System automatically revokes obsolete enrollment records from the prior department.</li>
+              <li>Automatically enrolls employee in the active onboarding path for their new department.</li>
             </ul>
           </div>
         </div>
@@ -424,34 +428,34 @@
     <div class="slide">
       <div class="slide-header">
         <div>
-          <span class="stage-tag">GIAI ĐOẠN 2: NẠP TÀI LIỆU & AN TOÀN DỮ LIỆU</span>
-          <h1 class="slide-title">4. Kho Tài Liệu Doanh Nghiệp & Lọc Mã Độc</h1>
+          <span class="stage-tag">STAGE 2: DOCUMENT INGESTION & SAFETY</span>
+          <h1 class="slide-title">4. Enterprise Knowledge Base & Adversarial Defense</h1>
         </div>
         <span class="role-badge">HR Specialist</span>
       </div>
       <div class="slide-body">
         <div class="image-container">
-          <img src="./screenshots/02_hr_documents_repository.png" alt="Kho tài liệu HR">
+          <img src="./screenshots/02_hr_documents_repository.png" alt="Document Repository">
           <div class="image-caption">
-            <span>Kho 28 tài liệu doanh nghiệp (/hr/documents)</span>
+            <span>Corporate Knowledge Repository (/hr/documents)</span>
             <span>SRS Step 42, 43 & Item 1.6.v-ix</span>
           </div>
         </div>
         <div class="info-panel">
           <div class="card">
-            <h3>📁 Quản lý 28/28 Tài liệu Doanh nghiệp</h3>
+            <h3>📁 28 Enterprise Governance Documents</h3>
             <ul>
-              <li>Đọc đa định dạng: PDF (PyMuPDF), DOCX (python-docx), CSV.</li>
-              <li>Gắn nhãn vòng đời tài liệu: Đang hiệu lực (<code>active</code>), sắp ban hành (<code>upcoming</code>), đã bị thay thế (<code>superseded</code>).</li>
+              <li>Multi-format extraction: PDF (PyMuPDF), DOCX (python-docx), CSV, TXT, MD.</li>
+              <li>Document lifecycle tracking: Active (<code>active</code>), Upcoming (<code>upcoming</code>), Superseded (<code>superseded</code>).</li>
             </ul>
           </div>
           <div class="card">
-            <h3>🛡️ Phòng vệ Prompt Injection (Step 42 & 43)</h3>
-            <p>Tài liệu tải lên chỉ được coi là dữ liệu thô (Data), không được coi là câu lệnh thực thi (Instruction). Bộ lọc tự động chặn các câu lệnh tiêm nhiễm ẩn trong file.</p>
+            <h3>🛡️ Prompt Injection Defense (Steps 42 & 43)</h3>
+            <p>Uploaded documents are treated strictly as untrusted data rather than executable instructions. Sanitization filters automatically neutralize embedded jailbreak payloads.</p>
           </div>
           <div class="card">
-            <h3>📑 Cắt đoạn Section Chunking có trích dẫn</h3>
-            <p>Mỗi đoạn văn bản đều lưu kèm <code>doc_id</code>, <code>section_id</code> để phục vụ truy xuất nguồn gốc (Source Traceability).</p>
+            <h3>📑 Section Chunking & Traceability</h3>
+            <p>Every chunk indexes <code>doc_id</code>, <code>section_id</code>, and page numbers to guarantee source traceability.</p>
           </div>
         </div>
       </div>
@@ -461,34 +465,34 @@
     <div class="slide">
       <div class="slide-header">
         <div>
-          <span class="stage-tag">GIAI ĐOẠN 2: THIẾT KẾ LỘ TRÌNH</span>
-          <h1 class="slide-title">5. Xưởng Tạo & Quản Lý Lộ Trình Onboarding</h1>
+          <span class="stage-tag">STAGE 2: CURRICULUM DESIGN</span>
+          <h1 class="slide-title">5. Learning Path Studio & Lifecycle Management</h1>
         </div>
         <span class="role-badge">HR Specialist</span>
       </div>
       <div class="slide-body">
         <div class="image-container">
-          <img src="./screenshots/03_hr_paths_studio.png" alt="Xưởng lộ trình HR">
+          <img src="./screenshots/03_hr_paths_studio.png" alt="Path Studio">
           <div class="image-caption">
-            <span>Danh mục lộ trình đào tạo theo trạng thái (/hr/paths)</span>
+            <span>Learning Path Catalog by Lifecycle Status (/hr/paths)</span>
             <span>SRS Step 41 & Item 1.6.iv</span>
           </div>
         </div>
         <div class="info-panel">
           <div class="card">
-            <h3>⏱️ Thiết lập Thời lượng Onboarding linh hoạt</h3>
-            <p>Hỗ trợ cấu hình lộ trình <strong>7 ngày, 30 ngày hoặc 90 ngày</strong> tùy theo cấp bậc (Junior / Mid / Senior).</p>
+            <h3>⏱️ Flexible Onboarding Timelines</h3>
+            <p>Configurable curriculum timelines for <strong>7 days, 30 days, or 90 days</strong> tailored to seniority levels.</p>
           </div>
           <div class="card">
-            <h3>🏷️ Quản lý Phiên bản Revision & Trạng thái</h3>
+            <h3>🏷️ Revision Tracking & State Machine</h3>
             <ul>
-              <li>Mỗi lần sửa đổi, nộp lại đều ghi nhận tăng số phiên bản (<code>r1, r2, r3</code>).</li>
-              <li>Theo dõi rõ trạng thái vòng đời: Bản nháp (<code>draft</code>), Đang chờ duyệt (<code>in_review</code>), Cần sửa (<code>changes_requested</code>), Đã phát hành (<code>published</code>).</li>
+              <li>Every submission logs incremental revisions (<code>r1, r2, r3</code>).</li>
+              <li>Monitors lifecycle states: Draft (<code>draft</code>), In Review (<code>in_review</code>), Changes Requested (<code>changes_requested</code>), Published (<code>published</code>).</li>
             </ul>
           </div>
           <div class="card">
-            <h3>🔍 Bộ lọc & Tìm kiếm Đa chiều</h3>
-            <p>Tìm kiếm nhanh theo vị trí công việc, phòng ban, và tỷ lệ độ phủ (Coverage Score).</p>
+            <h3>🔍 Multi-Dimensional Filtering</h3>
+            <p>Rapid search by job role, corporate department, and Coverage Score.</p>
           </div>
         </div>
       </div>
@@ -498,36 +502,36 @@
     <div class="slide">
       <div class="slide-header">
         <div>
-          <span class="stage-tag">GIAI ĐOẠN 3: ĐỐI CHIẾU 2 PIPELINE (TRỌNG TÂM ĐỀ BÀI)</span>
-          <h1 class="slide-title">6. Bảng Đối Chiếu Song Song Table 1 (Ground-Truth vs GenAI)</h1>
+          <span class="stage-tag">STAGE 3: DUAL-PIPELINE COMPARISON</span>
+          <h1 class="slide-title">6. Dual-Pipeline Table 1 Verification Matrix</h1>
         </div>
-        <span class="role-badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: #10b981;">100% Anti-Shortcut</span>
+        <span class="role-badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: #10b981;">100% Grounded</span>
       </div>
       <div class="slide-body">
         <div class="image-container">
-          <img src="./screenshots/04_hr_dual_comparison_table1.png" alt="Bảng Đối Chiếu Table 1">
+          <img src="./screenshots/04_hr_dual_comparison_table1.png" alt="Table 1 Comparison">
           <div class="image-caption">
-            <span>Bảng đối chiếu song song Table 1 thực tế trên hệ thống</span>
+            <span>Live Table 1 Cross-Validation View</span>
             <span>SRS Step 46 & Item 1.6.xlii</span>
           </div>
         </div>
         <div class="info-panel">
           <div class="card">
-            <h3>🏆 Đạt 100% Độ phủ (Coverage Score)</h3>
-            <p>Chứng minh lộ trình đáp ứng đầy đủ mọi điều khoản bắt buộc của công ty trước khi cho phép gửi duyệt.</p>
+            <h3>🏆 100% Mandatory Coverage Score</h3>
+            <p>Confirms that the curriculum addresses all mandatory corporate regulations prior to submission.</p>
           </div>
           <div class="card">
-            <h3>🔍 Đối chiếu chi tiết từng hàng</h3>
+            <h3>🔍 Field-by-Field Cross-Validation</h3>
             <ul>
-              <li><strong>Requirement ID & Source Document:</strong> Mã yêu cầu và tài liệu nguồn tương ứng.</li>
-              <li><strong>Python Expected Result (Pipeline 2):</strong> Kỳ vọng ma trận chuẩn từ thuật toán Python thuần (ZERO-AI).</li>
-              <li><strong>GenAI Output (Pipeline 1):</strong> Nội dung thực tế AI sinh ra.</li>
-              <li><strong>Trạng thái xác thực:</strong> Nhãn xanh lục <code>MATCH - VERIFIED</code> xác nhận khớp tuyệt đối.</li>
+              <li><strong>Requirement ID & Source Document:</strong> Requirement code and citing document section.</li>
+              <li><strong>Python Expected Result (Pipeline 2):</strong> Deterministic ground truth derived via Python heuristics (Zero-AI).</li>
+              <li><strong>GenAI Output (Pipeline 1):</strong> Content synthesized by the language model.</li>
+              <li><strong>Verification Status:</strong> Green badge <code>MATCH - VERIFIED</code> certifying complete alignment.</li>
             </ul>
           </div>
           <div class="card">
-            <h3>🚫 Chống gian lận (Anti-Shortcut Rule)</h3>
-            <p>Không có bất kỳ cơ chế hard-code hay bỏ qua bước chấm điểm của Python.</p>
+            <h3>🚫 Anti-Shortcut Engineering</h3>
+            <p>Zero hard-coded metrics; evaluation calculations operate dynamically on live database records.</p>
           </div>
         </div>
       </div>
@@ -537,33 +541,33 @@
     <div class="slide">
       <div class="slide-header">
         <div>
-          <span class="stage-tag">GIAI ĐOẠN 3: HOÀN THIỆN NỘI DUNG</span>
-          <h1 class="slide-title">7. Chỉnh Sửa Nội Dung & Vòng Lặp Tự Sửa Chữa</h1>
+          <span class="stage-tag">STAGE 3: CONTENT REVISION</span>
+          <h1 class="slide-title">7. Content Editing & Self-Correction Feedback Loop</h1>
         </div>
         <span class="role-badge">HR Specialist</span>
       </div>
       <div class="slide-body">
         <div class="image-container">
-          <img src="./screenshots/05_hr_path_content_editor.png" alt="Chỉnh sửa nội dung lộ trình">
+          <img src="./screenshots/05_hr_path_content_editor.png" alt="Path Editor">
           <div class="image-caption">
-            <span>Trang chỉnh sửa module, bài học, quiz và tiếp nhận góp ý</span>
+            <span>Module, lesson, task, and quiz editing view with reviewer feedback</span>
             <span>SRS Step 48 & Item 1.6.xlv</span>
           </div>
         </div>
         <div class="info-panel">
           <div class="card">
-            <h3>✏️ Chế độ Chỉnh sửa Thủ công (Manual Edit)</h3>
+            <h3>✏️ Manual Editing Capabilities</h3>
             <ul>
-              <li>HR có thể sửa trực tiếp tên bài học, thời lượng, câu hỏi và đáp án quiz trắc nghiệm.</li>
-              <li>Mỗi chỉnh sửa đều được Python tính toán lại điểm Coverage ngay lập tức để không làm hỏng ma trận.</li>
+              <li>HR can modify lesson titles, durations, tasks, and quiz questions.</li>
+              <li>Edits trigger instant Python re-validation of Coverage Scores to prevent requirement regressions.</li>
             </ul>
           </div>
           <div class="card">
-            <h3>🔄 Cơ chế Tự sửa chữa thông minh (Self-Correction Loop)</h3>
-            <p><span class="highlight-badge">ĐÚNG CHUẨN ĐỀ BÀI</span> Nếu lần sinh đầu tiên bị thiếu tài liệu dẫn đến điểm độ phủ thấp (ví dụ 69%):</p>
+            <h3>🔄 Intelligent Self-Correction Loop</h3>
+            <p><span class="highlight-badge">SRS REQUIREMENT</span> If an initial run has missing documents resulting in low coverage (e.g., 69%):</p>
             <ul>
-              <li>HR chỉ cần bấm nút <strong>"Sinh lại" (Regenerate)</strong>.</li>
-              <li>Hệ thống tự động kiểm tra kho tài liệu hợp lệ của công ty, tự động bổ sung tài liệu thiếu và hướng AI tập trung vào các Requirement ID bị thiếu để đạt 100% độ phủ.</li>
+              <li>HR clicks <strong>"Regenerate"</strong>.</li>
+              <li>The system identifies missing documents and guides the model to target omitted Requirement IDs, achieving 100% coverage.</li>
             </ul>
           </div>
         </div>
@@ -574,34 +578,34 @@
     <div class="slide">
       <div class="slide-header">
         <div>
-          <span class="stage-tag">GIAI ĐOẠN 4: THẨM ĐỊNH CON NGƯỜI</span>
-          <h1 class="slide-title">8. Hàng Đợi Kiểm Duyệt Độc Lập của Reviewer</h1>
+          <span class="stage-tag">STAGE 4: HUMAN VERIFICATION</span>
+          <h1 class="slide-title">8. Content Reviewer Independent Audit Queue</h1>
         </div>
         <span class="role-badge reviewer">Reviewer</span>
       </div>
       <div class="slide-body">
         <div class="image-container">
-          <img src="./screenshots/06_reviewer_approval_queue.png" alt="Hàng đợi Reviewer">
+          <img src="./screenshots/06_reviewer_approval_queue.png" alt="Reviewer Queue">
           <div class="image-caption">
-            <span>Bảng điều khiển Reviewer và hàng đợi (/reviewer/dashboard)</span>
+            <span>Reviewer Dashboard and Pending Queue (/reviewer/dashboard)</span>
             <span>SRS Step 47, 48 & Item 1.6.xliv</span>
           </div>
         </div>
         <div class="info-panel">
           <div class="card">
-            <h3>📋 Hàng đợi Thẩm định Tập trung (In-Review Queue)</h3>
-            <p>Chỉ hiển thị các lộ trình đã được HR nộp duyệt chính thức, tách biệt hoàn toàn với các bản nháp đang soạn thảo.</p>
+            <h3>📋 Centralized In-Review Queue</h3>
+            <p>Displays only paths formally submitted by HR, completely isolated from work-in-progress drafts.</p>
           </div>
           <div class="card">
-            <h3>🚨 Phát hiện Điểm bất thường (Flags & Warnings)</h3>
+            <h3>🚨 Anomaly Detection (Flags & Warnings)</h3>
             <ul>
-              <li>Tự động gắn nhãn <strong>Manual Review Required</strong> nếu phát hiện cảnh báo rủi ro.</li>
-              <li>Reviewer có thể truy cập thẳng vào Bảng đối chiếu Table 1 để soi từng điểm không khớp.</li>
+              <li>Automatically tags curricula as <strong>Manual Review Required</strong> upon detecting risk flags.</li>
+              <li>Direct link to Table 1 Comparison view to inspect discrepancies.</li>
             </ul>
           </div>
           <div class="card">
-            <h3>📊 Thống kê Lịch sử Quyết định</h3>
-            <p>Ghi nhận tổng số lộ trình đã duyệt, số lộ trình yêu cầu sửa đổi, và số lộ trình đã phát hành.</p>
+            <h3>📊 Audit Metrics Telemetry</h3>
+            <p>Tracks total reviewed curricula, requested changes, and published learning paths.</p>
           </div>
         </div>
       </div>
@@ -611,31 +615,31 @@
     <div class="slide">
       <div class="slide-header">
         <div>
-          <span class="stage-tag">GIAI ĐOẠN 4: QUYẾT ĐỊNH THẨM ĐỊNH</span>
-          <h1 class="slide-title">9. Phê Duyệt Lộ Trình & Ghi Vết Kiểm Toán (Audit Trail)</h1>
+          <span class="stage-tag">STAGE 4: REVIEWER DECISION</span>
+          <h1 class="slide-title">9. Curriculum Approval & Immutable Audit Trail</h1>
         </div>
         <span class="role-badge reviewer">Reviewer</span>
       </div>
       <div class="slide-body">
         <div class="image-container">
-          <img src="./screenshots/07_reviewer_path_inspection.png" alt="Thẩm định lộ trình">
+          <img src="./screenshots/07_reviewer_path_inspection.png" alt="Path Inspection">
           <div class="image-caption">
-            <span>Thẩm định chi tiết và thực thi quyền hạn (/reviewer/paths/:id)</span>
+            <span>Granular review inspection and decision actions (/reviewer/paths/:id)</span>
             <span>SRS Step 48, 49 & Item 1.6.xlvi-xlvii</span>
           </div>
         </div>
         <div class="info-panel">
           <div class="card">
-            <h3>⚖️ Các Quyền hạn của Thẩm định viên</h3>
+            <h3>⚖️ Reviewer Action Palette</h3>
             <ul>
-              <li><strong>Phê duyệt & Phát hành (Approve):</strong> Cho phép nhân viên bắt đầu học.</li>
-              <li><strong>Yêu cầu chỉnh sửa (Request Changes):</strong> Trả lộ trình về trạng thái <code>changes_requested</code> kèm nhận xét chi tiết cho HR.</li>
-              <li><strong>Chỉnh sửa trực tiếp (Direct Edit):</strong> Reviewer có thể tự sửa câu từ ngay tại khâu duyệt.</li>
+              <li><strong>Approve & Publish:</strong> Authorizes curriculum publication and triggers automated learner enrollment.</li>
+              <li><strong>Request Changes:</strong> Returns path to <code>changes_requested</code> with itemized reviewer annotations.</li>
+              <li><strong>Direct Edit:</strong> In-place edits made directly during the review transaction.</li>
             </ul>
           </div>
           <div class="card">
             <h3>📝 Reviewer Override & Audit Trail (Step 49)</h3>
-            <p>Khi Reviewer quyết định duyệt ngoại lệ đối với một lộ trình có cảnh báo, hệ thống <strong>bắt buộc Reviewer phải nhập lý do giải trình</strong>. Lý do này được lưu vĩnh viễn vào Nhật ký kiểm toán ISO không thể xóa sửa.</p>
+            <p>When approving paths with non-blocking warnings, the system <strong>mandates an explicit justification</strong> (≥ 10 characters) committed permanently to the immutable audit trail.</p>
           </div>
         </div>
       </div>
@@ -645,31 +649,31 @@
     <div class="slide">
       <div class="slide-header">
         <div>
-          <span class="stage-tag">GIAI ĐOẠN 5: TRẢI NGHIỆM HỌC TẬP</span>
-          <h1 class="slide-title">10. Cổng Học Tập Nhân Viên & Phát Hiện Điểm Yếu</h1>
+          <span class="stage-tag">STAGE 5: LEARNER EXPERIENCE</span>
+          <h1 class="slide-title">10. Employee Learning Portal & Weak-Area Analytics</h1>
         </div>
         <span class="role-badge employee">Employee</span>
       </div>
       <div class="slide-body">
         <div class="image-container">
-          <img src="./screenshots/08_employee_learning_portal.png" alt="Cổng học tập nhân viên">
+          <img src="./screenshots/08_employee_learning_portal.png" alt="Employee Portal">
           <div class="image-caption">
-            <span>Bảng điều khiển học tập Onboarding (/employee/dashboard)</span>
+            <span>Employee Learning Dashboard (/employee/dashboard)</span>
             <span>SRS Step 50, 53, 54, 55</span>
           </div>
         </div>
         <div class="info-panel">
           <div class="card">
-            <h3>📈 Theo dõi Tiến độ Trực quan</h3>
-            <p>Hiển thị thanh tiến độ %, tổng số bài học đã học, số nhiệm vụ thực tế đã tích hoàn thành, và điểm thi Quiz trung bình.</p>
+            <h3>📈 Visual Progress Tracking</h3>
+            <p>Real-time progress bars, completed lessons, checked operational tasks, and average quiz scores.</p>
           </div>
           <div class="card">
-            <h3>🧠 Phát hiện Điểm yếu Tự động (Weak-Area Detection - Step 55)</h3>
-            <p>Hệ thống tự động phân tích các câu hỏi trắc nghiệm nhân viên làm sai, đưa ra cảnh báo và hướng dẫn nhân viên đọc lại đúng mục trong tài liệu công ty để củng cố kiến thức.</p>
+            <h3>🧠 Weak-Area Identification (Step 56)</h3>
+            <p>Analyzes incorrect quiz responses, flags knowledge gaps, and provides deep links to exact document sections for reinforcement.</p>
           </div>
           <div class="card">
-            <h3>🎓 Chứng chỉ Hoàn thành (Certificate)</h3>
-            <p>Tự động cấp chứng chỉ Onboarding chính thức có mã định danh khi học viên hoàn thành 100% lộ trình.</p>
+            <h3>🎓 Digital Completion Certificate</h3>
+            <p>Automatically generates a verifiable completion certificate upon achieving 100% path completion.</p>
           </div>
         </div>
       </div>
@@ -679,31 +683,31 @@
     <div class="slide">
       <div class="slide-header">
         <div>
-          <span class="stage-tag">GIAI ĐOẠN 5: BÁO CÁO & PHÂN TÍCH TÁC ĐỘNG</span>
-          <h1 class="slide-title">11. Báo Cáo Tuân Thủ & Sinh Lại Có Chọn Lọc</h1>
+          <span class="stage-tag">STAGE 5: COMPLIANCE & IMPACT ANALYTICS</span>
+          <h1 class="slide-title">11. Compliance Analytics & Selective Regeneration</h1>
         </div>
         <span class="role-badge">HR Specialist</span>
       </div>
       <div class="slide-body">
         <div class="image-container">
-          <img src="./screenshots/09_hr_analytics_reports.png" alt="Báo cáo phân tích">
+          <img src="./screenshots/09_hr_analytics_reports.png" alt="Analytics Reports">
           <div class="image-caption">
-            <span>Báo cáo độ phủ và tác động chính sách (/hr/reports)</span>
+            <span>Coverage Reports and Policy Impact Analytics (/hr/reports)</span>
             <span>SRS Step 57, 58, 59 & Item 1.6.lxi</span>
           </div>
         </div>
         <div class="info-panel">
           <div class="card">
-            <h3>📊 Ma trận Độ phủ Theo Phòng ban (Role Coverage Matrix)</h3>
-            <p>Báo cáo tỷ lệ hoàn thành đào tạo theo từng phòng ban và phân tích mức độ tuân thủ quy định bắt buộc.</p>
+            <h3>📊 Departmental Coverage Matrix</h3>
+            <p>Analyzes onboarding completion rates and regulatory compliance across all corporate departments.</p>
           </div>
           <div class="card">
-            <h3>🔄 Phân tích Tác động Chính sách (Step 58: Impact Analysis)</h3>
-            <p>Khi công ty cập nhật một tài liệu mới (ví dụ DOC-11 v1.0 ➔ v1.1), hệ thống tự động xác định chính xác những module nào, vị trí công việc nào bị ảnh hưởng.</p>
+            <h3>🔄 Policy Impact Analysis (Step 58)</h3>
+            <p>When an internal document updates (e.g., DOC-11 v1.0 ➔ v1.1), the system pinpoints affected modules and positions.</p>
           </div>
           <div class="card">
-            <h3>⚡ Sinh lại có chọn lọc (Step 59: Selective Regeneration)</h3>
-            <p>Chỉ sinh lại đúng các module bị ảnh hưởng bởi chính sách mới, bảo toàn nguyên vẹn tiến độ các phần khác của nhân viên.</p>
+            <h3>⚡ Selective Regeneration (Step 59)</h3>
+            <p>Regenerates only modules affected by the updated policy, preserving employee progress across unaffected sections.</p>
           </div>
         </div>
       </div>
