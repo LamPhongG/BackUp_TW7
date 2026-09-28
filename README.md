@@ -6,19 +6,17 @@ SkillSprint AI turns a company's internal documents (policies, SOPs, handbooks, 
 
 ## Repository layout
 
-| Folder | Content |
+| Folder / File | Content |
 | :--- | :--- |
-| `src/` | **Core Architecture**: document_processing, document_validation, genai_pipeline, prompt_templates, python_validation, role_matrix, comparison_engine, hallucination_checks, contradiction_checks, security |
+| `src/` | **Core Architecture**: document_processing, document_validation, genai_pipeline, prompt_templates, python_validation, role_matrix, comparison_engine, hallucination_checks, contradiction_checks, security ([src/README.md](src/README.md)) |
 | `frontend/` | React + Vite web app for HR, Reviewer and Employee ([frontend/README.md](frontend/README.md)) |
 | `backend/` | FastAPI API, SQLAlchemy + Alembic database, document ingestion, Gemini pipeline, server-side checks ([backend/README.md](backend/README.md)) |
 | `tests/` | Root test suite (adversarial tests, comparison engine, consistency, document processing, rule engine) |
-| `sample_documents/` | Sample company documents DOC-01…DOC-28 (PDF, DOCX, MD, TXT, CSV), RD-01…RD-10, adversarial CTX samples |
+| `sample_documents/` | Corporate dataset DOC-01…DOC-28 (PDF, DOCX, MD, TXT, CSV), RD-01…RD-10, adversarial CTX samples ([sample_documents/README.md](sample_documents/README.md)) |
 | `hidden_test_ready/` | Automated test harness for unseen evaluator documents |
-| `documentation/` | Functional flows, project report outline, team work breakdown, signs of AI-generated writing |
-| `sample_documents/` | Sample company documents DOC-11…DOC-20 as PDF, with Markdown sources and test answer keys ([sample_documents/README_PHASE2.md](sample_documents/README_PHASE2.md)) |
-| `documentation/` | Functional flows ([FRONTEND_FLOWS.md](documentation/FRONTEND_FLOWS.md)), the team work breakdown, signs of AI-generated writing ([AI_WRITING_SIGNS.html](documentation/AI_WRITING_SIGNS.html)), the proposed design for path assignment and progress tracking ([DESIGN_PATH_ASSIGNMENT.md](documentation/DESIGN_PATH_ASSIGNMENT.md)), and the proposed validation gate between HR and Reviewer ([DESIGN_VALIDATION_GATE.md](documentation/DESIGN_VALIDATION_GATE.md)) |
-| `Rules/` | Team coding and writing rules |
-| `AI_USAGE.md` | Declaration of every AI-assisted change |
+| `documentation/` | Video demonstration script, presentation deck, database ERD, diagrams, and UI screenshots ([documentation/README.md](documentation/README.md)) |
+| `reports/` | Official SRS submission deliverables: Project Report, Comparison CSV, Validation, Security, Technical Blog, and Team Records ([reports/README.md](reports/README.md)) |
+| `AI_USAGE.md` | Complete declaration of AI assistance across development ([AI_USAGE.md](AI_USAGE.md)) |
 
 Detailed setup and execution walkthrough: **[GETTING_STARTED.md](GETTING_STARTED.md)**
 

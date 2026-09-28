@@ -1,4 +1,4 @@
-"""Assignment of published paths and progress (documentation/DESIGN_PATH_ASSIGNMENT.md §5.3–§5.6).
+"""Assignment of published paths and progress (reports/Project_Report.md §5.3–§5.6).
 
 Seeded employees: Alex (Engineering, support-engineer, onboarding not started), Minh (Engineering, team-leader,
 onboarding completed in 2023), Linh (Customer Support, cs-exec, joins 28/09/2026).

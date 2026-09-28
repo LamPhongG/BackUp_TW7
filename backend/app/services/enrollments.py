@@ -1,6 +1,6 @@
 """Giving published learning paths to employees and recording their progress.
 
-Design and decisions: documentation/DESIGN_PATH_ASSIGNMENT.md (§5.3 assignment rules, §5.5 statuses).
+Design and decisions: reports/Project_Report.md (§5.3 assignment rules, §5.5 statuses).
 """
 from dataclasses import dataclass
 from datetime import date, timedelta

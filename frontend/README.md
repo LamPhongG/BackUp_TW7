@@ -11,7 +11,7 @@ SkillSprint AI transforms internal company documents (PDF, DOCX, TXT, MD/MARKDOW
 
 The interface supports seamless **English and Vietnamese** localization.
 
-📄 **Features, Workflows, and Architecture Details:** [`documentation/FRONTEND_FLOWS.md`](../documentation/FRONTEND_FLOWS.md)
+📄 **Comprehensive Architecture & System Workflows:** [`reports/Project_Report.md`](../reports/Project_Report.md)
 
 ---
 

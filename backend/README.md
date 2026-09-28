@@ -102,7 +102,7 @@ backend/
 - Relational decomposition creates excessive joins without transactional benefit during hierarchical editing.
 - Employee progress points to stable item IDs within the JSON structure; published paths are immutable.
 
-For detailed JSON schema specifications, see Section 7 of [documentation/FRONTEND_FLOWS.md](../documentation/FRONTEND_FLOWS.md).
+For detailed JSON schema specifications, see Section 7 of [reports/Project_Report.md](../reports/Project_Report.md).
 
 ---
 

@@ -12,7 +12,7 @@ class LearningPath(Base):
     """A generated learning path moving through draft → in_review → published → archived.
 
     `stages` holds the whole stage → module → lesson/task/quiz tree as JSON (contract in
-    documentation/FRONTEND_FLOWS.md §7). HR and Reviewers edit and review the tree as one unit, and
+    reports/Project_Report.md §7). HR and Reviewers edit and review the tree as one unit, and
     every item keeps its own `source_reference`, so splitting it into tables would only add joins.
     """
 

@@ -12,7 +12,7 @@ class Enrollment(Base):
     """One path given to one employee (the spec's `Employee_LearningPaths`).
 
     The path content is not copied: published paths are read-only, so the lesson and task ids stored here
-    stay valid for as long as anyone can study the path (documentation/DESIGN_PATH_ASSIGNMENT.md §4.1).
+    stay valid for as long as anyone can study the path (reports/Project_Report.md §4.1).
     """
 
     __tablename__ = "enrollments"
