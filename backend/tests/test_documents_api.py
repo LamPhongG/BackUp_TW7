@@ -4,6 +4,11 @@ from app.core.config import get_settings
 from tests.factories import make_docx, make_pdf, make_scanned_pdf, policy_text, unique_code, upload, upload_ready_pdf
 
 
+def _stored_file(doc: dict, ext: str) -> Path | None:
+    """The uploaded file, wherever `services/documents.py` put it (files are grouped in a folder per category)."""
+    return next(get_settings().upload_dir.rglob(f"{doc['id']}.{ext}"), None)
+
+
 def test_hr_uploads_pdf_and_gets_chunks(client, hr_headers, reviewer_headers):
     res = upload(client, hr_headers, make_pdf(policy_text()), "leave.pdf")
 
@@ -15,7 +20,7 @@ def test_hr_uploads_pdf_and_gets_chunks(client, hr_headers, reviewer_headers):
     assert doc["chunk_count"] >= 3
     assert doc["lifecycle_status"] == "active"
     assert doc["uploaded_by_name"] == "Jordan Lee"
-    assert (get_settings().upload_dir / f"{doc['id']}.pdf").is_file()
+    assert _stored_file(doc, "pdf") is not None
 
     chunks = client.get(f"/api/documents/{doc['id']}/chunks", headers=reviewer_headers).json()
     assert [c["chunk_id"] for c in chunks["chunks"]][:2] == [f"{doc['code']}-C0001", f"{doc['code']}-C0002"]
@@ -31,7 +36,7 @@ def test_markdown_extension_is_stored_as_md(client, hr_headers):
     doc = res.json()
     assert (doc["ext"], doc["file_name"], doc["processing_status"]) == ("md", "leave-policy.markdown", "ready")
     assert doc["chunk_count"] == 2
-    assert (get_settings().upload_dir / f"{doc['id']}.md").is_file()
+    assert _stored_file(doc, "md") is not None
 
 
 def test_catalog_code_gets_vietnamese_title_and_family(client, hr_headers):
@@ -182,7 +187,8 @@ def test_only_hr_can_change_the_repository(client, reviewer_headers, employee_he
 
 def test_delete_removes_row_and_file(client, hr_headers):
     doc = upload_ready_pdf(client, hr_headers)
-    stored = Path(get_settings().upload_dir / f"{doc['id']}.pdf")
+    stored = _stored_file(doc, "pdf")
+    assert stored is not None and stored.is_file()
 
     res = client.delete(f"/api/documents/{doc['id']}", headers=hr_headers)
 

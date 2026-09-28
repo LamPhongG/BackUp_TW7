@@ -20,6 +20,8 @@ SkillSprint AI turns a company's internal documents (policies, SOPs, handbooks, 
 | `Rules/` | Team coding and writing rules |
 | `AI_USAGE.md` | Declaration of every AI-assisted change |
 
+Detailed setup and execution walkthrough: **[GETTING_STARTED.md](GETTING_STARTED.md)**
+
 ## Quick start
 
 ```powershell
@@ -28,8 +30,7 @@ cd backend
 python -m venv .venv; .venv\Scripts\activate
 pip install -r requirements.txt
 copy .env.example .env          # then set JWT_SECRET (and GEMINI_API_KEY to use Gemini)
-alembic upgrade head
-python -m app.db.seed
+python setup_database.py        # creates all tables, seeds users, role matrix and ingests 28 docs
 uvicorn app.main:app --reload
 
 # Frontend  →  http://localhost:3000
