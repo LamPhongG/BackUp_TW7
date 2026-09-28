@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  UserRound, ShieldCheck, History, CircleCheck, CircleAlert,
+  UserRound, ShieldCheck, CircleCheck, CircleAlert,
   ArrowUpRight, Plus, Building2, BriefcaseBusiness
 } from "../../components/Icons";
 import { Card, SectionHeader, StatCard, Button, Badge } from "../../components/UI";
@@ -62,9 +62,6 @@ export default function AdminDashboard() {
           <p>{t("admin_dashboard_desc")}</p>
         </div>
         <div className="heading-actions">
-          <Button variant="secondary" onClick={() => navigate("/admin/audit-log")} icon={<History size={16} />}>
-            {t("menu_audit_log")}
-          </Button>
           <Button onClick={() => navigate("/admin/users")} icon={<UserRound size={16} />}>
             {t("menu_users")}
           </Button>
