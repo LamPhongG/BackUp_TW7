@@ -3,6 +3,8 @@ chunk ids, because learning-path citations point at `chunk_id`.
 
 Chunk contract: {doc_id, chunk_id, section_id, heading, page, content}
 """
+import csv
+import io
 import re
 from dataclasses import dataclass
 
@@ -159,10 +161,53 @@ def _split_long(paragraph: _Part, max_chars: int) -> list[_Part]:
 
 
 def chunk_csv(doc_id: str, text: str, rows_per_chunk: int = 25) -> list[dict]:
-    """Each chunk repeats the header row so it reads on its own without the previous chunk."""
-    lines = [line for line in re.split(r"\r?\n", text) if line.strip()]
+    """Parse CSV documents into traceable chunks.
+
+    If the CSV is pre-structured with section_id / heading / content columns (like DOC-10 SOP),
+    each row is preserved as an individual section chunk with its exact section number and heading.
+    Otherwise, groups rows up to rows_per_chunk repeating the header row.
+    """
+    clean_text = text.lstrip("\ufeff")
+    lines = [line for line in re.split(r"\r?\n", clean_text) if line.strip()]
     if not lines:
         return []
+
+    # Check for pre-structured chunk CSV
+    try:
+        reader = csv.DictReader(io.StringIO(clean_text))
+        fieldnames = [f.strip().lower() for f in (reader.fieldnames or [])]
+        if "content" in fieldnames and ("section_id" in fieldnames or "heading" in fieldnames):
+            chunks = []
+            for i, row in enumerate(reader, start=1):
+                row_map = {k.strip().lower(): v for k, v in row.items() if k}
+                content = (row_map.get("content") or "").strip()
+                if not content:
+                    continue
+                raw_section_id = (row_map.get("section_id") or "").strip()
+                raw_heading = (row_map.get("heading") or "").strip()
+
+                if raw_section_id and not re.match(r"^\d", raw_heading):
+                    heading = f"{raw_section_id}. {raw_heading}".strip()
+                else:
+                    heading = raw_heading or f"Section {raw_section_id or i}"
+
+                chunk_id = row_map.get("chunk_id") or f"{doc_id}-C{i:04d}"
+                if not chunk_id.startswith(doc_id):
+                    chunk_id = f"{doc_id}-C{i:04d}"
+
+                chunks.append({
+                    "doc_id": doc_id,
+                    "chunk_id": chunk_id,
+                    "section_id": raw_section_id or f"S{i:03d}",
+                    "heading": heading,
+                    "page": None,
+                    "content": content,
+                })
+            if chunks:
+                return chunks
+    except Exception:
+        pass
+
     header, rows = lines[0], lines[1:]
     if not rows:
         return chunk_blocks(doc_id, [Block(page=None, text=header)])

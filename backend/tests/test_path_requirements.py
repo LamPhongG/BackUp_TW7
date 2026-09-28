@@ -318,3 +318,34 @@ def test_the_server_reads_the_file_outline_to_set_aside_other_roles_sections(cli
         {"doc": doc["code"], "section": "3", "heading": "3. Sales Executive", "chunks": 1}]
     titles = [lesson["title"] for s in path["stages"] for m in s["modules"] for lesson in m["lessons"]]
     assert "3.1 Mission" not in titles and "4. Common Rules" in titles
+
+
+def test_regenerate_auto_includes_missing_documents_when_requested(client, hr_headers, db, position):
+    code1 = unique_code()
+    code2 = unique_code()
+    doc1 = upload_ready_pdf(client, hr_headers, code=code1, title_en=f"Policy {code1}")
+    doc2 = upload_ready_pdf(client, hr_headers, code=code2, title_en=f"Policy {code2}")
+    _require(db, position, code1, section="1")
+    _require(db, position, code2, section="1")
+
+    # Initially HR omits doc2
+    initial = _create(client, hr_headers, position, [doc1["id"]], allow_missing_mandatory=True).json()
+    assert initial["generation"]["mandatory_omitted"] == [code2]
+    assert initial["coverage"]["score"] < 1.0
+
+    # HR regenerates with auto_include_missing=True
+    regenerated = client.post(
+        f"/api/paths/{initial['id']}/regenerate",
+        headers=hr_headers,
+        json={"source_document_ids": [doc1["id"]], "auto_include_missing": True},
+    ).json()
+
+    # doc2 was automatically included from approved repository
+    source_codes = {s["code"] for s in regenerated["sources"]}
+    assert code1 in source_codes
+    assert code2 in source_codes
+
+    # Python validation pipeline independently evaluated the result and achieved 100% coverage
+    assert regenerated["coverage"]["score"] == 1.0
+    assert len(regenerated["coverage"]["missing"]) == 0
+

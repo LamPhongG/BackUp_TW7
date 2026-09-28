@@ -110,11 +110,17 @@ SAMPLE_DOCS_MAPPING = {
 def create_schema(reset: bool = False):
     """Create all relational tables."""
     settings = get_settings()
-    if reset and settings.database_url.startswith("sqlite:///"):
-        db_path = Path(settings.database_url.replace("sqlite:///", ""))
-        if db_path.exists():
-            print(f"[Reset] Removing existing database file: {db_path.name}")
-            db_path.unlink()
+    if reset:
+        if settings.database_url.startswith("sqlite:///"):
+            db_path = Path(settings.database_url.replace("sqlite:///", ""))
+            if db_path.exists():
+                print(f"[Reset] Removing existing database file: {db_path.name}")
+                db_path.unlink()
+        elif "postgresql" in settings.database_url:
+            print("[Reset] Dropping and recreating PostgreSQL public schema...")
+            with engine.connect() as conn:
+                conn.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
+                conn.commit()
 
     print("[Schema] Initializing database tables...")
     Base.metadata.create_all(bind=engine)
@@ -154,16 +160,14 @@ def ingest_sample_documents(db, admin_id: str):
         if not cat:
             continue
 
-        # Files live under a category subfolder (role_description/, policy/, sop/, ...), not
-        # directly in sample_documents/ — search recursively. Exclude source/, which holds the
-        # provenance .md files used by tests, not the documents actually meant to be ingested.
-        file_path = next(
-            (p for p in sample_dir.rglob(info["file"]) if "source" not in p.relative_to(sample_dir).parts),
-            None,
-        )
-        if file_path is None:
-            print(f"  [Skip] Missing physical file for {code}: {info['file']}")
-            continue
+        file_path = sample_dir / info["file"]
+        if not file_path.is_file():
+            matches = list(sample_dir.rglob(info["file"]))
+            if matches:
+                file_path = matches[0]
+            else:
+                print(f"  [Skip] Missing physical file for {code}: {info['file']}")
+                continue
 
         content = file_path.read_bytes()
         ext = file_extension(file_path.name)

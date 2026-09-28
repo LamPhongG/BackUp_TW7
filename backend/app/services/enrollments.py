@@ -61,8 +61,16 @@ def _eligible(user: User, path: LearningPath) -> bool:
 
 
 def _assign(db: Session, user: User, path: LearningPath, source: AssignmentSource, today: date) -> Enrollment | None:
-    """None when the employee already has this path (also a withdrawn one: it is not silently given back)."""
-    if db.scalar(select(Enrollment.id).where(Enrollment.user_id == user.id, Enrollment.path_id == path.id)):
+    """None when the employee already has this path (also a withdrawn one: it is not silently given back,
+    unless it was previously withdrawn due to department_transfer and the employee transferred back)."""
+    existing = db.scalar(select(Enrollment).where(Enrollment.user_id == user.id, Enrollment.path_id == path.id))
+    if existing:
+        if existing.status == EnrollmentStatus.WITHDRAWN and existing.withdrawn_reason == "department_transfer":
+            existing.status = EnrollmentStatus.IN_PROGRESS if existing.started_at else EnrollmentStatus.ASSIGNED
+            existing.withdrawn_at = None
+            existing.withdrawn_reason = None
+            existing.due_date = due_date_for(user, path, today)
+            return existing
         return None
     enrollment = Enrollment(user_id=user.id, path_id=path.id, source=source, due_date=due_date_for(user, path, today))
     db.add(enrollment)
@@ -102,6 +110,48 @@ def assign_onboarding_to(db: Session, user: User) -> int:
                          details={"source": "auto", "employee": user.email})
             count += 1
     return count
+
+
+def sync_enrollments_on_user_transfer(db: Session, user: User, actor: User) -> dict:
+    """When an employee's department or job position changes:
+    1. Withdraw active auto-assigned onboarding paths that no longer target the employee's new department/position.
+       (Completed paths, manual/self enrollments, and company-wide paths are preserved).
+    2. Reset user.training_status to NOT_STARTED if it was COMPLETED, so they can onboard into the new role.
+    3. Auto-assign published onboarding paths for their new department or position.
+    """
+    if user.user_role is not UserRole.EMPLOYEE or not user.is_active:
+        return {"withdrawn": 0, "assigned": 0}
+
+    withdrawn_count = 0
+
+    # 1. Withdraw outdated active auto-assigned paths
+    active_rows = db.execute(
+        select(Enrollment, LearningPath)
+        .join(LearningPath, LearningPath.id == Enrollment.path_id)
+        .where(Enrollment.user_id == user.id, Enrollment.status.in_(ACTIVE))
+    ).all()
+
+    for enrollment, path in active_rows:
+        if enrollment.source in (AssignmentSource.AUTO_DEPARTMENT, AssignmentSource.AUTO_POSITION):
+            if _match(user, path) is None:
+                enrollment.status = EnrollmentStatus.WITHDRAWN
+                enrollment.withdrawn_at = utcnow()
+                enrollment.withdrawn_reason = "department_transfer"
+                audit.record(
+                    db, actor, "withdraw", path,
+                    status_before=path.status, status_after=path.status,
+                    details={"reason": "department_transfer", "employee": user.email}
+                )
+                withdrawn_count += 1
+
+    # 2. Reset training_status so the employee is eligible for the new role's onboarding
+    if user.training_status == TrainingStatus.COMPLETED:
+        user.training_status = TrainingStatus.NOT_STARTED
+
+    # 3. Assign onboarding paths for the new department / position
+    assigned_count = assign_onboarding_to(db, user)
+
+    return {"withdrawn": withdrawn_count, "assigned": assigned_count}
 
 
 def withdraw_for_archived_path(db: Session, path: LearningPath) -> None:

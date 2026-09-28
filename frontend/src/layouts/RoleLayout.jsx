@@ -25,9 +25,6 @@ function navFor(role, paths) {
     return [
       ["menu_dashboard", "/admin/dashboard", LayoutDashboard],
       ["menu_users", "/admin/users", UserRound],
-      ["menu_paths", "/admin/paths", Layers3],
-      ["menu_reports", "/admin/reports", BarChart3],
-      ["menu_audit_log", "/admin/audit-log", History],
     ];
   }
   if (role === "hr") {

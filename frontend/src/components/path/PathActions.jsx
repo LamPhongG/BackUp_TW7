@@ -97,10 +97,19 @@ function RegenerateModal({ path, onClose }) {
   const { activeDocuments, processed } = useDocuments();
   const { run, busy, errorBox } = useRunner();
   const [job, setJob] = useState(null);
-  const codes = new Set(path.sources.map(s => s.code));
+
+  const existingCodes = new Set(path.sources.map(s => s.code));
+  // Tìm các tài liệu bắt buộc còn thiếu từ kết quả coverage của Python
+  const missingRequiredCodes = (path.coverage?.requiredDocs || [])
+    .filter(d => !d.covered)
+    .map(d => d.code);
+  const allTargetCodes = new Set([...existingCodes, ...missingRequiredCodes]);
+
   // Dùng phiên bản đang hiệu lực của cùng mã tài liệu — tài liệu mới cập nhật sẽ được lấy vào
-  const docs = activeDocuments.filter(d => codes.has(d.code) && processed[d.id]);
+  const docs = activeDocuments.filter(d => allTargetCodes.has(d.code) && processed[d.id]);
   const role = JOB_ROLES.find(r => r.id === path.target.role_id);
+  const autoAddedCodes = missingRequiredCodes.filter(c => !existingCodes.has(c));
+
   // Lần sinh trước HR đã chủ động bỏ tài liệu bắt buộc: sinh lại giữ nguyên quyết định đó
   const omitted = path.generation?.mandatory_omitted || [];
   return (
@@ -110,6 +119,16 @@ function RegenerateModal({ path, onClose }) {
       ) : (
         <>
           <p>{t("regenerate_desc", { n: docs.length })}</p>
+          {autoAddedCodes.length > 0 && (
+            <p className="cell-sub" style={{ color: "#6366f1", marginTop: 8, fontWeight: 500 }}>
+              ✦ Tự động bổ sung tài liệu còn thiếu: <strong>{autoAddedCodes.join(", ")}</strong> để đạt 100% độ phủ.
+            </p>
+          )}
+          {path.coverage?.missing?.length > 0 && autoAddedCodes.length === 0 && (
+            <p className="cell-sub" style={{ color: "#6366f1", marginTop: 8, fontWeight: 500 }}>
+              ✦ Hệ thống sẽ đưa phản hồi từ Python ({path.coverage.missing.length} yêu cầu chưa đạt) vào prompt để AI tập trung bổ sung.
+            </p>
+          )}
           {path.status === "changes_requested" && <p className="cell-sub">{t("regenerate_keep_comments")}</p>}
           {omitted.length > 0 && <p className="cell-sub text-warning">{t("regenerate_keeps_omitted", { list: omitted.join(", ") })}</p>}
         </>
