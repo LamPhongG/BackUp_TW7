@@ -4,21 +4,45 @@ Tài liệu hướng dẫn chi tiết dành cho thành viên trong nhóm, giản
 
 ## 1. Yêu cầu môi trường tiên quyết (Prerequisites)
 
-Trước khi bắt đầu, hãy đảm bảo máy tính đã cài đặt các công cụ sau:
-- Python: Phiên bản 3.11, 3.12, 3.13 hoặc 3.14. Kiểm tra bằng lệnh: `python --version`
-- Node.js: Phiên bản 18.x trở lên cùng npm. Kiểm tra bằng lệnh: `node -v` và `npm -v`
-- Git: Kiểm tra bằng lệnh: `git --version`
+- Nếu dùng Docker (Khuyến nghị): Chỉ cần cài đặt **Docker Desktop** (đã bao gồm Docker Compose).
+- Nếu chạy trực tiếp trên máy host:
+  - Python: Phiên bản 3.11, 3.12, 3.13 hoặc 3.14 (`python --version`)
+  - Node.js: Phiên bản 18.x trở lên cùng npm (`node -v` và `npm -v`)
+  - Git: Kiểm tra bằng lệnh `git --version`
 
 ## 2. Bước 1: Clone repository từ GitHub
 
-Mở terminal (PowerShell trên Windows hoặc Terminal trên macOS/Linux) và chạy lệnh:
+Mở terminal và chạy lệnh:
 
 ```bash
-git clone https://github.com/LamPhongG/BackUp_TW7.git
-cd BackUp_TW7
+git clone https://github.com/LamPhongG/TechWiz7-FourAngryBirds-SkillSprint-AI.git
+cd TechWiz7-FourAngryBirds-SkillSprint-AI
 ```
 
-## 3. Bước 2: Cấu hình môi trường ảo Python và cài đặt thư viện
+---
+
+## 3. Cách 1: Khởi chạy 1-Click bằng Docker (Khuyến nghị cho Giám khảo)
+
+Toàn bộ hệ thống (PostgreSQL + Backend FastAPI + Frontend React Nginx) được đóng gói và khởi chạy tự động:
+
+```bash
+docker compose up --build -d
+```
+
+- **Giao diện người dùng (Frontend)**: Truy cập tại `http://localhost:3000`
+- **Swagger API Documentation**: Truy cập tại `http://localhost:8000/api/docs`
+- **Cơ sở dữ liệu PostgreSQL**: Tự động cấu hình, chạy migration, nạp 203 ma trận và 28 tài liệu hoàn chỉnh.
+
+Để dừng hệ thống:
+```bash
+docker compose down
+```
+
+---
+
+## 4. Cách 2: Cài đặt và chạy thủ công trên máy host
+
+### Bước 2.1: Cấu hình môi trường ảo Python và cài đặt thư viện
 
 Khuyến nghị tạo môi trường ảo (virtual environment) để tránh xung đột thư viện:
 

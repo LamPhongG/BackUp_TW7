@@ -24,6 +24,20 @@ Detailed setup and execution walkthrough: **[GETTING_STARTED.md](GETTING_STARTED
 
 ## Quick start
 
+### Option 1: One-Click Docker (Recommended)
+
+Run the entire production stack (PostgreSQL + FastAPI Backend + React Nginx Frontend) with a single command:
+
+```bash
+docker compose up --build -d
+```
+
+- **Frontend Application**: `http://localhost:3000`
+- **Backend API Docs (Swagger)**: `http://localhost:8000/api/docs`
+- **PostgreSQL Database**: Port `5432` (Auto-migrated, seeds 203 matrix rules, ingests 28 documents)
+
+### Option 2: Local Development Setup
+
 ```powershell
 # Backend  →  http://localhost:8000/api/docs
 cd backend
@@ -36,11 +50,15 @@ uvicorn app.main:app --reload
 # Frontend  →  http://localhost:3000
 cd frontend
 npm install
-echo VITE_API_URL=http://localhost:8000/api > .env.local   # omit to run fully in the browser
+echo VITE_API_URL=http://localhost:8000/api > .env.local
 npm run dev
 ```
 
-Demo accounts (password `Demo@123`): `hr@fourangrybirds.vn`, `reviewer@fourangrybirds.vn`, `alex.morgan@fourangrybirds.vn`.
+Demo accounts (password `Demo@123` or `password123`):
+- **Admin**: `admin@fourangrybirds.vn`
+- **HR Manager**: `hr@fourangrybirds.vn`
+- **Reviewer**: `reviewer@fourangrybirds.vn`
+- **Employee**: `alex.morgan@fourangrybirds.vn` (or `sales.emp@fourangrybirds.vn`)
 
 ### Evaluator Note on Email Notifications (SMTP)
 - **Real Gmail Delivery**: To test live email delivery when HR creates new employee accounts, configure `SMTP_USER` and `SMTP_PASSWORD` (16-character Google App Password) in `backend/.env`.
