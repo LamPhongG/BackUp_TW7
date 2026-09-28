@@ -154,8 +154,14 @@ def ingest_sample_documents(db, admin_id: str):
         if not cat:
             continue
 
-        file_path = sample_dir / info["file"]
-        if not file_path.is_file():
+        # Files live under a category subfolder (role_description/, policy/, sop/, ...), not
+        # directly in sample_documents/ — search recursively. Exclude source/, which holds the
+        # provenance .md files used by tests, not the documents actually meant to be ingested.
+        file_path = next(
+            (p for p in sample_dir.rglob(info["file"]) if "source" not in p.relative_to(sample_dir).parts),
+            None,
+        )
+        if file_path is None:
             print(f"  [Skip] Missing physical file for {code}: {info['file']}")
             continue
 
