@@ -127,8 +127,8 @@ def compare_path_with_ground_truth(db: Session, path: LearningPath) -> dict[str,
     for req_id, gt in gt_by_id.items():
         genai_entries = genai_items_by_req_id.get(req_id, [])
         is_covered = len(genai_entries) > 0
-        gt_doc = gt.get("source_doc_code") or gt.get("source_document") or "—"
-        gt_sec = str(gt.get("source_section") or "—")
+        gt_doc = gt.get("source_doc_code") or gt.get("source_document") or "N/A"
+        gt_sec = str(gt.get("source_section") or "N/A")
         gt_mandatory = bool(gt.get("mandatory", True))
         gt_priority = gt.get("priority") or "Medium"
 
@@ -144,7 +144,7 @@ def compare_path_with_ground_truth(db: Session, path: LearningPath) -> dict[str,
                 {"field": "Requirement ID", "genai": req_id, "gt": req_id, "match": True},
                 {"field": "Role", "genai": role_name, "gt": role_name, "match": True},
                 {"field": "Source Document", "genai": genai_doc, "gt": gt_doc, "match": genai_doc == gt_doc},
-                {"field": "Source Section", "genai": genai_sec, "gt": gt_sec, "match": (gt_sec == "—" or genai_sec == gt_sec or genai_sec.startswith(gt_sec))},
+                {"field": "Source Section", "genai": genai_sec, "gt": gt_sec, "match": (gt_sec == "N/A" or genai_sec == gt_sec or genai_sec.startswith(gt_sec))},
                 {"field": "Mandatory", "genai": "Yes" if genai_mandatory else "No", "gt": "Yes" if gt_mandatory else "No", "match": genai_mandatory == gt_mandatory},
                 {"field": "Priority", "genai": gt_priority, "gt": gt_priority, "match": True},
                 {"field": "Due Stage", "genai": genai_stage, "gt": "Week 1", "match": True}
@@ -155,7 +155,7 @@ def compare_path_with_ground_truth(db: Session, path: LearningPath) -> dict[str,
                 matches += 1
                 row_result = "Match"
                 val_status = "Verified"
-                explanation = "GenAI output perfectly aligns with Python Ground Truth requirement."
+                explanation = "GenAI output matches Python ground truth requirement."
             else:
                 mismatches += 1
                 row_result = "Mismatch"
