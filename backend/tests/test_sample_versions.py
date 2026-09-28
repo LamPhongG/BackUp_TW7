@@ -47,7 +47,7 @@ def reviewer_headers_module(client_module):
 @pytest.fixture(scope="module")
 def uploaded(client_module, hr_headers_module):
     docs = {}
-    for pdf in sorted(p for code in VERSIONED for p in SAMPLES.glob(f"{code}_*.pdf")):
+    for pdf in sorted(p for code in VERSIONED for p in SAMPLES.rglob(f"{code}_*.pdf")):
         meta = front_matter(pdf)
         res = upload(client_module, hr_headers_module, pdf.read_bytes(), pdf.name, code=meta["document_id"],
                      title_en=meta["title_en"], category=meta["category"], department_code=meta["department"],

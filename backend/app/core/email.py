@@ -1,4 +1,4 @@
-"""Invitation and welcome emails over SMTP (settings `SMTP_*` in backend/.env)."""
+"""Invitation, welcome and account emails over SMTP (settings `SMTP_*` in backend/.env)."""
 import logging
 import smtplib
 from email.message import EmailMessage
@@ -95,3 +95,33 @@ def send_welcome(to_email: str, name: str, login_url: str, position_name: str) -
         f"Đăng nhập: {login_url}"
     )
     return _send(to_email, "Tài khoản SkillSprint AI đã được tạo", html, text)
+
+
+def send_account_credentials(
+    to_email: str, name: str, password: str, login_url: str, position_name: str, department_name: str
+) -> bool:
+    """Login details for an account an Admin created from a CV.
+
+    The password is generated for this email only: it is not stored in plain text and not shown to the Admin when the
+    email is sent. The employee is asked to change it after the first login.
+    """
+    html = _page(
+        f"<p>Xin chào <strong>{escape(name)}</strong>,</p>"
+        f"<p>Tài khoản SkillSprint AI của bạn đã được tạo để bắt đầu lộ trình hội nhập.</p>"
+        f'<div class="info"><p><strong>Email đăng nhập:</strong> {escape(to_email)}</p>'
+        f"<p><strong>Mật khẩu tạm thời:</strong> <code>{escape(password)}</code></p>"
+        f"<p><strong>Vị trí:</strong> {escape(position_name)}</p>"
+        f"<p><strong>Phòng ban:</strong> {escape(department_name)}</p></div>"
+        f"<p>Sau khi đăng nhập, bạn nên đổi mật khẩu trong menu tài khoản (góc trên bên phải).</p>"
+        f'<a class="btn" href="{escape(login_url)}">Đăng nhập</a>'
+    )
+    text = (
+        f"Xin chào {name},\n"
+        f"Tài khoản SkillSprint AI của bạn đã được tạo.\n"
+        f"Email đăng nhập: {to_email}\n"
+        f"Mật khẩu tạm thời: {password}\n"
+        f"Vị trí: {position_name}. Phòng ban: {department_name}.\n"
+        f"Đăng nhập: {login_url}\n"
+        f"Sau khi đăng nhập, bạn nên đổi mật khẩu trong menu tài khoản."
+    )
+    return _send(to_email, "Thông tin đăng nhập SkillSprint AI", html, text)

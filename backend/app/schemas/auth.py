@@ -1,7 +1,7 @@
 """Login request/response and the current-user profile."""
 from datetime import date
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.models import PathLevel, TrainingStatus, User, UserRole
 
@@ -31,6 +31,8 @@ class UserOut(BaseModel):
     previous_experience: str | None = None
     training_status: TrainingStatus | None = None
     is_active: bool = True
+    # The password was set by an Admin (generated and emailed); the dashboard suggests changing it.
+    password_is_temporary: bool = False
 
     @classmethod
     def from_user(cls, user: User) -> "UserOut":
@@ -53,6 +55,7 @@ class UserOut(BaseModel):
             previous_experience=user.previous_experience,
             training_status=user.training_status,
             is_active=user.is_active,
+            password_is_temporary=bool(user.password_is_temporary),
         )
 
 
@@ -62,3 +65,16 @@ class TokenResponse(BaseModel):
     expires_in: int
     user: UserOut
 
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def _fits_bcrypt(cls, value: str) -> str:
+        # bcrypt ignores everything after 72 bytes, so a longer password would be silently truncated.
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("Password must be at most 72 bytes")
+        return value

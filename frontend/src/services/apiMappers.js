@@ -15,6 +15,10 @@ export function mapUser(u) {
     role_id: u.job_position_id,
     role: u.title,
     department: u.department_code,
+    job_position_id: u.job_position_id,
+    is_active: u.is_active,
+    // Mật khẩu do Admin tạo và gửi qua email; dashboard nhân viên gợi ý đổi
+    passwordIsTemporary: Boolean(u.password_is_temporary),
   };
 }
 

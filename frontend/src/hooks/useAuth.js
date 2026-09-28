@@ -144,7 +144,16 @@ export function useAuthProvider() {
     if (!backendEnabled() && session?.roleKey === ROLES.EMPLOYEE) persist({ ...session, roleId });
   };
 
-  return { user, login, logout, setEmployeePosition };
+  // Đổi mật khẩu của chính mình (chỉ khi có backend). Lỗi được ném ra để modal hiện đúng lý do.
+  const changePassword = (currentPassword, newPassword) =>
+    apiRequest("/auth/change-password", {
+      method: "POST", body: { current_password: currentPassword, new_password: newPassword },
+    }).then(res => {
+      if (session?.token) persist({ ...session, user: mapUser(res) });
+      return mapUser(res);
+    });
+
+  return { user, login, logout, setEmployeePosition, changePassword };
 }
 
 export function useAuth() {

@@ -4,6 +4,7 @@
 > Người đọc: agent lập trình (Gemini 3.1) và nhóm FourAngryBirds.
 > Đầu vào: `SkillSprint AI-Generative AI PowerPlay_SRS.pdf` (52 trang), mã nguồn tại commit `6e4254e` trên nhánh `rajpham`.
 > Mọi số liệu "hiện trạng" dưới đây đã được kiểm tra trên code và DB tại commit đó.
+> Cập nhật 28/09/2026: T1 và T2 đã làm và đã rà lại (xem dòng cuối `AI_USAGE.md`). Route danh sách học viên là `GET /learners`. Thêm migration `a4d1c7e93b02` cho vai trò admin; `GET /users` chỉ cho Admin và HR. T3 đã làm (coverage theo yêu cầu, `rule_pipeline/coverage.py`). T5 đã làm phần trung thực: comparator chỉ so trường có dữ liệu độc lập; muốn có cột "GenAI result" đầy đủ theo Step 46 vẫn cần T4 (Gemini khai `genai_claims`).
 
 ## 0. Đọc trước khi code
 
@@ -46,7 +47,7 @@ Mỗi task phải giữ các bộ trên xanh, cộng thêm test mới của task
 | Pipeline 2 | `backend/app/services/path_checks.py`, `services/role_matrix.py` (coverage), `rule_pipeline/` (precedence, weak_areas) |
 | So sánh | `backend/app/comparator/engine.py`, route `GET /paths/{id}/comparison` |
 | Luồng duyệt | `services/paths.py`, `services/path_workflow.py` |
-| Gán và học | `services/enrollments.py`, `services/progress.py`, route `/me/enrollments`, `/paths/learners` |
+| Gán và học | `services/enrollments.py`, `services/progress.py`, route `/me/enrollments`, `/learners` |
 | Frontend | `frontend/src/pages/{hr,reviewer,employee,admin,shared}`, `components/path/*`, `contexts/PathsContext.jsx`, `services/apiMappers.js` |
 | Thiết kế đã có | `documentation/DESIGN_VALIDATION_GATE.md`, `documentation/DESIGN_PATH_ASSIGNMENT.md`, `documentation/FRONTEND_FLOWS.md`, `backend/README.md` |
 
@@ -87,7 +88,7 @@ Ký hiệu: **Đủ** · **Một phần** · **Thiếu** · **Sai** (có làm nh
 | Step 46, Deliverable 6 | So sánh GenAI và Python ≥ 100 dòng, có giải thích | **Sai**: xem 1.8 #12 | T5 |
 | Step 47 | Trạng thái cuối | Một phần: path_checks có 3 trạng thái, comparator có trạng thái riêng, hai nơi không thống nhất | T3, T5 |
 | Step 48–49, xlvii | Duyệt, sửa, sinh lại; giữ kết quả gốc và quyết định Reviewer | Một phần: sửa và sinh lại ghi đè nội dung gốc | T12 |
-| Step 50–53 | Dashboard nhân viên, admin, theo vị trí; theo dõi tiến độ | Một phần: API `/paths/learners` thiếu điểm quiz; chưa có dashboard theo vị trí từ dữ liệu thật | T1, T18 |
+| Step 50–53 | Dashboard nhân viên, admin, theo vị trí; theo dõi tiến độ | Một phần: API `/learners` thiếu điểm quiz; chưa có dashboard theo vị trí từ dữ liệu thật | T1, T18 |
 | Step 54–56 | Đánh giá tiến độ, gợi ý, điểm yếu | Thiếu ở server: `weak_areas.analyze_weak_areas` chưa được gọi; "on track" chỉ tính ở frontend | T17 |
 | Step 57–59, 1.8 #4 | Phát hiện cập nhật, phân tích ảnh hưởng, sinh lại chọn lọc | Thiếu: chỉ có cờ `outdated_source` mức cả tài liệu | T11 |
 | Step 60 | So sánh lộ trình | Một phần: có `PlanComparisonModal` nhưng coverage bịa | T1 |
@@ -113,7 +114,7 @@ Ký hiệu: **Đủ** · **Một phần** · **Thiếu** · **Sai** (có làm nh
   - dòng 38–87: học viên giả khi không có backend.
 - `frontend/src/pages/hr/Learners.jsx` dòng 36–75: học viên giả khi không có backend.
 - `frontend/src/components/path/PlanComparisonModal.jsx` dòng 37, 47: `coverage: pathA.coverage_score || 95` và `|| 90`. Trường `coverage_score` không tồn tại trên object lộ trình (`apiMappers.js` dòng 75 map thành `coverage`), nên màn hình luôn hiện 95% và 90%.
-- API `GET /paths/learners` (`schemas/enrollments.py::GlobalLearnerOut`) không có điểm quiz, trong khi `Reports.jsx` đọc `quiz_score`, `hours_spent`, `cert_issued`.
+- API `GET /learners` (`schemas/enrollments.py::GlobalLearnerOut`) không có điểm quiz, trong khi `Reports.jsx` đọc `quiz_score`, `hours_spent`, `cert_issued`.
 
 **Việc cần làm:**
 1. Backend, file mới `backend/app/services/reports.py` và `backend/app/api/routes/reports.py` (prefix `/reports`, quyền HR, Reviewer, Admin). Tất cả số liệu tính từ DB:
@@ -385,7 +386,7 @@ Ký hiệu: **Đủ** · **Một phần** · **Thiếu** · **Sai** (có làm nh
 1. `services/progress.py::assess(enrollment, path, today)` trả một trong: `completed`; `assessment_required` (xong bài học và nhiệm vụ nhưng chưa đạt quiz); `behind_schedule` (tiến độ thực thấp hơn tiến độ mong đợi quá 20 điểm phần trăm; tiến độ mong đợi = số ngày đã qua / tổng số ngày tới hạn × 100); `requires_attention` (có học phần yếu, hoặc trượt cùng một quiz từ 2 lần); `on_track`. Các ngưỡng đặt trong `config/validation.yaml`.
 2. Nối `rule_pipeline/weak_areas.analyze_weak_areas` vào `submit_quiz` và vào API chi tiết enrollment.
 3. Gợi ý: học phần yếu → *Revision module* (mở lại học phần đó) và *Additional quiz* (câu hỏi cùng yêu cầu R… ở học phần khác); từ 2 học phần yếu → *Manager review*; hoàn thành với điểm ≥ 90% → *Advanced module* (lộ trình Thăng tiến đã phát hành cho vị trí đó, nếu có).
-4. Trả về trong `/me/enrollments` và `/paths/learners`. Frontend bỏ phần tính "on track" riêng trong `Learners.jsx` và dùng trạng thái của server.
+4. Trả về trong `/me/enrollments` và `/learners`. Frontend bỏ phần tính "on track" riêng trong `Learners.jsx` và dùng trạng thái của server.
 5. Test cho từng trạng thái với ngày cố định.
 
 ### T18. Dashboard theo vị trí, tìm kiếm và lọc, hồ sơ nhân viên
@@ -394,7 +395,7 @@ Ký hiệu: **Đủ** · **Một phần** · **Thiếu** · **Sai** (có làm nh
 
 **Việc cần làm:**
 1. `GET /reports/roles`: mỗi vị trí gồm số yêu cầu (theo loại), lộ trình đã phát hành, số nhân viên, tỷ lệ hoàn thành, điểm quiz trung bình. Trang *Dashboard theo vị trí*.
-2. Tìm kiếm và lọc theo nhân viên, vị trí, phòng ban, học phần, tài liệu, trạng thái, tiến độ, kết quả kiểm định. Lọc ở server bằng query param trên `/paths`, `/paths/learners`, `/documents`.
+2. Tìm kiếm và lọc theo nhân viên, vị trí, phòng ban, học phần, tài liệu, trạng thái, tiến độ, kết quả kiểm định. Lọc ở server bằng query param trên `/paths`, `/learners`, `/documents`.
 3. `UserCreate` và `UserUpdate` nhận đủ trường hồ sơ Step 9: `employee_code`, `experience_level`, `location`, `joining_date`, `manager_id`, `competencies`, `previous_experience`, `training_status`. Form Admin và HR hiện đủ các trường này. Không yêu cầu thông tin nhạy cảm.
 
 ## 6. Task P3: dọn dẹp và trải nghiệm

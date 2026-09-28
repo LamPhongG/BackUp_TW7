@@ -1,7 +1,7 @@
 """Mounts every route module under the API prefix. Add new routers here."""
 from fastapi import APIRouter
 
-from app.api.routes import audit, auth, catalog, documents, enrollments, health, invite, paths, users, reports
+from app.api.routes import audit, auth, catalog, documents, enrollments, health, invite, paths, reports, users
 
 api_router = APIRouter()
 api_router.include_router(health.router)

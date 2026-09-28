@@ -30,7 +30,8 @@ router = APIRouter(prefix="/paths", tags=["learning paths"])
 
 HrUser = Annotated[User, Depends(require_roles(UserRole.HR))]
 ReviewerUser = Annotated[User, Depends(require_roles(UserRole.REVIEWER))]
-StaffUser = Annotated[User, Depends(require_roles(UserRole.HR, UserRole.REVIEWER))]
+# Read-only endpoints; Admins oversee them (SRS Step 51) but take no part in the workflow.
+StaffUser = Annotated[User, Depends(require_roles(UserRole.HR, UserRole.REVIEWER, UserRole.ADMIN))]
 
 
 @router.get("", response_model=list[PathOut] | list[PathSummary])

@@ -116,11 +116,15 @@ Lỗi nghiệp vụ trả về `{"detail": "...", "code": "err_...", "vars": {..
 - `detail` là câu tiếng Anh, dùng khi không có bản dịch.
 - Lỗi validate dữ liệu là 422 theo định dạng chuẩn của FastAPI.
 
+**Admin** (`admin@fourangrybirds.vn`) quản lý tài khoản (`/users`) và **chỉ đọc** mọi thứ còn lại để giám sát (SRS Step 51): lộ trình ở mọi trạng thái, kiểm định, bảng đối chiếu, tài liệu và chunk, học viên, báo cáo, nhật ký kiểm toán. Admin không tải tài liệu, không tạo, gửi, duyệt hay góp ý lộ trình, không tạo lời mời. HR chỉ tạo, sửa, khoá được tài khoản **nhân viên**; tạo hay đổi tài khoản HR, Reviewer, Admin là việc của Admin.
+
 | Endpoint | Quyền | Trạng thái |
 | :--- | :--- | :---: |
 | `GET /ping`, `GET /health` (kiểm tra DB) | Công khai | ✅ |
 | `POST /auth/login` → `{access_token, expires_in, user}` | Công khai | ✅ |
 | `GET /auth/me` | Đã đăng nhập | ✅ |
+| `POST /auth/change-password` `{current_password, new_password}` (8 ký tự đến 72 byte, khác mật khẩu cũ) → `UserOut`, xoá cờ `password_is_temporary` | Đã đăng nhập | ✅ |
+| `POST /users/cv/parse` (multipart `file`: pdf, docx, txt, md) → bản nháp hồ sơ; `POST /users/from-cv` → tạo nhân viên, gán lộ trình hội nhập, gửi email mật khẩu | Admin, HR | ✅ |
 | `GET /departments`, `GET /job-positions` | Đã đăng nhập | ✅ |
 | `POST /paths/jobs`, `POST /paths/{id}/regenerate/jobs` → 202 + job; `GET /paths/jobs/{job_id}` theo dõi từng bước (kiểm tra nguồn → phân tích → dàn ý → từng học phần → ma trận → lưu) | HR (chỉ người tạo job) | ✅ |
 | `GET /job-positions/{id}/required-sources`: tài liệu ma trận yêu cầu trích cho vị trí, quy về bản đang hiệu lực (`mandatory`, `status` ready / not_ready / missing, yêu cầu viết theo bản cũ) | HR, Reviewer | ✅ |
@@ -154,6 +158,12 @@ Lỗi nghiệp vụ trả về `{"detail": "...", "code": "err_...", "vars": {..
 - Email gửi qua SMTP (`SMTP_*`, `FRONTEND_URL` trong `.env`). Chưa cấu hình hoặc máy chủ từ chối thì lời mời vẫn được tạo, response có `email_sent: false` để HR tự gửi link.
 - Email xác nhận tài khoản không chứa mật khẩu. Tên người và vị trí được escape trước khi đưa vào HTML.
 - Test không bao giờ gửi email thật: `conftest.py` xoá `SMTP_HOST`, `tests/test_invite.py` thay `smtplib.SMTP` bằng bản giả.
+
+**Tạo tài khoản nhân viên từ CV** (`services/cv_parser.py`, `api/routes/users.py`, `core/email.py`):
+- `POST /users/cv/parse` đọc CV bằng Python (dùng lại `ingestion.extract`, không gọi AI, không lưu file): họ tên, email, số năm kinh nghiệm (dưới 2 năm Beginner, 2 đến 5 Intermediate, trên 5 Advanced), mục kinh nghiệm, mục kỹ năng. Số điện thoại, địa chỉ, ngày sinh, số giấy tờ không được đọc (SRS Step 9). Trường không đọc được nằm trong `warnings` (`cv_warn_no_email`…). CV ảnh chụp hoặc PDF không có lớp chữ trả 422 `err_cv_unreadable`.
+- Admin kiểm tra và sửa bản nháp, chọn vị trí, rồi gọi `POST /users/from-cv`. Phòng ban lấy theo vị trí. Server sinh mật khẩu 12 ký tự (`core/security.generate_password`, dùng `secrets`), chỉ lưu bản băm, đặt `password_is_temporary = true`, gán lộ trình hội nhập như nhân viên đăng ký qua lời mời, rồi gửi email `Thông tin đăng nhập SkillSprint AI`.
+- Gửi email được: response có `email_sent: true` và **không** chứa mật khẩu. Không gửi được (chưa cấu hình SMTP hoặc máy chủ lỗi): tài khoản vẫn được tạo, response có `email_sent: false` và `temporary_password` để Admin tự đưa cho nhân viên. Mật khẩu chỉ hiện một lần.
+- Mật khẩu do Admin đặt (tạo tài khoản ở `POST /users` hoặc đặt lại ở `PATCH /users/{id}`) cũng được đánh dấu tạm thời. Dashboard nhân viên hiện lời nhắc đổi mật khẩu kèm nút "Để sau" (nhớ theo tài khoản trên trình duyệt). Nhân viên đổi mật khẩu ở menu tài khoản hoặc ngay trên lời nhắc; đổi xong thì cờ được xoá.
 
 **Quyền do server kiểm tra:** bảng quyền trong `services/path_workflow.py` là bản chép từ `frontend/src/utils/pathWorkflow.js`. Sửa một bên thì phải sửa bên còn lại.
 - Vai trò không bao giờ có quyền làm thao tác đó → 403.
@@ -196,7 +206,7 @@ Lỗi nghiệp vụ trả về `{"detail": "...", "code": "err_...", "vars": {..
 | `google-generativeai` | `google-genai` | Thư viện cũ đã bị Google ngừng phát triển |
 | `psycopg2-binary` | `psycopg[binary]` (v3) | Bản kế nhiệm của psycopg2, SQLAlchemy 2 hỗ trợ trực tiếp |
 | Phiên bản ghim cũ (FastAPI 0.111, Pydantic 2.7…) | Bản mới nhất, đã ghim | Các bản cũ ra đời trước Python 3.13 nên không có bản cài sẵn cho Python mới. Bộ mới đã cài thử trên venv sạch, `pip check` không lỗi |
-| Bảng `roles` + tài khoản `admin` | Cột `user_role` + bảng `job_positions`; tài khoản `hr` | Vai trò đăng nhập (3 loại) khác vị trí công việc (10 loại) |
+| Bảng `roles` | Cột `user_role` (`admin`, `hr`, `reviewer`, `employee`) + bảng `job_positions` | Vai trò đăng nhập (4 loại) khác vị trí công việc (10 loại) |
 | `plans`, `modules`, `tasks`, `quizzes` | `learning_paths.stages` (JSON) | Xem mục 3 |
 | `policy_matrix` | Chưa tạo | Chờ Nhi chốt: đọc `role_matrix.csv` hay lưu DB |
 | `.env.example` ở gốc repo | `backend/.env.example` | Mỗi phần tự quản biến môi trường của mình |

@@ -20,7 +20,8 @@ from app.services import role_matrix
 from app.services.documents import compute_lifecycle
 
 COVERAGE_MANUAL_BELOW = 0.6
-COVERAGE_WARNING_BELOW = 0.85
+# SRS 1.2 and NFR 4: a plan is Verified only when every mandatory requirement is covered.
+COVERAGE_WARNING_BELOW = 1.0
 CRITICAL_KNOWLEDGE = {"hallucination", "contradiction", "source_missing"}
 WARNING_KNOWLEDGE = {"outdated_source", "pending"}
 
@@ -62,7 +63,8 @@ class CheckResult:
         }
 
 
-def _items(stages: list[dict]):
+def iter_items(stages: list[dict]):
+    """Every lesson, task and quiz question of a path, with its module and source reference."""
     for stage in stages:
         for m in stage.get("modules", []):
             for kind, key in (("lesson", "lessons"), ("task", "tasks"), ("quiz", "quiz")):
@@ -87,7 +89,7 @@ def _find_quote(quote: str, chunks: list[dict], page: int | None) -> dict | None
 
 def check_knowledge(stages: list[dict], docs: list[_Doc], chunks_by_doc: dict[str, list[dict]]) -> list[dict]:
     out = []
-    for entry in _items(stages):
+    for entry in iter_items(stages):
         ref = entry["source_reference"] or {}
         status = "verified"
         quote = (ref.get("exact_quote") or "").strip()
@@ -188,7 +190,7 @@ def _taught_chunks(module: dict) -> set[str]:
 
 def check_injection(stages: list[dict]) -> list[dict]:
     pseudo = []
-    for e in _items(stages):
+    for e in iter_items(stages):
         item = e["item"]
         if e["kind"] == "lesson":
             text = f"{item.get('title', '')}\n{item.get('content', '')}"
@@ -227,12 +229,15 @@ def run_checks(path: LearningPath, docs: list[_Doc], chunks_by_doc: dict[str, li
     if flow_errors:
         blocking.append({"key": "reason_flow_errors", "vars": {"n": flow_errors}})
     # No Pipeline 2 result yet: does not block, but the path cannot count as fully verified.
-    if score is None:
+    if isinstance(path.coverage, dict) and (path.coverage.get("counts") or {}).get("required") == 0:
+        # The role has no mandatory requirement in the matrix, so nothing proves the path is complete.
+        manual.append({"key": "reason_matrix_empty"})
+    elif score is None:
         warnings.append({"key": "reason_coverage_pending"})
     elif score < COVERAGE_MANUAL_BELOW:
-        manual.append({"key": "reason_low_coverage", "vars": {"score": round(score * 100), "min": COVERAGE_MANUAL_BELOW * 100}})
+        manual.append({"key": "reason_low_coverage", "vars": {"score": round(score * 100), "min": round(COVERAGE_MANUAL_BELOW * 100)}})
     elif score < COVERAGE_WARNING_BELOW:
-        warnings.append({"key": "reason_medium_coverage", "vars": {"score": round(score * 100), "min": COVERAGE_WARNING_BELOW * 100}})
+        warnings.append({"key": "reason_medium_coverage", "vars": {"score": round(score * 100), "min": round(COVERAGE_WARNING_BELOW * 100)}})
     if warn_knowledge:
         warnings.append({"key": "reason_knowledge_warning", "vars": {"n": warn_knowledge}})
     if flow_warnings:
@@ -256,7 +261,7 @@ def run_checks(path: LearningPath, docs: list[_Doc], chunks_by_doc: dict[str, li
 
 def check_path(db: Session, path: LearningPath) -> CheckResult:
     """Load the documents the path cites (all versions of their codes, for lifecycle) and run every check."""
-    refs = [e["source_reference"] or {} for e in _items(path.stages)]
+    refs = [e["source_reference"] or {} for e in iter_items(path.stages)]
     ids = {r.get("doc_id") for r in refs if r.get("doc_id")}
     codes = {r.get("doc") for r in refs if r.get("doc")}
     rows = db.scalars(select(Document).where(Document.id.in_(ids) | Document.code.in_(codes))).all()

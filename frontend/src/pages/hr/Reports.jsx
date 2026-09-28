@@ -1,648 +1,279 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  BarChart3, Download, Printer, Users, BookOpen, ShieldAlert,
-  Award, Check, X, CircleAlert, Search, Layers3, FileSpreadsheet,
-  RouteIcon, FileText, Sparkles, Target, ShieldCheck
+  BarChart3, Printer, Users, BookOpen, ShieldAlert, Award, Check, X, CircleAlert, Search, Layers3,
+  FileSpreadsheet, RouteIcon, FileText, Target, ShieldCheck,
 } from "../../components/Icons";
 import { Card, StatCard, Button, Badge, ProgressBar, EmptyState } from "../../components/UI";
+import { FinalStatusBadge } from "../../components/path/Badges";
+import { STATUS_KEY } from "../../components/path/DualComparisonTable";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../../hooks/useAuth";
-import { usePaths } from "../../contexts/PathsContext";
-import { useDocuments } from "../../contexts/DocumentsContext";
-import { apiRequest, backendEnabled } from "../../services/apiClient";
-import { DEPARTMENTS, ROLES as JOB_ROLES } from "../../data/company";
+import { apiBlob, apiRequest, backendEnabled } from "../../services/apiClient";
+import { DEPARTMENTS } from "../../data/company";
 import { exportToCsv, printReportToPdf } from "../../utils/exportHelpers";
 import { formatLocalDate } from "../../utils/helpers";
+
+// Every figure comes from the backend reports (SRS Step 51-53, 62). A missing value is a dash, never 0% or an
+// invented number (SRS 1.8 #12).
+const pct = value => (value == null ? "—" : `${value}%`);
+const mean = values => {
+  const known = values.filter(v => v != null);
+  return known.length ? Math.round(known.reduce((a, b) => a + b, 0) / known.length) : null;
+};
+const ENDPOINTS = {
+  learners: "/learners", coverage: "/reports/role-coverage", quizzes: "/reports/quiz-analytics",
+  knowledge: "/reports/documents", alerts: "/reports/alerts", comparison: "/reports/comparison",
+};
+const EMPTY = Object.fromEntries(Object.keys(ENDPOINTS).map(k => [k, []]));
+const LIFECYCLE_TONE = { active: "green", upcoming: "blue" };
+const QUIZ_TONE = { ok: "green", weak: "orange", no_attempts: "default" };
+const rowKey = (r, i) => r.enrollment_id || r.role_id || (r.module_id && `${r.path_id}-${r.module_id}`) || r.id || r.path_id || i;
 
 export default function HrReports() {
   const { t, tv, pick, locale } = useLanguage();
   const { user } = useAuth();
-  const { paths } = usePaths();
-  const { documents } = useDocuments();
-
-    const [activeTab, setActiveTab] = useState("learners");
-  const [learners, setLearners] = useState([]);
-  const [roleCoverageData, setRoleCoverageData] = useState([]);
-  const [quizAnalyticsData, setQuizAnalyticsData] = useState([]);
-  const [documentAttributionData, setDocumentAttributionData] = useState([]);
-  const [securityAuditData, setSecurityAuditData] = useState([]);
-  const [dualPipelineSummaryData, setDualPipelineSummaryData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState("learners");
+  const [data, setData] = useState(EMPTY);
+  const [loading, setLoading] = useState(backendEnabled());
+  const [failed, setFailed] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedDept, setSelectedDept] = useState("all");
+  const [dept, setDept] = useState("all");
 
   useEffect(() => {
+    if (!backendEnabled()) return undefined;
     let mounted = true;
-    async function loadData() {
-      if (!backendEnabled()) {
-        if (mounted) setLoading(false);
-        return;
-      }
-      setLoading(true);
-      try {
-        const [lData, rcData, qaData, docData, alertsData] = await Promise.all([
-          apiRequest("/paths/learners"),
-          apiRequest("/reports/role-coverage"),
-          apiRequest("/reports/quiz-analytics"),
-          apiRequest("/reports/documents"),
-          apiRequest("/reports/alerts")
-        ]);
-        if (mounted) {
-          setLearners(lData || []);
-          setRoleCoverageData(rcData || []);
-          setQuizAnalyticsData(qaData || []);
-          setDocumentAttributionData(docData || []);
-          setSecurityAuditData(alertsData || []);
-          setDualPipelineSummaryData([]); // Missing backend implementation for T1
-        }
-      } catch (err) {
-        console.error("Failed to load reports:", err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-    loadData();
+    Promise.all(Object.entries(ENDPOINTS).map(([key, url]) => apiRequest(url).then(rows => [key, rows || []])))
+      .then(entries => { if (mounted) setData(Object.fromEntries(entries)); })
+      .catch(() => { if (mounted) setFailed(true); })
+      .finally(() => { if (mounted) setLoading(false); });
     return () => { mounted = false; };
-  }, [paths]);
+  }, []);
 
-  // 1. Dữ liệu Báo cáo Tiến độ Nhân sự
-  const filteredLearners = useMemo(() => {
-    return learners.filter(l => {
-      const matchDept = selectedDept === "all" || l.department?.toLowerCase() === selectedDept.toLowerCase();
-      const matchSearch = !search ||
-        l.name?.toLowerCase().includes(search.toLowerCase()) ||
-        l.email?.toLowerCase().includes(search.toLowerCase()) ||
-        l.path_title?.toLowerCase().includes(search.toLowerCase());
-      return matchDept && matchSearch;
-    });
-  }, [learners, selectedDept, search]);
+  const tabs = useMemo(() => {
+    const date = value => (value ? formatLocalDate(value, locale) : "—");
+    const decision = value => t(`cmp_status_${STATUS_KEY[value]}`);
+    const citedItems = data.knowledge.reduce((acc, x) => acc + x.cited_items, 0);
+    // Weighted by cited items, so a document cited once does not weigh as much as one cited a hundred times.
+    const citationAccuracy = citedItems
+      ? Math.round(data.knowledge.reduce((acc, x) => acc + (x.citation_accuracy ?? 0) * x.cited_items, 0) / citedItems)
+      : null;
+    return {
+      learners: {
+        title: "rep_title_learners", subtitle: "rep_sub_learners", file: "report_learners", dept: r => r.department_code,
+        kpis: [
+          { label: "rep_kpi_learners", value: rows => rows.length, icon: Users, tone: "purple" },
+          { label: "rep_kpi_completed", value: rows => rows.filter(r => r.status === "completed").length, icon: Award, tone: "green" },
+          { label: "rep_kpi_in_progress", value: rows => rows.filter(r => r.status === "in_progress").length, icon: RouteIcon, tone: "blue" },
+          { label: "rep_kpi_certificates", value: rows => rows.filter(r => r.certificate).length, icon: ShieldCheck, tone: "orange" },
+        ],
+        columns: [
+          { label: "rep_col_employee", text: r => `${r.name} (${r.email})`, cell: r => <><strong>{r.name}</strong><div className="cell-sub">{r.email}</div></> },
+          { label: "rep_col_department", text: r => tv(r.department_code), cell: r => <>{tv(r.department_code)}<div className="cell-sub">{r.job_title}</div></> },
+          { label: "rep_col_path", text: r => r.path_title },
+          { label: "rep_col_progress", text: r => pct(r.percent),
+            cell: r => <div style={{ display: "flex", alignItems: "center", gap: 8 }}><ProgressBar value={r.percent} max={100} /><span>{r.percent}%</span></div> },
+          { label: "rep_col_quiz", text: r => pct(r.best_quiz_percent) },
+          { label: "rep_col_certificate", text: r => t(r.certificate ? "rep_cert_issued" : "rep_cert_not_yet"),
+            cell: r => (r.certificate ? <Badge tone="green">{t("rep_cert_issued")}</Badge> : <span className="cell-sub">{t("rep_cert_not_yet")}</span>) },
+          { label: "rep_col_status", text: r => t(`rep_enrollment_${r.status}`),
+            cell: r => <Badge tone={r.status === "completed" ? "green" : "blue"}>{t(`rep_enrollment_${r.status}`)}</Badge> },
+          { label: "rep_col_completed_at", text: r => date(r.completed_at) },
+        ],
+      },
+      coverage: {
+        title: "rep_title_coverage", subtitle: "rep_sub_coverage", file: "report_role_coverage", dept: r => r.department,
+        kpis: [
+          { label: "rep_kpi_roles", value: rows => rows.length, icon: Target, tone: "purple" },
+          { label: "rep_kpi_full_coverage", value: rows => rows.filter(r => r.coverage_score === 100).length, icon: Check, tone: "green" },
+          { label: "rep_kpi_avg_coverage", value: rows => pct(mean(rows.map(r => r.coverage_score))), icon: Layers3, tone: "blue" },
+          { label: "rep_kpi_roles_without_path", value: rows => rows.filter(r => r.path_id == null).length, icon: CircleAlert, tone: "orange" },
+        ],
+        columns: [
+          { label: "rep_col_role_code", text: r => r.role_id, cell: r => <code>{r.role_id}</code> },
+          { label: "rep_col_role", text: r => pick(r, "role_name") },
+          { label: "rep_col_department", text: r => tv(r.department) },
+          { label: "rep_col_path", text: r => (r.path_id ? pick(r, "path_title") : t("rep_no_published_path")),
+            cell: r => (r.path_id ? pick(r, "path_title") : <span className="cell-sub">{t("rep_no_published_path")}</span>) },
+          { label: "rep_col_covered", text: r => (r.path_id ? `${r.covered_requirements}/${r.mandatory_requirements}` : "—") },
+          { label: "rep_col_coverage", text: r => pct(r.coverage_score) },
+          { label: "rep_col_traceability", text: r => pct(r.traceability_score) },
+          { label: "rep_col_verification", text: r => r.final_status || "—",
+            cell: r => (r.final_status ? <FinalStatusBadge status={r.final_status} /> : "—") },
+        ],
+      },
+      quizzes: {
+        title: "rep_title_quizzes", subtitle: "rep_sub_quizzes", file: "report_quizzes",
+        kpis: [
+          { label: "rep_kpi_quiz_modules", value: rows => rows.length, icon: BookOpen, tone: "purple" },
+          { label: "rep_kpi_avg_pass_rate", value: rows => pct(mean(rows.map(r => r.pass_rate))), icon: Award, tone: "green" },
+          { label: "rep_kpi_attempts", value: rows => rows.reduce((acc, r) => acc + r.attempts, 0), icon: Check, tone: "blue" },
+          { label: "rep_kpi_weak_modules", value: rows => rows.filter(r => r.status === "weak").length, icon: CircleAlert, tone: "orange" },
+        ],
+        columns: [
+          { label: "rep_col_path", text: r => pick(r, "path_title") },
+          { label: "rep_col_module", text: r => `${t(`stage_${r.stage_key}`)} · ${pick(r, "module_title")}`,
+            cell: r => <><strong>{pick(r, "module_title")}</strong><div className="cell-sub">{t(`stage_${r.stage_key}`)}</div></> },
+          { label: "rep_col_questions", text: r => r.quiz_count },
+          { label: "rep_col_attempts", text: r => r.attempts },
+          { label: "rep_col_pass_rate", text: r => pct(r.pass_rate) },
+          { label: "rep_col_avg_score", text: r => pct(r.avg_score) },
+          { label: "rep_col_assessment", text: r => t(`rep_quiz_${r.status}`),
+            cell: r => <Badge tone={QUIZ_TONE[r.status]}>{t(`rep_quiz_${r.status}`)}</Badge> },
+        ],
+      },
+      knowledge: {
+        title: "rep_title_knowledge", subtitle: "rep_sub_knowledge", file: "report_documents",
+        kpis: [
+          { label: "rep_kpi_documents", value: rows => rows.length, icon: FileText, tone: "purple" },
+          { label: "rep_kpi_chunks", value: rows => rows.reduce((acc, r) => acc + r.chunks_count, 0), icon: Layers3, tone: "blue" },
+          { label: "rep_kpi_citation_accuracy", value: () => pct(citationAccuracy), icon: Check, tone: "green" },
+          { label: "rep_kpi_uncited", value: rows => rows.filter(r => r.cited_items === 0).length, icon: ShieldCheck, tone: "orange" },
+        ],
+        columns: [
+          { label: "rep_col_doc_code", text: r => r.code, cell: r => <code>{r.code}</code> },
+          { label: "rep_col_doc_title", text: r => pick(r, "title") },
+          { label: "rep_col_category", text: r => r.category, cell: r => <Badge tone="purple">{r.category}</Badge> },
+          { label: "rep_col_version", text: r => `v${r.version}` },
+          { label: "rep_col_chunks", text: r => r.chunks_count },
+          { label: "rep_col_paths_citing", text: r => r.referenced_in_paths },
+          { label: "rep_col_citation_accuracy", text: r => pct(r.citation_accuracy),
+            cell: r => <><strong>{pct(r.citation_accuracy)}</strong>{r.cited_items > 0 && <div className="cell-sub">{t("rep_items", { n: r.cited_items })}</div>}</> },
+          { label: "rep_col_lifecycle", text: r => t(`rep_lifecycle_${r.lifecycle}`),
+            cell: r => <Badge tone={LIFECYCLE_TONE[r.lifecycle] || "orange"}>{t(`rep_lifecycle_${r.lifecycle}`)}</Badge> },
+        ],
+      },
+      alerts: {
+        title: "rep_title_alerts", subtitle: "rep_sub_alerts", file: "report_alerts",
+        kpis: [
+          { label: "rep_kpi_alerts", value: rows => rows.length, icon: ShieldAlert, tone: "purple" },
+          { label: "rep_kpi_injections", value: rows => rows.filter(r => r.type === "prompt_injection").length, icon: ShieldCheck, tone: "red" },
+          { label: "rep_kpi_open", value: rows => rows.filter(r => r.status === "open").length, icon: CircleAlert, tone: "orange" },
+          { label: "rep_kpi_excluded", value: rows => rows.filter(r => r.type === "excluded_chunks").length, icon: Check, tone: "green" },
+        ],
+        columns: [
+          { label: "rep_col_alert_id", text: r => r.id, cell: r => <code>{r.id}</code> },
+          { label: "rep_col_date", text: r => date(r.date) },
+          { label: "rep_col_alert_type", text: r => t(`rep_alert_${r.type}`), cell: r => <strong>{t(`rep_alert_${r.type}`)}</strong> },
+          { label: "rep_col_severity", text: r => t(`rep_severity_${r.severity}`),
+            cell: r => <Badge tone={r.severity === "high" ? "red" : r.severity === "medium" ? "orange" : "blue"}>{t(`rep_severity_${r.severity}`)}</Badge> },
+          { label: "rep_col_source", text: r => r.source },
+          { label: "rep_col_details", text: r => (r.type === "prompt_injection" ? r.details : t("rep_items", { n: r.details })) },
+          { label: "rep_col_status", text: r => t(`rep_alert_status_${r.status}`),
+            cell: r => <Badge tone={r.status === "open" ? "red" : "green"}>{t(`rep_alert_status_${r.status}`)}</Badge> },
+        ],
+      },
+      comparison: {
+        title: "rep_title_comparison", subtitle: "rep_sub_comparison", file: "report_comparison_summary", dept: r => r.department,
+        kpis: [
+          { label: "rep_kpi_compared_paths", value: rows => rows.length, icon: Layers3, tone: "purple" },
+          { label: "rep_kpi_verified", value: rows => rows.filter(r => r.decision === "Verified").length, icon: Check, tone: "green" },
+          { label: "rep_kpi_warning", value: rows => rows.filter(r => r.decision === "Verified with Warning").length, icon: CircleAlert, tone: "orange" },
+          { label: "rep_kpi_not_verified", value: rows => rows.filter(r => !["Verified", "Verified with Warning"].includes(r.decision)).length, icon: X, tone: "red" },
+        ],
+        columns: [
+          { label: "rep_col_path_id", text: r => r.path_id, cell: r => <code>{r.path_id}</code> },
+          { label: "rep_col_path", text: r => pick(r, "path_title"),
+            cell: r => <>{pick(r, "path_title")}{!r.genai_claims_available && <div className="cell-sub">{t("rep_no_genai_claims")}</div>}</> },
+          { label: "rep_col_role", text: r => `${r.role} · ${tv(r.department)}`, cell: r => <>{r.role}<div className="cell-sub">{tv(r.department)}</div></> },
+          { label: "cmp_result_match", text: r => r.matches },
+          { label: "cmp_result_mismatch", text: r => r.mismatches },
+          { label: "cmp_result_missing", text: r => r.missing },
+          { label: "cmp_problems", text: r => r.unsupported },
+          { label: "rep_col_coverage", text: r => pct(r.coverage_score) },
+          { label: "rep_col_decision", text: r => decision(r.decision),
+            cell: r => <Badge tone={r.decision === "Verified" ? "green" : r.decision === "Verified with Warning" ? "orange" : "red"}>{decision(r.decision)}</Badge> },
+        ],
+      },
+    };
+  }, [data, t, tv, pick, locale]);
 
-  
+  const current = tabs[tab];
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return data[tab].filter(r => (dept === "all" || !current.dept || current.dept(r) === dept)
+      && (!q || current.columns.some(c => String(c.text(r) ?? "").toLowerCase().includes(q))));
+  }, [data, tab, current, search, dept]);
 
-  
-
-  
-
-  
-
-  
-
-  // Hàm xử lý xuất CSV theo Tab hiện tại
-  const handleExportCsv = () => {
-    if (activeTab === "learners") {
-      const headers = ["Mã tham gia", "Họ và tên", "Email", "Phòng ban", "Vị trí", "Lộ trình", "Trạng thái", "Tiến độ (%)", "Điểm Quiz (%)", "Chứng nhận", "Ngày hoàn thành"];
-      const rows = filteredLearners.map(l => [
-        l.enrollment_id, l.name, l.email, l.department, l.job_title, l.path_title,
-        l.status, `${l.progress_percent || 0}%`, `${l.quiz_score || 0}%`, l.hours_spent || 0,
-        l.cert_issued || l.progress_percent === 100 ? "Đã cấp" : "Chưa", l.completed_at ? formatLocalDate(l.completed_at, locale) : "-"
-      ]);
-      exportToCsv("Bao_cao_tien_do_nhan_su", headers, rows);
-    } else if (activeTab === "coverage") {
-      const headers = ["Mã vai trò", "Tên chức danh", "Phòng ban", "Lộ trình đào tạo", "Tổng yêu cầu", "Đã bao phủ", "Coverage (%)", "Traceability (%)", "Kiểm định"];
-      const rows = roleCoverageData.map(r => [
-        r.role_id, r.role_name, r.department, r.path_title, r.total_requirements, r.covered_requirements, `${r.coverage_score}%`, `${r.traceability_score}%`, r.status
-      ]);
-      exportToCsv("Bao_cao_do_phu_ky_nang", headers, rows);
-    } else if (activeTab === "quizzes") {
-      const headers = ["Lộ trình", "Giai đoạn", "Học phần", "Số câu hỏi", "Lượt thi", "Tỷ lệ đỗ (%)", "Điểm TB (%)", "Đánh giá"];
-      const rows = quizAnalyticsData.map(q => [
-        q.path_title, q.stage_name, q.module_title, q.quiz_count, q.attempts, `${q.pass_rate}%`, `${q.avg_score}%`, q.weak_area
-      ]);
-      exportToCsv("Bao_cao_ket_qua_danh_gia_quiz", headers, rows);
-    } else if (activeTab === "knowledge") {
-      const headers = ["Mã tài liệu", "Tên tài liệu", "Danh mục", "Phiên bản", "Số đoạn tri thức (chunks)", "Lộ trình tham chiếu", "Độ chính xác trích dẫn", "Trạng thái"];
-      const rows = documentAttributionData.map(d => [
-        d.code, d.title, d.category, d.version, d.chunks_count, d.referenced_in_paths, d.attribution_accuracy, d.status
-      ]);
-      exportToCsv("Bao_cao_trich_xuat_tai_lieu", headers, rows);
-    } else if (activeTab === "alerts") {
-      const headers = ["Mã cảnh báo", "Ngày phát hiện", "Loại rủi ro", "Mức độ", "Nguồn", "Chi tiết sự kiện", "Hành động xử lý", "Trạng thái"];
-      const rows = securityAuditData.map(s => [
-        s.id, s.date, s.type, s.severity, s.source, s.details, s.action, s.status
-      ]);
-      exportToCsv("Bao_cao_canh_bao_an_toan_ai", headers, rows);
-    } else if (activeTab === "comparison") {
-      const headers = ["Mã lộ trình", "Tên lộ trình", "Vai trò", "Phòng ban", "Khớp (Matches)", "Khác biệt (Mismatches)", "Bỏ sót (Missing)", "Bịa đặt (Unsupported)", "Coverage", "Quyết định"];
-      const rows = dualPipelineSummaryData.map(p => [
-        p.path_id, p.path_title, p.role, p.department, p.matches, p.mismatches, p.missing, p.unsupported, p.coverage_score, p.decision
-      ]);
-      exportToCsv("Bao_cao_tong_hop_doi_chieu_2_pipeline", headers, rows);
-    }
+  const exportCsv = () => exportToCsv(current.file, current.columns.map(c => t(c.label)), rows.map(r => current.columns.map(c => c.text(r))));
+  const exportPdf = () => printReportToPdf({
+    title: t(current.title), subtitle: t(current.subtitle),
+    kpis: current.kpis.map(k => ({ label: t(k.label), value: k.value(rows) })),
+    headers: current.columns.map(c => t(c.label)), rows: rows.map(r => current.columns.map(c => c.text(r))),
+    metadata: { [t("rep_exported_by")]: user?.name || "" },
+  });
+  const exportRequirementCsv = async () => {
+    const url = URL.createObjectURL(await apiBlob("/reports/comparison.csv"));
+    const a = Object.assign(document.createElement("a"), { href: url, download: "genai_python_comparison.csv" });
+    a.click();
+    URL.revokeObjectURL(url);
   };
-
-  // Hàm xử lý In / Lưu PDF theo Tab hiện tại
-  const handlePrintPdf = () => {
-    if (activeTab === "learners") {
-      printReportToPdf({
-        title: "Báo cáo Tiến độ Đào tạo & Hoàn thành Onboarding",
-        subtitle: "Tổng hợp tiến độ nhân sự theo dõi thời gian thực, tỷ lệ vượt qua và chứng nhận hoàn thành.",
-        kpis: [
-          { label: "Tổng nhân viên", value: filteredLearners.length },
-          { label: "Đã hoàn thành", value: filteredLearners.filter(l => l.progress_percent === 100).length },
-          { label: "Đang học tập", value: filteredLearners.filter(l => l.progress_percent < 100).length },
-          { label: "Chứng nhận cấp", value: filteredLearners.filter(l => l.progress_percent === 100).length }
-        ],
-        headers: ["Nhân viên", "Phòng ban", "Lộ trình", "Tiến độ", "Điểm Quiz", "Chứng chỉ"],
-        rows: filteredLearners.map(l => [
-          `${l.name} (${l.email})`, l.department, l.path_title, `${l.progress_percent || 0}%`, `${l.quiz_score || 0}%`,
-          l.progress_percent === 100 ? "Đã cấp" : "Chưa hoàn thành"
-        ]),
-        metadata: { "Người xuất": user.name || "HR Admin", "Bộ lọc phòng ban": selectedDept }
-      });
-    } else if (activeTab === "coverage") {
-      printReportToPdf({
-        title: "Báo cáo Độ phủ Kỹ năng & Vai trò (Role Requirements Matrix)",
-        subtitle: "Đánh giá mức độ bao phủ các tiêu chuẩn kỹ năng bắt buộc giữa Ground Truth và Lộ trình đào tạo.",
-        kpis: [
-          { label: "Tổng vai trò", value: roleCoverageData.length },
-          { label: "Đạt chuẩn 100%", value: roleCoverageData.filter(r => r.coverage_score === 100).length },
-          { label: "Cần bổ sung", value: roleCoverageData.filter(r => r.coverage_score < 100).length }
-        ],
-        headers: ["Mã vai trò", "Tên chức danh", "Phòng ban", "Đã bao phủ", "Coverage (%)", "Trạng thái"],
-        rows: roleCoverageData.map(r => [
-          r.role_id, r.role_name, r.department, `${r.covered_requirements}/${r.total_requirements}`, `${r.coverage_score}%`, r.status
-        ]),
-        metadata: { "Người xuất": user.name || "HR Admin" }
-      });
-    } else if (activeTab === "quizzes") {
-      printReportToPdf({
-        title: "Báo cáo Đánh giá Học tập & Nhận diện Điểm yếu",
-        subtitle: "Phân tích tỷ lệ đỗ bài kiểm tra, điểm trung bình và các chủ đề kiến thức cần củng cố.",
-        kpis: [
-          { label: "Tổng học phần đánh giá", value: quizAnalyticsData.length },
-          { label: "Tỷ lệ đỗ trung bình", value: "86.4%" },
-          { label: "Học phần cần lưu ý", value: quizAnalyticsData.filter(q => q.pass_rate < 80).length }
-        ],
-        headers: ["Lộ trình", "Giai đoạn", "Học phần", "Số câu hỏi", "Tỷ lệ đỗ", "Đánh giá"],
-        rows: quizAnalyticsData.map(q => [
-          q.path_title, q.stage_name, q.module_title, q.quiz_count, `${q.pass_rate}%`, q.weak_area
-        ]),
-        metadata: { "Người xuất": user.name || "HR Admin" }
-      });
-    } else if (activeTab === "knowledge") {
-      printReportToPdf({
-        title: "Báo cáo Trích xuất Tri thức Doanh nghiệp & Nguồn trích dẫn",
-        subtitle: "Theo dõi mức độ sử dụng tài liệu nội bộ (SOPs, Handbooks) và tính chuẩn xác của trích dẫn.",
-        kpis: [
-          { label: "Tổng tài liệu", value: documentAttributionData.length },
-          { label: "Đoạn tri thức", value: documentAttributionData.reduce((acc, d) => acc + d.chunks_count, 0) },
-          { label: "Độ chính xác", value: "98.5%" }
-        ],
-        headers: ["Mã tài liệu", "Tên tài liệu", "Danh mục", "Phiên bản", "Số chunks", "Độ chuẩn xác"],
-        rows: documentAttributionData.map(d => [
-          d.code, d.title, d.category, d.version, d.chunks_count, d.attribution_accuracy
-        ]),
-        metadata: { "Người xuất": user.name || "HR Admin" }
-      });
-    } else if (activeTab === "alerts") {
-      printReportToPdf({
-        title: "Báo cáo Giám sát An toàn AI & Xử lý Rủi ro Tri thức",
-        subtitle: "Ghi nhận các can thiệp tự động ngăn chặn Prompt Injection, Hallucination và Mâu thuẫn tài liệu.",
-        kpis: [
-          { label: "Tổng cảnh báo", value: securityAuditData.length },
-          { label: "Đã ngăn chặn", value: securityAuditData.filter(s => s.status === "Blocked").length },
-          { label: "Đã hiệu chỉnh", value: securityAuditData.filter(s => s.status === "Resolved" || s.status === "Filtered").length }
-        ],
-        headers: ["Mã cảnh báo", "Ngày", "Loại rủi ro", "Mức độ", "Chi tiết", "Hành động xử lý"],
-        rows: securityAuditData.map(s => [
-          s.id, s.date, s.type, s.severity, s.details, s.action
-        ]),
-        metadata: { "Người xuất": user.name || "HR Admin" }
-      });
-    } else if (activeTab === "comparison") {
-      printReportToPdf({
-        title: "Báo cáo Tổng hợp Đối chiếu 2 Pipeline (Dual-Pipeline Summary)",
-        subtitle: "Đánh giá tính nhất quán giữa Pipeline 1 (GenAI) và Pipeline 2 (Python Ground Truth Role Matrix).",
-        kpis: [
-          { label: "Tổng lộ trình", value: dualPipelineSummaryData.length },
-          { label: "Khớp 100%", value: dualPipelineSummaryData.filter(p => p.decision === "Verified").length },
-          { label: "Cần chú ý", value: dualPipelineSummaryData.filter(p => p.decision !== "Verified").length }
-        ],
-        headers: ["Mã lộ trình", "Tên lộ trình", "Vai trò", "Khớp (Matches)", "Khác biệt", "Bỏ sót", "Quyết định"],
-        rows: dualPipelineSummaryData.map(p => [
-          p.path_id, p.path_title, p.role, p.matches, p.mismatches, p.missing, p.decision
-        ]),
-        metadata: { "Người xuất": user.name || "HR Admin" }
-      });
-    }
-  };
-
-  const TABS = [
-    { key: "learners", label: "Tiến độ Nhân sự", count: filteredLearners.length },
-    { key: "coverage", label: "Độ phủ Kỹ năng Vai trò", count: roleCoverageData.length },
-    { key: "quizzes", label: "Kết quả Đánh giá & Quiz", count: quizAnalyticsData.length },
-    { key: "knowledge", label: "Trích xuất Tri thức & Nguồn", count: documentAttributionData.length },
-    { key: "alerts", label: "Cảnh báo An toàn & AI", count: securityAuditData.length },
-    { key: "comparison", label: "Đối chiếu 2 Pipeline", count: dualPipelineSummaryData.length },
-  ];
 
   return (
     <div className="reports-page">
-      {/* 1. Page Header */}
       <div className="page-heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
         <div>
-          <span className="eyebrow">{t("role_hr")} · {t("nav_workspace")}</span>
-          <h1 style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <BarChart3 size={28} style={{ color: "var(--primary)" }} />
-            {t("menu_reports") || "Trung tâm Báo cáo & Xuất dữ liệu"}
-          </h1>
-          <p style={{ margin: "4px 0 0", color: "var(--muted)", fontSize: 14 }}>
-            Theo dõi toàn diện tiến độ hội nhập, độ phủ yêu cầu năng lực, kiểm định 2 pipeline và xuất dữ liệu báo cáo chuyên nghiệp.
-          </p>
+          <span className="eyebrow">{t(`role_${user?.userRole || "hr"}`)} · {t("nav_workspace")}</span>
+          <h1 style={{ display: "flex", alignItems: "center", gap: 10 }}><BarChart3 size={28} /> {t("menu_reports")}</h1>
+          <p className="cell-sub" style={{ margin: "4px 0 0" }}>{t("rep_page_desc")}</p>
         </div>
-
-        <div className="heading-actions" style={{ display: "flex", gap: 10 }}>
-          <Button variant="outline" onClick={handleExportCsv} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <FileSpreadsheet size={16} style={{ color: "#10b981" }} />
-            Xuất file CSV
-          </Button>
-          <Button variant="primary" onClick={handlePrintPdf} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Printer size={16} />
-            In / Lưu PDF
-          </Button>
+        <div className="heading-actions" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {tab === "comparison" && backendEnabled() && (
+            <Button variant="outline" onClick={exportRequirementCsv}><FileSpreadsheet size={16} /> {t("rep_export_requirement_csv")}</Button>
+          )}
+          <Button variant="outline" onClick={exportCsv} disabled={!rows.length}><FileSpreadsheet size={16} /> {t("rep_export_csv")}</Button>
+          <Button variant="primary" onClick={exportPdf} disabled={!rows.length}><Printer size={16} /> {t("rep_export_pdf")}</Button>
         </div>
       </div>
 
-      {/* 2. Filter & Navigation Bar */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14, margin: "18px 0" }}>
         <div className="filter-tabs" style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: 0 }}>
-          {TABS.map(tab => (
-            <button
-              key={tab.key}
-              className={activeTab === tab.key ? "active" : ""}
-              onClick={() => setActiveTab(tab.key)}
-              style={{ padding: "8px 14px", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}
-            >
-              {tab.label}
-              <em className="tab-count" style={{ fontSize: 11 }}>{tab.count}</em>
+          {Object.keys(tabs).map(key => (
+            <button key={key} className={tab === key ? "active" : ""} onClick={() => setTab(key)}>
+              {t(`rep_tab_${key}`)} <em className="tab-count">{data[key].length}</em>
             </button>
           ))}
         </div>
-
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <div style={{ position: "relative" }}>
             <Search size={15} style={{ position: "absolute", left: 10, top: 10, color: "var(--muted)" }} />
-            <input
-              type="text"
-              className="input-text"
-              placeholder="Tìm kiếm..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{ paddingLeft: 32, fontSize: 13, height: 36, width: 180 }}
-            />
+            <input type="text" className="input-text" placeholder={t("rep_search")} value={search}
+              onChange={e => setSearch(e.target.value)} style={{ paddingLeft: 32, height: 36, width: 180 }} />
           </div>
-
-          <select
-            className="input-select"
-            value={selectedDept}
-            onChange={e => setSelectedDept(e.target.value)}
-            style={{ fontSize: 13, height: 36 }}
-          >
-            <option value="all">Tất cả phòng ban</option>
-            {DEPARTMENTS.map(d => (
-              <option key={d.id} value={d.id}>{pick(d, "name")}</option>
-            ))}
-          </select>
+          {current.dept && (
+            <select className="input-select" value={dept} onChange={e => setDept(e.target.value)} style={{ height: 36 }}>
+              <option value="all">{t("rep_all_departments")}</option>
+              {DEPARTMENTS.map(d => <option key={d} value={d}>{tv(d)}</option>)}
+            </select>
+          )}
         </div>
       </div>
 
-      {/* 3. Tab Contents */}
-
-      {/* TAB 1: TIẾN ĐỘ NHÂN SỰ */}
-      {activeTab === "learners" && (
-        <div>
+      {!backendEnabled() || failed ? (
+        <Card><EmptyState title={t(failed ? "rep_load_failed" : "rep_need_backend")} description={t("rep_need_backend_desc")} /></Card>
+      ) : (
+        <>
           <div className="stat-grid" style={{ marginBottom: 20 }}>
-            <StatCard label="Tổng nhân sự tham gia" value={filteredLearners.length} icon={Users} tone="purple" />
-            <StatCard label="Hoàn thành 100%" value={filteredLearners.filter(l => l.progress_percent === 100).length} icon={Award} tone="green" />
-            <StatCard label="Đang học tập" value={filteredLearners.filter(l => l.progress_percent < 100 && l.progress_percent > 0).length} icon={RouteIcon} tone="blue" />
-            <StatCard label="Chứng nhận đã cấp" value={filteredLearners.filter(l => l.progress_percent === 100).length} icon={ShieldCheck} tone="orange" />
+            {current.kpis.map(k => <StatCard key={k.label} label={t(k.label)} value={k.value(rows)} icon={k.icon} tone={k.tone} />)}
           </div>
-
           <Card>
-            <div style={{ overflowX: "auto" }}>
-              <table className="data-table" style={{ width: "100%", fontSize: 13 }}>
-                <thead>
-                  <tr>
-                    <th>Nhân viên</th>
-                    <th>Phòng ban & Vị trí</th>
-                    <th>Lộ trình tham gia</th>
-                    <th style={{ minWidth: 140 }}>Tiến độ</th>
-                    <th>Điểm Quiz TB</th>
-                    <th>Thời gian học</th>
-                    <th>Chứng nhận</th>
-                    <th>Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLearners.map(l => (
-                    <tr key={l.enrollment_id}>
-                      <td>
-                        <strong>{l.name}</strong>
-                        <div className="cell-sub">{l.email}</div>
-                      </td>
-                      <td>
-                        <div>{l.department}</div>
-                        <div className="cell-sub">{l.job_title}</div>
-                      </td>
-                      <td>
-                        <span style={{ fontWeight: 600 }}>{l.path_title}</span>
-                      </td>
-                      <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <ProgressBar value={l.progress_percent || 0} max={100} style={{ flex: 1, height: 6 }} />
-                          <span style={{ fontSize: 12, fontWeight: 700, minWidth: 35 }}>{l.progress_percent || 0}%</span>
-                        </div>
-                      </td>
-                      <td>
-                        <strong style={{ color: (l.quiz_score || 0) >= 80 ? "#10b981" : "#f59e0b" }}>
-                          {l.quiz_score || 0}%
-                        </strong>
-                      </td>
-                      <td>{l.hours_spent || 0} giờ</td>
-                      <td>
-                        {l.progress_percent === 100 ? (
-                          <Badge tone="green"><Award size={12} style={{ marginRight: 4 }} />Đã cấp</Badge>
-                        ) : (
-                          <span className="cell-sub">Chưa đủ ĐK</span>
-                        )}
-                      </td>
-                      <td>
-                        <Badge tone={l.status === "completed" ? "green" : "blue"}>
-                          {l.status === "completed" ? "Hoàn thành" : "Đang học"}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {loading ? <p className="cell-sub">{t("rep_loading")}</p> : rows.length === 0 ? (
+              <EmptyState title={t("rep_empty")} description={t(`rep_empty_${tab}`)} />
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table className="data-table" style={{ width: "100%", fontSize: 13 }}>
+                  <thead><tr>{current.columns.map(c => <th key={c.label}>{t(c.label)}</th>)}</tr></thead>
+                  <tbody>
+                    {rows.map((r, i) => (
+                      <tr key={rowKey(r, i)}>
+                        {current.columns.map(c => <td key={c.label}>{c.cell ? c.cell(r) : c.text(r)}</td>)}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </Card>
-        </div>
-      )}
-
-      {/* TAB 2: ĐỘ PHỦ KỸ NĂNG VAI TRÒ */}
-      {activeTab === "coverage" && (
-        <div>
-          <div className="stat-grid" style={{ marginBottom: 20 }}>
-            <StatCard label="Tổng chức danh" value={roleCoverageData.length} icon={Target} tone="purple" />
-            <StatCard label="Đạt chuẩn Ground Truth (100%)" value={roleCoverageData.filter(r => r.coverage_score === 100).length} icon={Check} tone="green" />
-            <StatCard label="Độ phủ trung bình" value={`${Math.round(roleCoverageData.reduce((acc, r) => acc + r.coverage_score, 0) / (roleCoverageData.length || 1))}%`} icon={Layers3} tone="blue" />
-            <StatCard label="Cần bổ sung kỹ năng" value={roleCoverageData.filter(r => r.coverage_score < 100).length} icon={CircleAlert} tone="orange" />
-          </div>
-
-          <Card>
-            <div style={{ overflowX: "auto" }}>
-              <table className="data-table" style={{ width: "100%", fontSize: 13 }}>
-                <thead>
-                  <tr>
-                    <th>Mã vai trò</th>
-                    <th>Tên chức danh</th>
-                    <th>Phòng ban</th>
-                    <th>Lộ trình đào tạo tương ứng</th>
-                    <th>Đã bao phủ</th>
-                    <th>Coverage Score</th>
-                    <th>Traceability</th>
-                    <th>Kiểm định</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {roleCoverageData.map(r => (
-                    <tr key={r.role_id}>
-                      <td><code>{r.role_id}</code></td>
-                      <td><strong>{r.role_name}</strong></td>
-                      <td>{r.department}</td>
-                      <td>{r.path_title}</td>
-                      <td><strong>{r.covered_requirements} / {r.total_requirements}</strong> yêu cầu</td>
-                      <td>
-                        <span style={{ fontWeight: 800, color: r.coverage_score === 100 ? "#10b981" : "#f59e0b" }}>
-                          {r.coverage_score}%
-                        </span>
-                      </td>
-                      <td>{r.traceability_score}%</td>
-                      <td>
-                        <Badge tone={r.status === "Verified" ? "green" : (r.status === "Incomplete" ? "red" : "orange")}>
-                          {r.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* TAB 3: KẾT QUẢ ĐÁNH GIÁ & QUIZ */}
-      {activeTab === "quizzes" && (
-        <div>
-          <div className="stat-grid" style={{ marginBottom: 20 }}>
-            <StatCard label="Tổng học phần có quiz" value={quizAnalyticsData.length} icon={BookOpen} tone="purple" />
-            <StatCard label="Tỷ lệ đỗ trung bình" value="86.8%" icon={Award} tone="green" />
-            <StatCard label="Lượt hoàn thành quiz" value={quizAnalyticsData.reduce((acc, q) => acc + q.attempts, 0)} icon={Check} tone="blue" />
-            <StatCard label="Chủ đề cần củng cố" value={quizAnalyticsData.filter(q => q.pass_rate < 80).length} icon={CircleAlert} tone="orange" />
-          </div>
-
-          <Card>
-            <div style={{ overflowX: "auto" }}>
-              <table className="data-table" style={{ width: "100%", fontSize: 13 }}>
-                <thead>
-                  <tr>
-                    <th>Lộ trình</th>
-                    <th>Giai đoạn & Học phần</th>
-                    <th>Số câu hỏi</th>
-                    <th>Số lượt thi</th>
-                    <th>Tỷ lệ đỗ lần đầu</th>
-                    <th>Điểm TB</th>
-                    <th>Nhận diện Điểm yếu & Khuyến nghị</th>
-                    <th>Đánh giá</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {quizAnalyticsData.map((q, idx) => (
-                    <tr key={idx}>
-                      <td><span style={{ fontWeight: 600 }}>{q.path_title}</span></td>
-                      <td>
-                        <div><strong>{q.module_title}</strong></div>
-                        <div className="cell-sub">{q.stage_name}</div>
-                      </td>
-                      <td>{q.quiz_count} câu</td>
-                      <td>{q.attempts} lượt</td>
-                      <td>
-                        <strong style={{ color: q.pass_rate >= 80 ? "#10b981" : "#ef4444" }}>
-                          {q.pass_rate}%
-                        </strong>
-                      </td>
-                      <td>{q.avg_score}%</td>
-                      <td>
-                        <span style={{ fontSize: 12, color: q.pass_rate < 80 ? "#b45309" : "var(--muted)" }}>
-                          {q.weak_area}
-                        </span>
-                      </td>
-                      <td>
-                        <Badge tone={q.status === "Tốt" ? "green" : "orange"}>
-                          {q.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* TAB 4: TRÍCH XUẤT TRI THỨC & NGUỒN */}
-      {activeTab === "knowledge" && (
-        <div>
-          <div className="stat-grid" style={{ marginBottom: 20 }}>
-            <StatCard label="Tài liệu nội bộ đã duyệt" value={documentAttributionData.length} icon={FileText} tone="purple" />
-            <StatCard label="Đoạn tri thức (Chunks)" value={documentAttributionData.reduce((acc, d) => acc + d.chunks_count, 0)} icon={Layers3} tone="blue" />
-            <StatCard label="Độ chính xác trích dẫn" value="98.5%" icon={Check} tone="green" />
-            <StatCard label="Độ phủ chính sách" value="100%" icon={ShieldCheck} tone="orange" />
-          </div>
-
-          <Card>
-            <div style={{ overflowX: "auto" }}>
-              <table className="data-table" style={{ width: "100%", fontSize: 13 }}>
-                <thead>
-                  <tr>
-                    <th>Mã tài liệu</th>
-                    <th>Tên tài liệu</th>
-                    <th>Danh mục</th>
-                    <th>Phiên bản</th>
-                    <th>Số đoạn tri thức</th>
-                    <th>Sử dụng trong lộ trình</th>
-                    <th>Độ chính xác trích dẫn</th>
-                    <th>Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {documentAttributionData.map(d => (
-                    <tr key={d.code}>
-                      <td><code>{d.code}</code></td>
-                      <td><strong>{d.title}</strong></td>
-                      <td><Badge tone="purple">{d.category}</Badge></td>
-                      <td>v{d.version}</td>
-                      <td>{d.chunks_count} đoạn</td>
-                      <td><strong>{d.referenced_in_paths}</strong> lộ trình</td>
-                      <td><strong style={{ color: "#10b981" }}>{d.attribution_accuracy}</strong></td>
-                      <td><Badge tone="green">{d.status}</Badge></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* TAB 5: CẢNH BÁO AN TOÀN & AI */}
-      {activeTab === "alerts" && (
-        <div>
-          <div className="stat-grid" style={{ marginBottom: 20 }}>
-            <StatCard label="Tổng sự kiện kiểm toán" value={securityAuditData.length} icon={ShieldAlert} tone="purple" />
-            <StatCard label="Ngăn chặn Prompt Injection" value={securityAuditData.filter(s => s.status === "Blocked").length} icon={ShieldCheck} tone="red" />
-            <StatCard label="Mâu thuẫn tri thức đã sửa" value={securityAuditData.filter(s => s.status === "Resolved").length} icon={Check} tone="green" />
-            <StatCard label="Lọc bỏ Hallucination" value={securityAuditData.filter(s => s.status === "Filtered").length} icon={CircleAlert} tone="orange" />
-          </div>
-
-          <Card>
-            <div style={{ overflowX: "auto" }}>
-              <table className="data-table" style={{ width: "100%", fontSize: 13 }}>
-                <thead>
-                  <tr>
-                    <th>Mã sự kiện</th>
-                    <th>Ngày phát hiện</th>
-                    <th>Loại rủi ro</th>
-                    <th>Mức độ</th>
-                    <th>Nguồn phát hiện</th>
-                    <th>Chi tiết sự kiện</th>
-                    <th>Hành động bảo vệ của hệ thống</th>
-                    <th>Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {securityAuditData.map(s => (
-                    <tr key={s.id}>
-                      <td><code>{s.id}</code></td>
-                      <td>{s.date}</td>
-                      <td><strong>{s.type}</strong></td>
-                      <td>
-                        <Badge tone={s.severity === "High" ? "red" : (s.severity === "Medium" ? "orange" : "blue")}>
-                          {s.severity}
-                        </Badge>
-                      </td>
-                      <td>{s.source}</td>
-                      <td style={{ maxWidth: 280 }}>{s.details}</td>
-                      <td><span style={{ color: "var(--muted)", fontSize: 12 }}>{s.action}</span></td>
-                      <td>
-                        <Badge tone={s.status === "Blocked" ? "red" : "green"}>
-                          {s.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* TAB 6: ĐỐI CHIẾU 2 PIPELINE (TABLE 1 SUMMARY) */}
-      {activeTab === "comparison" && (
-        <div>
-          <div className="stat-grid" style={{ marginBottom: 20 }}>
-            <StatCard label="Tổng lộ trình đối chiếu" value={dualPipelineSummaryData.length} icon={Layers3} tone="purple" />
-            <StatCard label="Lộ trình đạt chuẩn (Verified)" value={dualPipelineSummaryData.filter(p => p.decision === "Verified").length} icon={Check} tone="green" />
-            <StatCard label="Lộ trình cảnh báo (Warning)" value={dualPipelineSummaryData.filter(p => p.decision === "Verified with Warning").length} icon={CircleAlert} tone="orange" />
-            <StatCard label="Bỏ sót yêu cầu (Missing)" value={dualPipelineSummaryData.filter(p => p.decision === "Incomplete").length} icon={X} tone="red" />
-          </div>
-
-          <Card>
-            <div style={{ overflowX: "auto" }}>
-              <table className="data-table" style={{ width: "100%", fontSize: 13 }}>
-                <thead>
-                  <tr>
-                    <th>Mã lộ trình</th>
-                    <th>Tên lộ trình</th>
-                    <th>Vai trò & Phòng ban</th>
-                    <th>Khớp (Matches)</th>
-                    <th>Khác biệt (Mismatches)</th>
-                    <th>Bỏ sót (Missing)</th>
-                    <th>Bịa đặt (Unsupported)</th>
-                    <th>Coverage Score</th>
-                    <th>Quyết định kiểm định</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dualPipelineSummaryData.map(p => (
-                    <tr key={p.path_id}>
-                      <td><code>{p.path_id}</code></td>
-                      <td><strong>{p.path_title}</strong></td>
-                      <td>
-                        <div>{p.role}</div>
-                        <div className="cell-sub">{p.department}</div>
-                      </td>
-                      <td><Badge tone="green">{p.matches}</Badge></td>
-                      <td>{p.mismatches > 0 ? <Badge tone="orange">{p.mismatches}</Badge> : 0}</td>
-                      <td>{p.missing > 0 ? <Badge tone="red">{p.missing}</Badge> : 0}</td>
-                      <td>{p.unsupported > 0 ? <Badge tone="red">{p.unsupported}</Badge> : 0}</td>
-                      <td><strong>{p.coverage_score}</strong></td>
-                      <td>
-                        <Badge tone={p.decision === "Verified" ? "green" : (p.decision === "Incomplete" ? "red" : "orange")}>
-                          {p.decision}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </div>
+        </>
       )}
     </div>
   );

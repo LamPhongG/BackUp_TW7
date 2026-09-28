@@ -30,7 +30,7 @@ export default function HrLearners() {
     setLoading(true);
     try {
       if (backendEnabled()) {
-        const data = await apiRequest("/paths/learners");
+        const data = await apiRequest("/learners");
         setLearners(data || []);
       } else {
         setLearners([]);
@@ -48,20 +48,20 @@ export default function HrLearners() {
 
   const stats = useMemo(() => {
     const total = learners.length;
-    const completed = learners.filter(l => l.status === "completed" || (l.percent != null ? l.percent : l.progress_percent) === 100).length;
-    const overdue = learners.filter(l => (l.overdue || l.is_overdue) && l.status !== "completed").length;
-    const onTrack = learners.filter(l => (l.status === "in_progress" || l.status === "assigned") && !(l.overdue || l.is_overdue)).length;
+    const completed = learners.filter(l => l.status === "completed" || l.percent === 100).length;
+    const overdue = learners.filter(l => l.overdue && l.status !== "completed").length;
+    const onTrack = learners.filter(l => (l.status === "in_progress" || l.status === "assigned") && !l.overdue).length;
     return { total, completed, overdue, onTrack };
   }, [learners]);
 
   const filtered = useMemo(() => {
     return learners.filter(l => {
-      const name = l.name || l.user_name || "";
-      const email = l.email || l.user_email || "";
+      const name = l.name;
+      const email = l.email;
       const pathTitle = l.path_title || "";
-      const dept = l.department_code || l.department || "";
-      const percent = l.percent != null ? l.percent : (l.progress_percent || 0);
-      const isOverdue = Boolean(l.overdue || l.is_overdue);
+      const dept = l.department_code || "";
+      const percent = l.percent;
+      const isOverdue = l.overdue;
 
       const q = search.trim().toLowerCase();
       const matchSearch = !q ||
@@ -175,11 +175,11 @@ export default function HrLearners() {
               </thead>
               <tbody>
                 {filtered.map(l => {
-                  const empName = l.name || l.user_name || "Employee";
-                  const empEmail = l.email || l.user_email || "";
-                  const empDept = l.department_code || l.department || "Company-wide";
-                  const percent = l.percent != null ? l.percent : (l.progress_percent || 0);
-                  const isOverdue = Boolean(l.overdue || l.is_overdue);
+                  const empName = l.name;
+                  const empEmail = l.email;
+                  const empDept = l.department_code || "Company-wide";
+                  const percent = l.percent;
+                  const isOverdue = l.overdue;
                   const isDone = l.status === "completed" || percent === 100;
 
                   return (
@@ -259,7 +259,7 @@ export default function HrLearners() {
                                   path: matchedPath,
                                   enrollment: {
                                     id: l.enrollment_id,
-                                    completedAt: l.completed_at || l.enrolled_at
+                                    completedAt: l.completed_at
                                   }
                                 });
                               }}

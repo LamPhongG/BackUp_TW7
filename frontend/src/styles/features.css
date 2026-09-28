@@ -385,3 +385,10 @@
 
 .glass-float input:-webkit-autofill, .glass-float input:-webkit-autofill:hover, .glass-float input:-webkit-autofill:focus, .glass-float input:-webkit-autofill:active { transition: background-color 5000s ease-in-out 0s; -webkit-text-fill-color: #fff !important; text-shadow: none !important; caret-color: #fff; }
 
+/* Form tạo tài khoản từ CV: 2 cột đều trong modal (minmax 0 để ô nhập dài không đẩy modal tràn ngang),
+   không để ô thứ 3 chiếm cả hàng như .form-grid mặc định */
+.cv-modal{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.cv-form{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.cv-form label:nth-child(3){grid-column:auto}
+.cv-form input,.cv-form select,.cv-form textarea{width:100%;min-width:0;box-sizing:border-box}
+@media (max-width:640px){.cv-form{grid-template-columns:minmax(0,1fr)}}

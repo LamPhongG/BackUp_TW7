@@ -1,30 +1,45 @@
-from fastapi import APIRouter, Depends, HTTPException
-from typing import Any
-from app.api.deps import get_current_user
+"""Reports (SRS Step 51-53, 62): HR, Reviewers and Admins."""
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
+from fastapi.responses import Response
+
+from app.api.deps import DbSession, require_roles
 from app.models import User, UserRole
-from app.services import reports as reports_service
-from app.db.session import get_db
-from sqlalchemy.orm import Session
+from app.schemas.reports import AlertRow, ComparisonSummaryRow, DocumentReportRow, QuizAnalyticsRow, RoleCoverageRow
+from app.services import reports as service
 
 router = APIRouter()
+Reporter = Annotated[User, Depends(require_roles(UserRole.HR, UserRole.REVIEWER, UserRole.ADMIN))]
 
-def require_reporting_access(user: User = Depends(get_current_user)):
-    if user.user_role not in (UserRole.HR, UserRole.REVIEWER, UserRole.ADMIN):
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-    return user
 
-@router.get("/role-coverage")
-def get_role_coverage(db: Session = Depends(get_db), _: User = Depends(require_reporting_access)) -> Any:
-    return reports_service.get_role_coverage(db)
+@router.get("/role-coverage", response_model=list[RoleCoverageRow])
+def role_coverage(db: DbSession, user: Reporter):
+    return service.role_coverage(db)
 
-@router.get("/quiz-analytics")
-def get_quiz_analytics(db: Session = Depends(get_db), _: User = Depends(require_reporting_access)) -> Any:
-    return reports_service.get_quiz_analytics(db)
 
-@router.get("/documents")
-def get_documents_report(db: Session = Depends(get_db), _: User = Depends(require_reporting_access)) -> Any:
-    return reports_service.get_documents_report(db)
+@router.get("/quiz-analytics", response_model=list[QuizAnalyticsRow])
+def quiz_analytics(db: DbSession, user: Reporter):
+    return service.quiz_analytics(db)
 
-@router.get("/alerts")
-def get_alerts_report(db: Session = Depends(get_db), _: User = Depends(require_reporting_access)) -> Any:
-    return reports_service.get_alerts_report(db)
+
+@router.get("/documents", response_model=list[DocumentReportRow])
+def documents_report(db: DbSession, user: Reporter):
+    return service.documents_report(db)
+
+
+@router.get("/alerts", response_model=list[AlertRow])
+def alerts(db: DbSession, user: Reporter):
+    return service.alerts(db)
+
+
+@router.get("/comparison", response_model=list[ComparisonSummaryRow])
+def comparison_summary(db: DbSession, user: Reporter):
+    return service.comparison_summary(db)
+
+
+@router.get("/comparison.csv")
+def comparison_csv(db: DbSession, user: Reporter):
+    # BOM so Excel opens the UTF-8 Vietnamese text correctly (SRS Step 63: Excel-compatible export).
+    return Response("\ufeff" + service.comparison_csv(db), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": 'attachment; filename="genai_python_comparison.csv"'})

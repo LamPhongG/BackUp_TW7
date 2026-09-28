@@ -14,7 +14,8 @@ from app.services.progress import PASS_RATIO
 router = APIRouter(tags=["enrollments"])
 
 Employee = Annotated[User, Depends(require_roles(UserRole.EMPLOYEE))]
-Staff = Annotated[User, Depends(require_roles(UserRole.HR, UserRole.REVIEWER))]
+# Learner progress: HR and Reviewers follow it, Admins oversee it (SRS Step 51).
+Staff = Annotated[User, Depends(require_roles(UserRole.HR, UserRole.REVIEWER, UserRole.ADMIN))]
 
 
 @router.get("/learners", response_model=list[GlobalLearnerOut])

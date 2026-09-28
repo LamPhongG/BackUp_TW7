@@ -220,9 +220,9 @@ export default function PlanComparisonModal({ open, onClose, defaultPathAId, def
               </tr>
               <tr>
                 <td><strong>Độ phủ Kỹ năng (Ground Truth)</strong></td>
-                <td><strong style={{ color: "#10b981" }}>{statsA.coverage}%</strong></td>
-                <td><strong style={{ color: "#10b981" }}>{statsB.coverage}%</strong></td>
-                <td>{diffLabel(statsA.coverage, statsB.coverage, "%")}</td>
+                <td><strong style={{ color: "#10b981" }}>{statsA.coverage != null ? `${statsA.coverage}%` : "Chưa tính"}</strong></td>
+                <td><strong style={{ color: "#10b981" }}>{statsB.coverage != null ? `${statsB.coverage}%` : "Chưa tính"}</strong></td>
+                <td>{statsA.coverage != null && statsB.coverage != null ? diffLabel(statsA.coverage, statsB.coverage, "%") : "—"}</td>
               </tr>
             </tbody>
           </table>

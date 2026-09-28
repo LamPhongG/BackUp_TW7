@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { RouteIcon, BookOpen, CheckSquare, ClipboardCheck, ArrowUpRight, Play, CircleCheck, CircleAlert, Compass, Award, BrainCircuit } from "../../components/Icons";
-import { Card, SectionHeader, StatCard, Button, ProgressBar, Badge, EmptyState } from "../../components/UI";
+import { RouteIcon, BookOpen, CheckSquare, ClipboardCheck, ArrowUpRight, Play, CircleCheck, CircleAlert, Compass, Award, BrainCircuit, LockKeyhole } from "../../components/Icons";
+import { Card, SectionHeader, StatCard, Button, ProgressBar, Badge, EmptyState, Toast } from "../../components/UI";
+import ChangePasswordModal from "../../components/ChangePasswordModal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useEnrollment } from "../../contexts/EnrollmentContext";
 import { useAuth } from "../../hooks/useAuth";
@@ -11,6 +12,41 @@ import { bestAttempt, moduleProgress, nextModule, pathProgress } from "../../uti
 import { backendEnabled } from "../../services/apiClient";
 import { formatLocalDate } from "../../utils/helpers";
 import CertificateModal from "../../components/path/CertificateModal";
+
+// "Để sau" được nhớ theo từng tài khoản trên trình duyệt này; đổi mật khẩu xong thì banner tự tắt theo dữ liệu backend
+const reminderKey = id => `skillsprint.pwdReminderDismissed.${id}`;
+function reminderDismissed(id) {
+  try { return localStorage.getItem(reminderKey(id)) === "1"; } catch { return false; }
+}
+
+/** Nhắc đổi mật khẩu tạm thời do Admin gửi qua email; nhân viên có thể đổi ngay hoặc để sau */
+function TemporaryPasswordBanner({ user }) {
+  const { t } = useLanguage();
+  const [dismissed, setDismissed] = useState(() => reminderDismissed(user.id));
+  const [open, setOpen] = useState(false);
+  const [toast, setToast] = useState(null);
+  const later = () => {
+    try { localStorage.setItem(reminderKey(user.id), "1"); } catch { /* storage bị chặn: chỉ ẩn trong phiên này */ }
+    setDismissed(true);
+  };
+  return (
+    <>
+      {user.passwordIsTemporary && !dismissed && (
+        <div className="notice notice--warning" data-testid="temp-password-banner" style={{ alignItems: "center", marginBottom: "1.25rem" }}>
+          <LockKeyhole size={18} />
+          <div style={{ flex: 1 }}>
+            <strong>{t("pwd_banner_title")}</strong>
+            <div style={{ fontSize: 14, marginTop: 2 }}>{t("pwd_banner_desc")}</div>
+          </div>
+          <Button variant="ghost" onClick={later}>{t("pwd_banner_later")}</Button>
+          <Button onClick={() => setOpen(true)}>{t("pwd_change")}</Button>
+        </div>
+      )}
+      <ChangePasswordModal open={open} onClose={() => setOpen(false)} onDone={setToast} />
+      <Toast message={toast} onClose={() => setToast(null)} />
+    </>
+  );
+}
 
 export default function EmployeeDashboard() {
   const navigate = useNavigate();
@@ -88,6 +124,8 @@ export default function EmployeeDashboard() {
         </div>
         <div className="heading-actions">{exploreButton}</div>
       </div>
+
+      <TemporaryPasswordBanner user={user} />
 
       <div className="stat-grid">
         <StatCard label={t("my_paths_count")} value={myPaths.length} icon={RouteIcon} tone="purple" />

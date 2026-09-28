@@ -3,14 +3,14 @@
 Run from `backend/`:  python -m app.db.seed
 Values mirror frontend/src/data/company.js and the demo logins in frontend/src/hooks/useAuth.js.
 """
-from datetime import date
+from datetime import UTC, date
 
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import BACKEND_DIR
 from app.core.security import hash_password
-from app.db.base import new_id, utcnow
+from app.db.base import new_id
 from app.db.session import SessionLocal
 from app.models import (
     AssignmentSource,
@@ -58,6 +58,9 @@ JOB_POSITIONS = [
 # Demo password is public in the frontend source, so these accounts are for local/demo databases only.
 DEMO_PASSWORD = "Demo@123"
 DEMO_USERS = [
+    # SRS Deliverable 14 asks for an administrator login; the frontend's demo login already offers this account.
+    {"email": "admin@fourangrybirds.vn", "name": "Alexandre Admin", "user_role": UserRole.ADMIN,
+     "job_title": "System Administrator", "department_code": "Company-wide", "job_position_id": None},
     {"email": "hr@fourangrybirds.vn", "name": "Jordan Lee", "user_role": UserRole.HR,
      "job_title": "HR Executive", "department_code": "Human Resources", "job_position_id": None},
     {"email": "reviewer@fourangrybirds.vn", "name": "Sarah Chen", "user_role": UserRole.REVIEWER,
@@ -129,9 +132,7 @@ def seed_demo_certificate(db: Session) -> None:
     picking any row, once marked a Branch Manager path still in review as completed and led to it being published
     by hand without targets, which crashed the HR dashboard. With no such path yet, nothing is seeded.
     """
-    from app.models import LearningPath, Enrollment, EnrollmentStatus, AssignmentSource, PathStatus, PathAssignment, QuizAttempt
-    from sqlalchemy import or_
-    from datetime import datetime, timezone
+    from datetime import datetime
     
     sales_id = db.scalar(select(User.id).where(User.email == "sales.emp@fourangrybirds.vn"))
     if sales_id is None:
@@ -149,7 +150,7 @@ def seed_demo_certificate(db: Session) -> None:
     enrollment = db.scalar(select(Enrollment).where(Enrollment.user_id == sales_id, Enrollment.path_id == path_id))
     if enrollment is not None and enrollment.status == EnrollmentStatus.COMPLETED:
         return
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if enrollment is None:
         enrollment = Enrollment(user_id=sales_id, path_id=path_id, source=AssignmentSource.SELF, assigned_at=now)
         db.add(enrollment)

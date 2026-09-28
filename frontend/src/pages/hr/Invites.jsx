@@ -181,14 +181,14 @@ export default function HrInvites() {
       <Modal open={modalOpen} title={t("invites_new")} onClose={() => setModalOpen(false)} width="520px">
         <form onSubmit={create} className="form-grid invite-form">
           <label>{t("invites_department")}
-            <select required value={form.department_code}
+            <select value={form.department_code}
               onChange={e => setForm(f => ({ ...f, department_code: e.target.value, job_position_id: "" }))}>
               <option value="">{t("invites_choose")}</option>
               {departments.map(d => <option key={d.code} value={d.code}>{name(d)}</option>)}
             </select>
           </label>
           <label>{t("invites_position")}
-            <select required value={form.job_position_id} disabled={!form.department_code}
+            <select value={form.job_position_id} disabled={!form.department_code}
               onChange={e => set("job_position_id", e.target.value)}>
               <option value="">{t("invites_choose")}</option>
               {positionOptions.map(p => <option key={p.id} value={p.id}>{name(p)}</option>)}

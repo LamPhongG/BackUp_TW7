@@ -4,5 +4,5 @@ export {
   Copy, Database, Download, ExternalLink, Eye, EyeOff, FileSpreadsheet, FileText, History, Info, Layers3,
   LayoutDashboard, Link2, Loader2, LockKeyhole, LogOut, Mail, Menu, MessageSquare, Pencil,
   Play, Plus, Printer, Quote, RefreshCw, Route as RouteIcon, ScanText, Search, Send,
-  ShieldAlert, ShieldCheck, SlidersHorizontal, Sparkles, Target, Trash2, Upload, UserRound, Users, WandSparkles, X
+  ShieldAlert, ShieldCheck, SlidersHorizontal, Sparkles, Target, Trash2, Unlock, Upload, UserRound, Users, WandSparkles, X
 } from "lucide-react";

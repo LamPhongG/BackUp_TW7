@@ -9,8 +9,9 @@ HIDDEN_FROM_EMPLOYEES = ("Test Case",)
 
 
 def path_filter(user: User) -> ColumnElement[bool]:
-    """HR sees every path, Reviewers everything past draft, employees the published paths assigned to them."""
-    if user.user_role is UserRole.HR:
+    """HR and Admins see every path (Admins read only, SRS Step 51), Reviewers everything past draft, employees the
+    published paths assigned to them."""
+    if user.user_role in (UserRole.HR, UserRole.ADMIN):
         return true()
     if user.user_role is UserRole.REVIEWER:
         return LearningPath.status != PathStatus.DRAFT
@@ -23,7 +24,7 @@ def path_filter(user: User) -> ColumnElement[bool]:
 
 def document_filter(user: User) -> ColumnElement[bool]:
     """Employees see company-wide documents, their department's, and sources of paths assigned to them."""
-    if user.user_role in (UserRole.HR, UserRole.REVIEWER):
+    if user.user_role in (UserRole.HR, UserRole.REVIEWER, UserRole.ADMIN):
         return true()
     if user.user_role is UserRole.EMPLOYEE:
         sources_of_my_paths = (

@@ -8,6 +8,7 @@ import { Card, SectionHeader, StatCard, Button, Badge } from "../../components/U
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../../hooks/useAuth";
 import { apiRequest } from "../../services/apiClient";
+import { mapUser } from "../../services/apiMappers";
 import { DEPARTMENTS } from "../../data/company";
 
 const ROLE_COLORS = {
@@ -29,7 +30,7 @@ export default function AdminDashboard() {
       try {
         setLoading(true);
         const data = await apiRequest("/users");
-        setUsers(data || []);
+        setUsers((data || []).map(mapUser));
       } catch (err) {
         console.error("Failed to load users for dashboard:", err);
       } finally {
@@ -91,7 +92,7 @@ export default function AdminDashboard() {
         />
         <StatCard
           label={t("admin_stat_roles")}
-          value="4 Vai trò"
+          value={Object.keys(ROLE_COLORS).length}
           icon={ShieldCheck}
           tone="orange"
         />
@@ -101,8 +102,8 @@ export default function AdminDashboard() {
         {/* Phân bổ 4 vai trò */}
         <Card>
           <SectionHeader
-            title="Phân bổ 4 vai trò hệ thống"
-            subtitle="Cơ cấu quyền truy cập theo SRS (Admin, HR, Reviewer, Employee)"
+            title={t("admin_role_distribution")}
+            subtitle={t("admin_role_distribution_desc")}
           />
           <div style={{ display: "grid", gap: "12px", marginTop: "10px" }}>
             {Object.entries(roleCounts).map(([roleKey, count]) => {
@@ -135,10 +136,7 @@ export default function AdminDashboard() {
                         {t(`role_${roleKey}`)}
                       </strong>
                       <span style={{ fontSize: "12px", color: "var(--muted)" }}>
-                        {roleKey === "admin" && "Quản trị người dùng & phân quyền"}
-                        {roleKey === "hr" && "Quản lý tài liệu & sinh lộ trình AI"}
-                        {roleKey === "reviewer" && "Thẩm định & phê duyệt lộ trình"}
-                        {roleKey === "employee" && "Tham gia học tập & làm bài test"}
+                        {t(`admin_role_desc_${roleKey}`)}
                       </span>
                     </div>
                   </div>
@@ -156,7 +154,7 @@ export default function AdminDashboard() {
         <Card>
           <SectionHeader
             title={t("admin_distribution_dept")}
-            subtitle="Phân bố nhân sự theo các phòng ban doanh nghiệp"
+            subtitle={t("admin_distribution_dept_desc")}
           />
           <div style={{ display: "grid", gap: "8px", maxHeight: "310px", overflowY: "auto", paddingRight: "4px" }}>
             {DEPARTMENTS.map(dept => {
@@ -178,7 +176,7 @@ export default function AdminDashboard() {
                     <Building2 size={15} style={{ color: "var(--muted)" }} />
                     <strong>{tv(dept)}</strong>
                   </span>
-                  <Badge tone={count > 0 ? "blue" : "default"}>{count} người</Badge>
+                  <Badge tone="blue">{t("admin_people", { n: count })}</Badge>
                 </div>
               );
             })}
@@ -190,7 +188,7 @@ export default function AdminDashboard() {
       <Card style={{ marginTop: "20px" }}>
         <SectionHeader
           title={t("admin_recent_users")}
-          subtitle="Tài khoản mới nhất trong hệ thống SkillSprint AI"
+          subtitle={t("admin_recent_users_desc")}
           action={
             <Button variant="ghost" onClick={() => navigate("/admin/users")}>
               {t("view_all")} <ArrowUpRight size={14} />
@@ -198,7 +196,7 @@ export default function AdminDashboard() {
           }
         />
         {recentUsers.length === 0 ? (
-          <p className="cell-sub">{loading ? "Đang tải dữ liệu..." : "Chưa có tài khoản nào."}</p>
+          <p className="cell-sub">{t(loading ? "admin_loading" : "admin_no_users")}</p>
         ) : (
           <div className="focus-list">
             {recentUsers.map(u => {
@@ -229,7 +227,7 @@ export default function AdminDashboard() {
                     <div>
                       <strong>{u.name}</strong>
                       <span style={{ marginLeft: "8px", fontSize: "12px", color: "var(--muted)" }}>
-                        {u.email} · {u.department ? tv(u.department) : "Company-wide"}
+                        {u.email} · {tv(u.department || "Company-wide")}
                       </span>
                     </div>
                   </div>

@@ -58,6 +58,14 @@ function HrPaths() {
   );
 }
 
+function AdminPaths() {
+  const { t } = useLanguage();
+  return (
+    <PathList basePath="/admin/paths" tabs={["all", "draft", "in_review", "changes_requested", "published", "archived"]}
+      eyebrow={t("role_admin")} title={t("menu_paths")} description={t("admin_paths_desc")} />
+  );
+}
+
 function ReviewerQueue() {
   const { t } = useLanguage();
   return (
@@ -93,6 +101,9 @@ export default function App() {
                     <Route index element={<Navigate to="/admin/dashboard" replace />} />
                     <Route path="dashboard" element={<AdminDashboard />} />
                     <Route path="users" element={<AdminUsers />} />
+                    <Route path="paths" element={<AdminPaths />} />
+                    <Route path="paths/:id" element={<PathDetail basePath="/admin/paths" />} />
+                    <Route path="reports" element={<HrReports />} />
                     <Route path="audit-log" element={<AuditLog pathBasePath="/admin/paths" />} />
                   </Route>
 

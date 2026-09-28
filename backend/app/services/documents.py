@@ -150,7 +150,7 @@ def create_document(db: Session, actor: User, meta: DocumentMeta, file_name: str
         mime_type=mimetypes.guess_type(file_name)[0],
         size_bytes=len(content),
         sha256=sha256,
-        storage_path=f"{doc_id}.{ext}",
+        storage_path=f"{meta.category.lower().replace(' ', '_')}/{doc_id}.{ext}",
         uploaded_by_id=actor.id,
     )
     db.add(doc)

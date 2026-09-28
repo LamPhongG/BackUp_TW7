@@ -1,4 +1,5 @@
 """Password hashing and JWT access tokens."""
+import secrets
 from datetime import UTC, datetime, timedelta
 
 import bcrypt
@@ -15,6 +16,21 @@ def hash_password(password: str) -> str:
     if len(raw) > _BCRYPT_MAX_BYTES:
         raise ValueError("Password is too long")
     return bcrypt.hashpw(raw, bcrypt.gensalt()).decode("ascii")
+
+
+# Letters that are easy to misread in an email (0/O, 1/l/I) are left out; the password is typed by hand.
+_PASSWORD_ALPHABETS = ("ABCDEFGHJKLMNPQRSTUVWXYZ", "abcdefghijkmnopqrstuvwxyz", "23456789", "!@#$%*?")
+
+
+def generate_password(length: int = 12) -> str:
+    """Random password with at least one upper-case letter, lower-case letter, digit and symbol (`secrets`, not
+    `random`, so it cannot be predicted)."""
+    rng = secrets.SystemRandom()
+    chars = [rng.choice(a) for a in _PASSWORD_ALPHABETS]
+    everything = "".join(_PASSWORD_ALPHABETS)
+    chars += [rng.choice(everything) for _ in range(length - len(chars))]
+    rng.shuffle(chars)
+    return "".join(chars)
 
 
 def verify_password(password: str, password_hash: str) -> bool:

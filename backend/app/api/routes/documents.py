@@ -15,7 +15,8 @@ from app.services import documents as service
 router = APIRouter(prefix="/documents", tags=["documents"])
 
 HrUser = Annotated[User, Depends(require_roles(UserRole.HR))]
-StaffUser = Annotated[User, Depends(require_roles(UserRole.HR, UserRole.REVIEWER))]
+# Read-only endpoints; Admins oversee them (SRS Step 51) but take no part in the workflow.
+StaffUser = Annotated[User, Depends(require_roles(UserRole.HR, UserRole.REVIEWER, UserRole.ADMIN))]
 
 
 def document_meta(

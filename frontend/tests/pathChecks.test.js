@@ -121,4 +121,18 @@ describe("runPathChecks — trạng thái cuối", () => {
 
     expect(runPathChecks({ ...build(), coverage: { score: "bad" } }, ctx).coverage).toBeNull();
   });
+
+  it("is verified only at 100% mandatory coverage, like the server (SRS 1.2)", () => {
+    const almost = runPathChecks({ ...build(), coverage: { score: 0.9, counts: { required: 10 } } }, ctx);
+    const reason = almost.reasons.find(x => x.key === "reason_medium_coverage");
+    expect(reason.vars).toEqual({ score: 90, min: 100 });
+    expect(almost.final_status).not.toBe("verified");
+  });
+
+  it("sends a role without mandatory requirements to manual review", () => {
+    const empty = runPathChecks({ ...build(), coverage: { score: null, counts: { required: 0 } } }, ctx);
+    expect(empty.reasons.map(x => x.key)).toContain("reason_matrix_empty");
+    expect(empty.reasons.map(x => x.key)).not.toContain("reason_coverage_pending");
+    expect(empty.final_status).toBe("manual_review");
+  });
 });

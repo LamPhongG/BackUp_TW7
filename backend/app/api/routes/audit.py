@@ -13,7 +13,7 @@ router = APIRouter(tags=["audit"])
 @router.get("/audit-logs", response_model=AuditLogPage)
 def list_audit_logs(
     db: DbSession,
-    _user: Annotated[User, Depends(require_roles(UserRole.HR, UserRole.REVIEWER))],
+    _user: Annotated[User, Depends(require_roles(UserRole.HR, UserRole.REVIEWER, UserRole.ADMIN))],
     path_id: str | None = None,
     action: str | None = None,
     limit: Annotated[int, Query(ge=1, le=1000)] = 200,

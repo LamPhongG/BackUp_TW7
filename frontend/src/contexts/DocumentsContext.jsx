@@ -174,8 +174,8 @@ function useBackendDocuments() {
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState({});
   const [processed, setProcessed] = useState({});
-  // Chunk chỉ HR / Reviewer xem được (để kiểm định); nhân viên đọc nội dung trong lộ trình
-  const canReadChunks = user?.userRole === "hr" || user?.userRole === "reviewer";
+  // Chunk chỉ HR / Reviewer / Admin xem được (để kiểm định); nhân viên đọc nội dung trong lộ trình
+  const canReadChunks = ["hr", "reviewer", "admin"].includes(user?.userRole);
 
   const reload = useCallback(async () => {
     if (!user) {

@@ -9,7 +9,8 @@ import { STAGE_TEMPLATES } from "../data/company";
 import { findQuoteInChunks, normalizeForMatch } from "./chunker";
 import { scanChunks } from "./injectionScan";
 
-export const COVERAGE_THRESHOLDS = { manualBelow: 0.6, warningBelow: 0.85 };
+// Verified chỉ khi phủ đủ 100% yêu cầu bắt buộc (SRS mục 1.2, NFR 4)
+export const COVERAGE_THRESHOLDS = { manualBelow: 0.6, warningBelow: 1 };
 export const MIN_REASON_LENGTH = 10;
 
 const CRITICAL_KNOWLEDGE = new Set(["hallucination", "contradiction", "source_missing"]);
@@ -135,6 +136,7 @@ export function checkFlow(path) {
  */
 function backendCoverage(path) {
   const c = path.coverage;
+  if (c && c.counts?.required === 0) return { ...c, score: null, matrixEmpty: true, requiredDocs: [], topics: [] };
   if (!c || typeof c.score !== "number" || c.score < 0 || c.score > 1) return null;
   return { ...c, requiredDocs: Array.isArray(c.requiredDocs) ? c.requiredDocs : [], topics: Array.isArray(c.topics) ? c.topics : [] };
 }
@@ -173,7 +175,8 @@ export function runPathChecks(path, { documents, chunksByDocId }) {
   if (injection.length) blockingReasons.push({ key: "reason_injection_content", vars: { n: injection.length } });
   if (flowErrors) blockingReasons.push({ key: "reason_flow_errors", vars: { n: flowErrors } });
   // Chưa có kết quả từ backend: không chặn duyệt, nhưng không được coi là Verified
-  if (score == null) warnings.push({ key: "reason_coverage_pending" });
+  if (coverage?.matrixEmpty) manual.push({ key: "reason_matrix_empty" });
+  else if (score == null) warnings.push({ key: "reason_coverage_pending" });
   else if (score < COVERAGE_THRESHOLDS.manualBelow) manual.push({ key: "reason_low_coverage", vars: { score: Math.round(score * 100), min: COVERAGE_THRESHOLDS.manualBelow * 100 } });
   else if (score < COVERAGE_THRESHOLDS.warningBelow) warnings.push({ key: "reason_medium_coverage", vars: { score: Math.round(score * 100), min: COVERAGE_THRESHOLDS.warningBelow * 100 } });
   if (warnKnowledge) warnings.push({ key: "reason_knowledge_warning", vars: { n: warnKnowledge } });

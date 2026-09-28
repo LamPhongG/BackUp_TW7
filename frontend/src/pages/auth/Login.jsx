@@ -45,7 +45,7 @@ export default function Login() {
 
   return (
     <form className="glass-card" onSubmit={submit} noValidate>
-      <div className="glass-card__brand"><span className="brand-mark"><Sparkles size={16} /></span> SkillSprint AI</div>
+      <div className="glass-card__brand"><span className="brand-mark" style={{ overflow: "hidden" }}><img src="/logonhom.png" alt="Logo" style={{ height: "100%", width: "100%", objectFit: "cover" }} /></span> SkillSprint AI</div>
       <h2>{t("login_title")}</h2>
       <p className="glass-card__subtitle">{t("login_subtitle")}</p>
 

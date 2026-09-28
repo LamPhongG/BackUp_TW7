@@ -8,6 +8,9 @@ import { useAuth, HOME_PATH } from "../hooks/useAuth";
 import { useLanguage, LanguageToggle } from "../contexts/LanguageContext";
 import { usePaths } from "../contexts/PathsContext";
 import ErrorBoundary from "../components/ErrorBoundary";
+import ChangePasswordModal from "../components/ChangePasswordModal";
+import { Toast } from "../components/UI";
+import { backendEnabled } from "../services/apiClient";
 
 const ROLE_STYLE = {
   admin: { dot: "#8b5cf6", avatar: ["#ede9fe", "#7c3aed"] },
@@ -22,6 +25,8 @@ function navFor(role, paths) {
     return [
       ["menu_dashboard", "/admin/dashboard", LayoutDashboard],
       ["menu_users", "/admin/users", UserRound],
+      ["menu_paths", "/admin/paths", Layers3],
+      ["menu_reports", "/admin/reports", BarChart3],
       ["menu_audit_log", "/admin/audit-log", History],
     ];
   }
@@ -58,6 +63,8 @@ function navFor(role, paths) {
 export default function RoleLayout({ role }) {
   const [collapsed, setCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [toast, setToast] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -81,7 +88,9 @@ export default function RoleLayout({ role }) {
     <div className={`app-shell ${collapsed ? "sidebar-collapsed" : ""}`}>
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-mark"><Sparkles size={18} /></div>
+          <div className="brand-mark" style={{ overflow: "hidden", padding: 0, border: "none", background: "transparent" }}>
+            <img src="/logonhom.png" alt="Logo" style={{ height: "100%", width: "100%", objectFit: "cover", borderRadius: "8px" }} />
+          </div>
           <span>SkillSprint AI</span>
         </div>
         <div className="role-switcher">
@@ -120,6 +129,7 @@ export default function RoleLayout({ role }) {
               {profileOpen && (
                 <div className="profile-menu">
                   {role === "employee" && <button onClick={() => navigate("/employee/profile")}>{t("menu_profile")}</button>}
+                  {backendEnabled() && <button onClick={() => setPasswordOpen(true)}>{t("pwd_change")}</button>}
                   <button onClick={handleLogout}>{t("sign_out")}</button>
                 </div>
               )}
@@ -127,6 +137,8 @@ export default function RoleLayout({ role }) {
           </div>
         </header>
         <div className="content"><ErrorBoundary inline><Outlet /></ErrorBoundary></div>
+        <ChangePasswordModal open={passwordOpen} onClose={() => setPasswordOpen(false)} onDone={setToast} />
+        <Toast message={toast} onClose={() => setToast(null)} />
       </main>
     </div>
   );

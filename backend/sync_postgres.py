@@ -8,35 +8,38 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import psycopg
-from alembic.config import Config
 from alembic import command
-from sqlalchemy import create_engine, select
+from alembic.config import Config
+from sqlalchemy import create_engine, make_url, select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db import seed
 from app.models import (
+    AuditLog,
     Department,
-    JobPosition,
-    User,
     Document,
     DocumentChunk,
+    Enrollment,
     InjectionFlag,
+    JobPosition,
     LearningPath,
     PathAssignment,
-    PathSource,
     PathComment,
-    Enrollment,
+    PathSource,
     QuizAttempt,
-    AuditLog,
+    User,
 )
+
 
 def reset_pg_schema():
     settings = get_settings()
-    print(f"Connecting to PostgreSQL: {settings.database_url}")
-    
-    # Reset public schema
-    conn = psycopg.connect("postgresql://postgres:123@localhost:5432/skillsprint_db", autocommit=True)
+    url = make_url(settings.database_url)
+    print(f"Connecting to PostgreSQL: {url.render_as_string(hide_password=True)}")
+    # DROP SCHEMA must never run against the SQLite file or an unintended server; the target comes from .env only.
+    if not url.drivername.startswith("postgresql"):
+        raise SystemExit(f"DATABASE_URL is not PostgreSQL ({url.drivername}); nothing was changed.")
+    conn = psycopg.connect(url.set(drivername="postgresql").render_as_string(hide_password=False), autocommit=True)
     with conn.cursor() as cur:
         print("Dropping and recreating public schema in PostgreSQL...")
         cur.execute("DROP SCHEMA public CASCADE;")

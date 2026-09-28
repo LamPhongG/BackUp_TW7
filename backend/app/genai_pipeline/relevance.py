@@ -13,8 +13,8 @@ shared sections, sections that name nobody — is kept, so the filter only remov
 import re
 from dataclasses import replace
 
-from app.genai_pipeline.requirements import section_number
 from app.genai_pipeline.types import RoleScope, SourceDoc
+from app.rule_pipeline.requirements import section_number
 
 _ROLE_TAG = re.compile(r"\[ROLE-SPECIFIC:\s*([^\]]+)\]", re.IGNORECASE)
 _EXCEPTION = re.compile(r"\[EXCEPTION\]", re.IGNORECASE)

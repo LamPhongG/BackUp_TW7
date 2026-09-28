@@ -15,10 +15,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError
-from app.genai_pipeline.requirements import section_number
 from app.ingestion.validation import VERSION_PATTERN, compare_versions, normalize_version
 from app.models import Document, JobPosition, Priority, ProcessingStatus, RoleRequirement
+from app.rule_pipeline.coverage import evaluate_requirements
 from app.rule_pipeline.precedence import precedence_tier
+from app.rule_pipeline.requirements import section_number
 from app.services.documents import compute_lifecycle
 
 REQUIRED_COLUMNS = ("Requirement_ID", "Role", "Mandatory_Optional", "Priority", "Source_Document", "Source_Section")
@@ -186,28 +187,31 @@ def cited_codes(stages: list[dict]) -> set[str]:
 
 
 def compute_coverage(db: Session, stages: list[dict], job_position_id: str) -> dict:
-    """Coverage Score (SRS Steps 10, 28-30) computed independently from what Pipeline 1 (GenAI) or
-    the client claims: how much of THIS role's mandatory Role Requirement Matrix is actually cited
-    in the generated stages. `requiredDocs` is document-level (for the coverage bar); `topics` is
-    requirement-level (each RoleRequirement row), for a finer-grained breakdown in the UI.
+    """Coverage Score (SRS Step 28-29) of a path for its role, computed by Pipeline 2 from the final content.
 
-    A position with no mandatory requirements yet (matrix not filled in for it) counts as fully
-    covered — a missing matrix is a data gap, not a content problem to block HR on.
+    `score` = covered mandatory requirements / total mandatory requirements, where a requirement is covered when a
+    lesson cites its document and section (`rule_pipeline.coverage.evaluate_requirements`). `None` when the role has no
+    mandatory requirement yet: an empty matrix must not look like full coverage. `requiredDocs` is the document-level
+    view of the same matrix, `topics` the requirement-level one (shape shared with the frontend).
     """
+    reqs = [as_generation_dict(r) for r in requirements_for(db, job_position_id) if r.source_doc_code]
+    result = evaluate_requirements(stages, reqs)
     cited = cited_codes(stages)
     mandatory_docs = sorted(
         (e for e in required_sources(db, job_position_id) if e["mandatory"]),
         key=lambda e: precedence_tier(e["document"]) if e["document"] else 99,
     )
-    doc_covered = [e["code"] in cited for e in mandatory_docs]
-    score = (sum(doc_covered) / len(mandatory_docs)) if mandatory_docs else 1.0
-
-    mandatory_reqs = [r for r in requirements_for(db, job_position_id) if r.mandatory and r.source_doc_code]
+    covered, not_assessed = set(result["covered"]), set(result["not_assessed"])
     return {
-        "score": score,
-        "requiredDocs": [{"code": e["code"], "covered": c} for e, c in zip(mandatory_docs, doc_covered, strict=True)],
-        "topics": [{"id": r.id, "label": requirement_text(r), "covered": r.source_doc_code in cited, "matchedKeyword": None}
-                  for r in mandatory_reqs],
+        "score": result["score"],
+        "requiredDocs": [{"code": e["code"], "covered": e["code"] in cited} for e in mandatory_docs],
+        "topics": [{"id": r["id"], "label": r["text"], "covered": r["id"] in covered,
+                    "assessed": r["id"] in covered and r["id"] not in not_assessed, "matchedKeyword": None}
+                   for r in reqs if r["mandatory"]],
+        "counts": {"required": result["required"], "covered": len(result["covered"]), "missing": len(result["missing"]),
+                   "not_assessed": len(result["not_assessed"]), "duplicate": len(result["duplicate"]),
+                   "unmatched_items": result["unmatched_items"]},
+        "missing": result["missing"],
     }
 
 

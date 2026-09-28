@@ -229,7 +229,8 @@ function useBackendPaths() {
   const [loaded, setLoaded] = useState(false);
   const latest = useRef(paths);
   latest.current = paths;
-  const canReadAudit = user?.userRole === "hr" || user?.userRole === "reviewer";
+  // Admins read the audit trail too (SRS Step 49, 51); employees never do.
+  const canReadAudit = ["hr", "reviewer", "admin"].includes(user?.userRole);
 
   const reloadAudit = useCallback(async () => {
     if (!canReadAudit) return;

@@ -12,7 +12,7 @@ export default function AuthLayout() {
         </video>
         <div className="auth-overlay"></div>
         <div className="auth-brand">
-          <img src="/logonhomai.jpg" alt="Logo" className="auth-logo-icon" />
+          <img src="/logonhom.png" alt="Logo" className="auth-logo-icon" style={{ borderRadius: "8px", objectFit: "cover" }} />
           SkillSprint AI
         </div>
         <div className="auth-hero">

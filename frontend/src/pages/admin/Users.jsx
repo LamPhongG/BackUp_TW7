@@ -1,13 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import {
-  UserRound, Plus, Pencil, Trash2, RefreshCw, Search, ShieldCheck,
-  Check, X, CircleAlert, LockKeyhole, Mail, Building2, BriefcaseBusiness
+  UserRound, Plus, Pencil, RefreshCw, Search, ShieldCheck,
+  Check, X, CircleAlert, LockKeyhole, Unlock, Mail, Building2, BriefcaseBusiness, FileText
 } from "../../components/Icons";
 import { Card, SectionHeader, Button, Badge, Modal, Toast } from "../../components/UI";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../../hooks/useAuth";
 import { apiRequest } from "../../services/apiClient";
+import { mapUser } from "../../services/apiMappers";
 import { DEPARTMENTS, ROLES as JOB_ROLES } from "../../data/company";
+import CreateFromCvModal from "./CreateFromCvModal";
 
 const SYSTEM_ROLES = [
   { key: "admin", label: "Admin", tone: "purple", color: "#8b5cf6" },
@@ -27,7 +29,7 @@ export default function AdminUsers() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedDept, setSelectedDept] = useState("all");
 
-  const [modalMode, setModalMode] = useState(null); // 'create' | 'edit' | 'delete' | 'restore' | null
+  const [modalMode, setModalMode] = useState(null); // 'create' | 'cv' | 'edit' | 'delete' | 'restore' | null
   const [activeUser, setActiveUser] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
   const [formError, setFormError] = useState("");
@@ -48,7 +50,7 @@ export default function AdminUsers() {
     try {
       setLoading(true);
       const data = await apiRequest("/users");
-      setUsers(data || []);
+      setUsers((data || []).map(mapUser));
     } catch (err) {
       console.error("Failed to fetch users:", err);
     } finally {
@@ -109,11 +111,11 @@ export default function AdminUsers() {
     e.preventDefault();
     setFormError("");
     if (!formData.name.trim() || !formData.email.trim() || !formData.password.trim()) {
-      setFormError("Vui lòng nhập đầy đủ họ tên, email và mật khẩu.");
+      setFormError(t("user_err_required"));
       return;
     }
     if (formData.password.length < 6) {
-      setFormError("Mật khẩu phải chứa ít nhất 6 ký tự.");
+      setFormError(t("user_err_password_short"));
       return;
     }
 
@@ -135,7 +137,7 @@ export default function AdminUsers() {
       closeModal();
       await fetchUsers();
     } catch (err) {
-      setFormError(err.message || "Không thể tạo tài khoản người dùng.");
+      setFormError(err.message || t("user_err_create"));
     } finally {
       setSubmitting(false);
     }
@@ -146,7 +148,7 @@ export default function AdminUsers() {
     if (!activeUser) return;
     setFormError("");
     if (!formData.name.trim()) {
-      setFormError("Họ tên không được để trống.");
+      setFormError(t("user_err_name_required"));
       return;
     }
 
@@ -161,7 +163,7 @@ export default function AdminUsers() {
       };
       if (formData.password.trim()) {
         if (formData.password.length < 6) {
-          setFormError("Mật khẩu mới phải có ít nhất 6 ký tự.");
+          setFormError(t("user_err_password_short"));
           setSubmitting(false);
           return;
         }
@@ -176,7 +178,7 @@ export default function AdminUsers() {
       closeModal();
       await fetchUsers();
     } catch (err) {
-      setFormError(err.message || "Không thể cập nhật tài khoản.");
+      setFormError(err.message || t("user_err_update"));
     } finally {
       setSubmitting(false);
     }
@@ -191,7 +193,7 @@ export default function AdminUsers() {
       closeModal();
       await fetchUsers();
     } catch (err) {
-      setFormError(err.message || "Không thể khóa tài khoản.");
+      setFormError(err.message || t("user_err_deactivate"));
     } finally {
       setSubmitting(false);
     }
@@ -206,7 +208,7 @@ export default function AdminUsers() {
       closeModal();
       await fetchUsers();
     } catch (err) {
-      setFormError(err.message || "Không thể kích hoạt lại tài khoản.");
+      setFormError(err.message || t("user_err_restore"));
     } finally {
       setSubmitting(false);
     }
@@ -239,6 +241,9 @@ export default function AdminUsers() {
           <p>{t("admin_users_desc")}</p>
         </div>
         <div className="heading-actions">
+          <Button variant="secondary" onClick={() => setModalMode("cv")} icon={<FileText size={16} />}>
+            {t("cv_create_button")}
+          </Button>
           <Button onClick={openCreateModal} icon={<Plus size={16} />}>
             {t("user_add_new")}
           </Button>
@@ -299,22 +304,22 @@ export default function AdminUsers() {
       <Card>
         {loading ? (
           <div style={{ padding: "40px", textAlign: "center", color: "var(--muted)" }}>
-            Đang tải danh sách tài khoản...
+            {t("user_loading")}
           </div>
         ) : filteredUsers.length === 0 ? (
           <div style={{ padding: "40px", textAlign: "center", color: "var(--muted)" }}>
-            Không tìm thấy tài khoản nào khớp với bộ lọc.
+            {t("user_no_match")}
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table className="data-table" style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--line)", textAlign: "left", fontSize: "13px", color: "var(--muted)" }}>
-                  <th style={{ padding: "12px 14px" }}>Người dùng</th>
-                  <th style={{ padding: "12px 14px" }}>Vai trò hệ thống</th>
-                  <th style={{ padding: "12px 14px" }}>Phòng ban & Chức danh</th>
-                  <th style={{ padding: "12px 14px" }}>Trạng thái</th>
-                  <th style={{ padding: "12px 14px", textAlign: "right" }}>Thao tác</th>
+                  <th style={{ padding: "12px 14px" }}>{t("user_col_user")}</th>
+                  <th style={{ padding: "12px 14px" }}>{t("user_col_role")}</th>
+                  <th style={{ padding: "12px 14px" }}>{t("user_col_department")}</th>
+                  <th style={{ padding: "12px 14px" }}>{t("user_col_status")}</th>
+                  <th style={{ padding: "12px 14px", textAlign: "right" }}>{t("user_col_actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -350,7 +355,7 @@ export default function AdminUsers() {
                           </div>
                           <div>
                             <div style={{ fontWeight: 600, fontSize: "14px", color: "var(--text)" }}>
-                              {u.name} {isCurrent && <span style={{ fontSize: "11px", color: "var(--primary)", fontWeight: 700 }}>(Bạn)</span>}
+                              {u.name} {isCurrent && <span style={{ fontSize: "11px", color: "var(--primary)", fontWeight: 700 }}>{t("user_you")}</span>}
                             </div>
                             <div style={{ fontSize: "12px", color: "var(--muted)" }}>{u.email}</div>
                           </div>
@@ -380,7 +385,7 @@ export default function AdminUsers() {
                           {u.department ? tv(u.department) : "—"}
                         </div>
                         <div style={{ fontSize: "12px", color: "var(--muted)" }}>
-                          {u.role || u.job_title || "Thành viên"}
+                          {u.role || "—"}
                         </div>
                       </td>
                       <td style={{ padding: "12px 14px" }}>
@@ -406,19 +411,19 @@ export default function AdminUsers() {
                               variant="ghost"
                               onClick={() => openDeleteModal(u)}
                               disabled={isCurrent}
-                              title={isCurrent ? "Không thể khóa chính mình" : t("user_soft_delete")}
-                              style={{ padding: "6px 8px", color: isCurrent ? "var(--muted)" : "var(--red)" }}
+                              title={isCurrent ? t("user_cannot_deactivate_self") : t("user_soft_delete")}
+                              style={{ padding: "6px 8px", color: isCurrent ? "var(--muted)" : "var(--green)" }}
                             >
-                              <Trash2 size={15} />
+                              <Unlock size={15} />
                             </Button>
                           ) : (
                             <Button
                               variant="ghost"
                               onClick={() => openRestoreModal(u)}
                               title={t("user_restore")}
-                              style={{ padding: "6px 8px", color: "var(--green)" }}
+                              style={{ padding: "6px 8px", color: "var(--red)" }}
                             >
-                              <RefreshCw size={15} />
+                              <LockKeyhole size={15} />
                             </Button>
                           )}
                         </div>
@@ -456,8 +461,7 @@ export default function AdminUsers() {
               style={{ width: "100%", height: "38px" }}
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
-              placeholder="VD: Nguyễn Văn An"
-              required
+              placeholder={t("user_name_placeholder")}
             />
           </div>
 
@@ -472,7 +476,6 @@ export default function AdminUsers() {
               value={formData.email}
               onChange={e => setFormData({ ...formData, email: e.target.value })}
               placeholder="VD: an.nguyen@fourangrybirds.vn"
-              required
             />
           </div>
 
@@ -486,8 +489,7 @@ export default function AdminUsers() {
               style={{ width: "100%", height: "38px" }}
               value={formData.password}
               onChange={e => setFormData({ ...formData, password: e.target.value })}
-              placeholder="Tối thiểu 6 ký tự"
-              required
+              placeholder={t("user_password_placeholder")}
             />
           </div>
 
@@ -542,7 +544,7 @@ export default function AdminUsers() {
                 });
               }}
             >
-              <option value="">-- Chọn vị trí tiêu chuẩn --</option>
+              <option value="">{t("user_choose_position")}</option>
               {availablePositions.map(pos => (
                 <option key={pos.id} value={pos.id}>{pos.nameEn} ({pos.name})</option>
               ))}
@@ -554,7 +556,7 @@ export default function AdminUsers() {
               {t("cancel")}
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Đang xử lý..." : t("user_add_new")}
+              {submitting ? t("user_processing") : t("user_add_new")}
             </Button>
           </div>
         </form>
@@ -596,7 +598,6 @@ export default function AdminUsers() {
               style={{ width: "100%", height: "38px" }}
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
-              required
             />
           </div>
 
@@ -610,7 +611,7 @@ export default function AdminUsers() {
               style={{ width: "100%", height: "38px" }}
               value={formData.password}
               onChange={e => setFormData({ ...formData, password: e.target.value })}
-              placeholder="Để trống nếu giữ nguyên mật khẩu cũ"
+              placeholder={t("user_password_keep_placeholder")}
             />
           </div>
 
@@ -665,7 +666,7 @@ export default function AdminUsers() {
                 });
               }}
             >
-              <option value="">-- Chọn vị trí tiêu chuẩn --</option>
+              <option value="">{t("user_choose_position")}</option>
               {availablePositions.map(pos => (
                 <option key={pos.id} value={pos.id}>{pos.nameEn} ({pos.name})</option>
               ))}
@@ -677,7 +678,7 @@ export default function AdminUsers() {
               {t("cancel")}
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Đang lưu..." : t("save_changes")}
+              {submitting ? t("user_saving") : t("save_changes")}
             </Button>
           </div>
         </form>
@@ -701,7 +702,7 @@ export default function AdminUsers() {
           <div className="notice notice--warning" style={{ margin: 0 }}>
             <CircleAlert size={18} />
             <div>
-              <strong>Cơ chế Soft Delete:</strong>
+              <strong>{t("user_soft_delete_heading")}</strong>
               <div style={{ marginTop: "4px", fontSize: "13px" }}>
                 {t("user_soft_delete_confirm", { name: activeUser?.name, email: activeUser?.email })}
               </div>
@@ -709,7 +710,7 @@ export default function AdminUsers() {
           </div>
 
           <p style={{ fontSize: "14px", color: "var(--muted)", margin: 0 }}>
-            Tài khoản này sẽ không thể đăng nhập sau khi khóa. Bạn có thể mở khóa lại bất kỳ lúc nào bằng nút <strong>Kích hoạt lại</strong>.
+            {t("user_soft_delete_note")}
           </p>
 
           <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
@@ -717,7 +718,7 @@ export default function AdminUsers() {
               {t("cancel")}
             </Button>
             <Button variant="danger" onClick={handleSoftDelete} disabled={submitting}>
-              {submitting ? "Đang xử lý..." : t("user_soft_delete")}
+              {submitting ? t("user_processing") : t("user_soft_delete")}
             </Button>
           </div>
         </div>
@@ -747,11 +748,13 @@ export default function AdminUsers() {
               {t("cancel")}
             </Button>
             <Button onClick={handleRestore} disabled={submitting}>
-              {submitting ? "Đang kích hoạt..." : t("user_restore")}
+              {submitting ? t("user_restoring") : t("user_restore")}
             </Button>
           </div>
         </div>
       </Modal>
+
+      <CreateFromCvModal open={modalMode === "cv"} onClose={closeModal} onCreated={fetchUsers} />
 
       <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
     </div>
