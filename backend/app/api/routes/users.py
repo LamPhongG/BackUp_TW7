@@ -224,6 +224,9 @@ def update_user(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     _ensure_can_manage(actor, target.user_role, body.user_role or target.user_role)
 
+    old_dept = target.department_code
+    old_pos = target.job_position_id
+
     if body.name is not None:
         target.name = body.name.strip()
     if body.user_role is not None:
@@ -231,12 +234,35 @@ def update_user(
     if body.job_title is not None:
         target.job_title = body.job_title.strip() or None
     if body.department_code is not None:
+        if body.department_code:
+            dept = db.get(Department, body.department_code)
+            if not dept:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Department code '{body.department_code}' does not exist.",
+                )
         target.department_code = body.department_code or None
     if body.job_position_id is not None:
+        if body.job_position_id:
+            pos = db.get(JobPosition, body.job_position_id)
+            if not pos:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Job position '{body.job_position_id}' does not exist.",
+                )
+            if not body.department_code:
+                target.department_code = pos.department_code
+            if not body.job_title:
+                target.job_title = pos.name_en
         target.job_position_id = body.job_position_id or None
     if body.password:
         target.password_hash = hash_password(body.password)
         target.password_is_temporary = True
+
+    dept_changed = target.department_code != old_dept
+    pos_changed = target.job_position_id != old_pos
+    if (dept_changed or pos_changed) and target.user_role == UserRole.EMPLOYEE:
+        enrollments.sync_enrollments_on_user_transfer(db, target, actor)
 
     db.commit()
     db.refresh(target)

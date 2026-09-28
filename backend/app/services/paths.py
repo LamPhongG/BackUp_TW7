@@ -1,6 +1,7 @@
 """Learning-path operations. Every change checks the workflow table, then saves the path and its
 audit row in one commit (same contract as frontend `contexts/PathsContext.jsx`)."""
 from dataclasses import dataclass
+from datetime import date
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -30,6 +31,7 @@ from app.models import (
     PathSource,
     PathStatus,
     ProcessingStatus,
+    RoleRequirement,
     User,
     UserRole,
 )
@@ -137,23 +139,92 @@ def create(db: Session, actor: User, body: PathCreate, progress: Progress | None
 
 def regenerate(db: Session, actor: User, path: LearningPath, body: PathRegenerate,
                progress: Progress | None = None) -> LearningPath:
-    """Replace content from (possibly newer) sources. Comments and history are kept."""
+    """Replace content from (possibly newer) sources. Comments and history are kept.
+
+    Self-Correction Loop (Anti-shortcut compliant):
+    1. Reads missing requirements flagged by the independent Python validation pipeline from the previous draft.
+    2. Automatically pulls in any missing approved company documents from the repository.
+    3. Feeds structured feedback into the prompt so GenAI specifically focuses on the missing requirements.
+    4. Python Pipeline 2 runs independently on the newly generated output to re-verify coverage.
+    """
     emit = progress or _silent
     ensure_allowed(actor, "regenerate", path)
     if body.prompt is not None:
         path.prompt = _checked_prompt(body.prompt)
     docs = _ready_sources(db, body.source_document_ids)
+
+    # 1. Detect missing requirements from previous evaluation
+    prev_coverage = path.coverage or role_matrix.compute_coverage(db, path.stages, path.target_job_position_id)
+    missing_req_ids = prev_coverage.get("missing", []) if prev_coverage else []
+
+    # 2. Anti-shortcut Rule 2: Auto-include missing approved documents from the company repository if requested
+    auto_added_codes: list[str] = []
+    missing_req_objects: list[RoleRequirement] = []
+    if missing_req_ids:
+        missing_req_objects = db.scalars(
+            select(RoleRequirement).where(RoleRequirement.id.in_(missing_req_ids))
+        ).all()
+        if body.auto_include_missing:
+            existing_doc_ids = {d.id for d in docs}
+            existing_doc_codes = {d.code for d in docs}
+            needed_doc_codes = {r.source_doc_code for r in missing_req_objects if r.source_doc_code}
+
+            for code in sorted(needed_doc_codes):
+                if code not in existing_doc_codes:
+                    candidates = db.scalars(
+                        select(Document).where(
+                            Document.code == code,
+                            Document.processing_status == ProcessingStatus.READY,
+                        )
+                    ).all()
+                    if candidates:
+                        families = db.scalars(select(Document).where(Document.family.in_({d.family for d in candidates}))).all()
+                        lifecycle = documents.compute_lifecycle(list(families), date.today())
+                        approved_doc = next((d for d in candidates if lifecycle.get(d.id, ("", ""))[0] == "active"), candidates[0])
+                        if approved_doc and approved_doc.id not in existing_doc_ids:
+                            docs.append(approved_doc)
+                            existing_doc_ids.add(approved_doc.id)
+                            existing_doc_codes.add(approved_doc.code)
+                            auto_added_codes.append(approved_doc.code)
+
     gaps = _check_mandatory_sources(db, path.target_job_position_id, docs, body.allow_missing_mandatory)
     emit("sources", count=len(docs), codes=[d.code for d in docs], mandatory_unavailable=gaps.unavailable,
          mandatory_omitted=gaps.omitted)
+
+    # 3. Add focused feedback prompt so GenAI targets the missing requirements explicitly
+    effective_prompt = path.prompt
+    if missing_req_objects:
+        feedback_lines = []
+        for r in missing_req_objects:
+            sec = f" §{r.source_section}" if r.source_section else ""
+            prio = r.priority.value if hasattr(r.priority, "value") else str(r.priority)
+            desc = r.policy_requirement or r.process_requirement or r.competency or "Mandatory requirement"
+            feedback_lines.append(f"- Requirement {r.id}: {r.source_doc_code}{sec} ({prio}) — {desc}")
+        feedback_block = (
+            "\n\n[INDEPENDENT VALIDATION FEEDBACK - TARGET MISSING REQUIREMENTS]:\n"
+            "The Python validation pipeline flagged that previous attempts missed the following mandatory requirements.\n"
+            "You MUST generate dedicated lessons/tasks/quiz questions explicitly covering and citing these exact sections:\n"
+            + "\n".join(feedback_lines)
+        )
+        effective_prompt = (effective_prompt or "") + feedback_block
+
     content = body.content or _generate(db, path.id, path.purpose, path.level, db.get(JobPosition, path.target_job_position_id),
-                                        docs, path.prompt, body.language, path.duration_days, emit)
+                                        docs, effective_prompt, body.language, path.duration_days, emit)
     check_stage_keys(path.purpose, [s.key for s in content.stages], path.duration_days)
     _apply_content(path, content, gaps)
+
+    # 4. Anti-shortcut Rule 1: Python Pipeline 2 independently evaluates final content
     path.coverage = role_matrix.compute_coverage(db, path.stages, path.target_job_position_id)
     path.sources = _source_rows(docs)
+
+    details = _generation_details(path, docs, gaps)
+    if auto_added_codes:
+        details["auto_added_sources"] = ", ".join(auto_added_codes)
+    if missing_req_ids:
+        details["targeted_missing_requirements"] = str(len(missing_req_ids))
+
     audit.record(db, actor, "regenerate", path, status_before=path.status, status_after=path.status,
-                 details=_generation_details(path, docs, gaps))
+                 details=details)
     emit("saving")
     db.commit()
     return path

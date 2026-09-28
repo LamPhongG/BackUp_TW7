@@ -110,11 +110,17 @@ SAMPLE_DOCS_MAPPING = {
 def create_schema(reset: bool = False):
     """Create all relational tables."""
     settings = get_settings()
-    if reset and settings.database_url.startswith("sqlite:///"):
-        db_path = Path(settings.database_url.replace("sqlite:///", ""))
-        if db_path.exists():
-            print(f"[Reset] Removing existing database file: {db_path.name}")
-            db_path.unlink()
+    if reset:
+        if settings.database_url.startswith("sqlite:///"):
+            db_path = Path(settings.database_url.replace("sqlite:///", ""))
+            if db_path.exists():
+                print(f"[Reset] Removing existing database file: {db_path.name}")
+                db_path.unlink()
+        elif "postgresql" in settings.database_url:
+            print("[Reset] Dropping and recreating PostgreSQL public schema...")
+            with engine.connect() as conn:
+                conn.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
+                conn.commit()
 
     print("[Schema] Initializing database tables...")
     Base.metadata.create_all(bind=engine)

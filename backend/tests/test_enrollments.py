@@ -265,3 +265,47 @@ def test_demo_certificate_seed_uses_only_a_path_published_to_sales(client, hr_he
 
     seed.run(db)
     assert _mine(client, sales_headers)[completed[0]["path_id"]]["completed_at"] == completed[0]["completed_at"]
+
+
+def test_employee_department_transfer_syncs_enrollments(client, hr_headers, reviewer_headers, employee_headers):
+    # 1. Publish onboarding path for Engineering and Finance
+    eng_path = _publish(client, hr_headers, reviewer_headers, position="support-engineer", departments=["Engineering"])
+    fin_path = _publish(client, hr_headers, reviewer_headers, position="finance-associate", departments=["Finance"])
+
+    # 2. Alex Morgan starts in Engineering -> has eng_path, not fin_path
+    me = client.get("/api/auth/me", headers=employee_headers).json()
+    alex_id = me["id"]
+    mine = _mine(client, employee_headers)
+    assert eng_path["id"] in mine
+    assert fin_path["id"] not in mine
+
+    # 3. HR transfers Alex to Finance department
+    transfer_res = client.patch(
+        f"/api/users/{alex_id}",
+        headers=hr_headers,
+        json={"department_code": "Finance", "job_position_id": "finance-associate"},
+    )
+    assert transfer_res.status_code == 200
+
+    # 4. Alex's enrollments should now have fin_path and eng_path should be withdrawn (not in _mine)
+    mine_after = _mine(client, employee_headers)
+    assert fin_path["id"] in mine_after
+    assert eng_path["id"] not in mine_after
+
+    # 5. Check enrollment status in explore/learners
+    explore = _explore(client, employee_headers)
+    assert explore[fin_path["id"]]["enrollment"]["status"] == "assigned"
+    # eng_path is no longer even in explore for a Finance employee
+    assert eng_path["id"] not in explore
+
+    # 6. Transfer Alex back to Engineering -> eng_path is reopened, fin_path is withdrawn
+    back_res = client.patch(
+        f"/api/users/{alex_id}",
+        headers=hr_headers,
+        json={"department_code": "Engineering", "job_position_id": "support-engineer"},
+    )
+    assert back_res.status_code == 200
+    mine_back = _mine(client, employee_headers)
+    assert eng_path["id"] in mine_back
+    assert fin_path["id"] not in mine_back
+

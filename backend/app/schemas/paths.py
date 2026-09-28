@@ -132,6 +132,7 @@ class PathRegenerate(BaseModel):
     prompt: str | None = Field(default=None, max_length=4000)
     language: Literal["vi", "en"] = "vi"
     allow_missing_mandatory: bool = False
+    auto_include_missing: bool = False
     content: PathContent | None = None
 
 
