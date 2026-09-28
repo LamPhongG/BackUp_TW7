@@ -156,8 +156,12 @@ def ingest_sample_documents(db, admin_id: str):
 
         file_path = sample_dir / info["file"]
         if not file_path.is_file():
-            print(f"  [Skip] Missing physical file for {code}: {info['file']}")
-            continue
+            matches = list(sample_dir.rglob(info["file"]))
+            if matches:
+                file_path = matches[0]
+            else:
+                print(f"  [Skip] Missing physical file for {code}: {info['file']}")
+                continue
 
         content = file_path.read_bytes()
         ext = file_extension(file_path.name)
