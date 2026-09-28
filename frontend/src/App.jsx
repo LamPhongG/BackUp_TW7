@@ -9,7 +9,6 @@ import AuthLayout from "./layouts/AuthLayout";
 import RoleLayout from "./layouts/RoleLayout";
 
 import Login from "./pages/auth/Login";
-import SelfRegister from "./pages/auth/SelfRegister";
 
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
@@ -94,7 +93,6 @@ export default function App() {
                 <Routes>
                   <Route element={<AuthLayout />}>
                     <Route path="/login" element={<Login />} />
-                    <Route path="/register/:token" element={<SelfRegister />} />
                   </Route>
 
                   <Route path="/admin" element={<RoleLayout role="admin" />}>

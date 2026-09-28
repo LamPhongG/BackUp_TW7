@@ -119,11 +119,12 @@ Quy tắc phân quyền nằm ở `src/utils/pathWorkflow.js` và được kiể
    - Sửa nội dung, hoặc **Sinh lại** từ phiên bản tài liệu mới nhất (góp ý và lịch sử được giữ).
    - Bấm **Gửi duyệt lại** → revision tăng lên (`r2`, `r3`…).
 5. **Thu hồi** một lộ trình đã phát hành khi chính sách thay đổi (bắt buộc lý do).
-6. **Mời nhân viên mới** (`/hr/invites`, chỉ ở chế độ backend)
-   - Chọn phòng ban, vị trí, số ngày hiệu lực; nhập email thì link được gửi qua email.
-   - Chưa cấu hình máy chủ email thì vẫn tạo được link, thông báo nói rõ email chưa gửi để HR tự sao chép link.
-   - Danh sách lời mời có trạng thái *Còn hiệu lực* / *Đã đăng ký* / *Hết hạn hoặc đã thu hồi*, nút sao chép link và thu hồi.
-   - Nhân viên mở link (`/register/:token`), tự đặt mật khẩu và điền hồ sơ; tài khoản nhận đúng vị trí và phòng ban HR đã chọn.
+6. **Mời nhân viên mới** (`/hr/invites`, chỉ ở chế độ backend) — tài khoản được tạo ngay, không còn link tự đăng ký.
+   - HR bấm **Tạo tài khoản nhân viên** (dùng chung modal với "Tạo từ CV" ở Admin — có thể tải CV để tự điền form, hoặc bấm **Bỏ qua, tự nhập thông tin** để nhập tay ngay): họ tên, email, phòng ban, vị trí là bắt buộc; kinh nghiệm, kỹ năng, mô tả kinh nghiệm trước đây là tuỳ chọn.
+   - Server tạo tài khoản ngay lập tức, tự sinh mật khẩu, gán lộ trình hội nhập của vị trí, và gửi mật khẩu qua email (`POST /users/from-cv`).
+   - Chưa cấu hình máy chủ email thì tài khoản vẫn được tạo, màn hình hiện mật khẩu tạm để HR tự gửi cho nhân viên (chỉ hiện đúng 1 lần).
+   - Nhân viên chỉ cần đăng nhập bằng email + mật khẩu nhận được — không tự đăng ký, không tự điền hồ sơ.
+   - Trang liệt kê 20 tài khoản nhân viên tạo gần nhất.
 
 ### 3.2 Reviewer
 

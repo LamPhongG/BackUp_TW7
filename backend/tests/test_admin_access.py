@@ -45,5 +45,3 @@ def test_admin_cannot_act_in_the_workflow(client, admin_headers, draft_path):
     assert client.post(f"/api/paths/{pid}/approve", headers=admin_headers,
                        json={"departments": ["Engineering"], "reason": "Admin should not approve"}).status_code == 403
     assert client.post(f"/api/paths/{pid}/comments", headers=admin_headers, json={"text": "Admin comment"}).status_code == 403
-    assert client.post("/api/invite", headers=admin_headers,
-                       json={"job_position_id": "cs-exec", "department_code": "Customer Support"}).status_code == 403

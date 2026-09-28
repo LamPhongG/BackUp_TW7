@@ -345,33 +345,12 @@
   .glass-card h2{font-size:30px}
 }
 
-/* Đăng ký từ link mời: dùng lại thẻ kính của trang đăng nhập, thêm ô chọn, ngày và ô nhiều dòng */
-.register-card{width:min(480px,100%);padding-top:36px}
-.register-target{margin:10px 0 26px;font-size:15px;font-weight:600;color:rgba(255,255,255,.92)}
-.register-section{margin:4px 0 18px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.8)}
-.register-card .glass-float select,.register-card .glass-float textarea,.register-card .glass-float input[type=date]{width:100%;padding:22px 18px 8px;border-radius:12px;border:1.5px solid rgba(255,255,255,.6);background:rgba(255,255,255,.28);color:#fff;font:inherit;font-size:16px;outline:none;color-scheme:dark}
-.register-card .glass-float select{height:56px}
-.register-card .glass-float select option{color:#1f2937}
-.register-card .glass-float textarea{min-height:96px;resize:vertical}
-.register-card .glass-float select:focus,.register-card .glass-float textarea:focus{border-color:#fff}
-.register-card .register-fixed-label{top:0;font-size:12.5px;font-weight:600;background:rgba(88,72,214,.62);border:1px solid rgba(255,255,255,.45)}
-.register-field-error{margin:6px 0 0;font-size:13px;color:#fee2e2}
-.register-done-icon{color:#fff;margin-bottom:8px}
-.register-link-btn{display:grid;place-items:center;margin-top:8px;text-decoration:none}
-
-/* Quản lý lời mời (HR) */
-.invite-stats{grid-template-columns:repeat(3,1fr)}
+/* Tài khoản nhân viên tạo bởi HR (mời nhân viên) */
 .invite-list{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:10px}
 .invite-item{display:flex;gap:16px;align-items:flex-start;padding:14px 16px;border:1px solid var(--line);border-radius:10px}
-.invite-item--used,.invite-item--expired{background:#f8f9fb}
 .invite-item__info{flex:1;min-width:0;display:grid;gap:4px}
 .invite-item__top{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .invite-item__line{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--muted)}
-.invite-item__url{font-size:12.5px;color:#4d45b8;word-break:break-all}
-.invite-item__actions{display:flex;gap:4px}
-.invite-revoke{color:#c43d55}
-.invite-form label:nth-child(n+3),.invite-form .modal-actions{grid-column:1/-1}
-@media(max-width:760px){.invite-stats{grid-template-columns:1fr}}
 
 /* Khám phá lộ trình của phòng ban */
 .explore-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}

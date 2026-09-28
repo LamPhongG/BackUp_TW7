@@ -1,5 +1,6 @@
 """Test setup: a throwaway SQLite database built by the real Alembic migrations, then seeded."""
 import os
+import smtplib
 import tempfile
 from pathlib import Path
 
@@ -12,7 +13,7 @@ os.environ["UPLOAD_DIR"] = str(_TMP_DIR / "uploads")
 # A developer's backend/.env may hold a real key: tests must never call Gemini (cost, quota, flaky results).
 # Tests that exercise Pipeline 1 swap in tests/fake_llm.py instead.
 os.environ["GEMINI_API_KEY"] = ""
-# Same for SMTP: invitation tests replace smtplib.SMTP with a fake.
+# Same for SMTP: tests that send account emails replace smtplib.SMTP with a fake (see `smtp` fixture).
 os.environ["SMTP_HOST"] = ""
 
 import pytest  # noqa: E402
@@ -20,6 +21,7 @@ from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
+from app.core.config import get_settings  # noqa: E402
 from app.db import seed  # noqa: E402
 from app.db.session import SessionLocal, engine  # noqa: E402
 from app.main import create_app  # noqa: E402
@@ -79,3 +81,39 @@ def reviewer_headers(client):
 @pytest.fixture
 def employee_headers(client):
     return login(client, "alex.morgan@fourangrybirds.vn")
+
+
+class FakeSMTP:
+    sent: list = []
+    fail = False
+
+    def __init__(self, host, port, timeout):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def starttls(self):
+        if FakeSMTP.fail:
+            raise smtplib.SMTPException("relay refused")
+
+    def login(self, user, password):
+        pass
+
+    def send_message(self, msg):
+        FakeSMTP.sent.append(msg)
+
+
+@pytest.fixture
+def smtp(monkeypatch):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "smtp_host", "smtp.test")
+    monkeypatch.setattr(settings, "smtp_user", "noreply@fourangrybirds.vn")
+    monkeypatch.setattr(settings, "smtp_password", "secret")
+    monkeypatch.setattr(smtplib, "SMTP", FakeSMTP)
+    FakeSMTP.sent = []
+    FakeSMTP.fail = False
+    return FakeSMTP

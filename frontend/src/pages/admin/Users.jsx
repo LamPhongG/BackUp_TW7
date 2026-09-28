@@ -9,7 +9,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { apiRequest } from "../../services/apiClient";
 import { mapUser } from "../../services/apiMappers";
 import { DEPARTMENTS, ROLES as JOB_ROLES } from "../../data/company";
-import CreateFromCvModal from "./CreateFromCvModal";
+import CreateEmployeeModal from "../../components/CreateEmployeeModal";
 
 const SYSTEM_ROLES = [
   { key: "admin", label: "Admin", tone: "purple", color: "#8b5cf6" },
@@ -754,7 +754,7 @@ export default function AdminUsers() {
         </div>
       </Modal>
 
-      <CreateFromCvModal open={modalMode === "cv"} onClose={closeModal} onCreated={fetchUsers} />
+      <CreateEmployeeModal open={modalMode === "cv"} onClose={closeModal} onCreated={fetchUsers} />
 
       <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
     </div>

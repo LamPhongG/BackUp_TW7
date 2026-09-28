@@ -9,7 +9,6 @@ from app.services import enrollments
 from app.services.cv_parser import level_from_years, parse_text
 from tests.conftest import login
 from tests.factories import make_docx, make_pdf
-from tests.test_invite import smtp  # noqa: F401  (fixture)
 
 
 @pytest.fixture
@@ -171,7 +170,7 @@ def test_onboard_emails_a_generated_password_that_logs_in(client, admin_headers,
 
     user = db.scalar(select(User).where(User.email == address))
     assert password not in user.password_hash
-    # Onboarding paths of the position are assigned as for an invited employee.
+    # Onboarding paths of the position are assigned right away.
     assert assigned == [address]
     me = client.get("/api/auth/me", headers=login(client, address, password)).json()
     assert me["password_is_temporary"] is True

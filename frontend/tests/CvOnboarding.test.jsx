@@ -1,6 +1,6 @@
 import { render, act, fireEvent, screen, cleanup } from "@testing-library/react";
 import { expect, test, vi, beforeEach, afterEach } from "vitest";
-import CreateFromCvModal from "../src/pages/admin/CreateFromCvModal";
+import CreateEmployeeModal from "../src/components/CreateEmployeeModal";
 import ChangePasswordModal from "../src/components/ChangePasswordModal";
 import * as apiClient from "../src/services/apiClient";
 
@@ -25,7 +25,7 @@ afterEach(cleanup);
 
 async function uploadCv() {
   const onCreated = vi.fn();
-  const { container } = render(<CreateFromCvModal open onClose={() => {}} onCreated={onCreated} />);
+  const { container } = render(<CreateEmployeeModal open onClose={() => {}} onCreated={onCreated} />);
   const file = new File(["cv"], "an.docx");
   await act(async () => { fireEvent.change(container.querySelector("#cv-file"), { target: { files: [file] } }); });
   return { container, onCreated };
@@ -79,6 +79,16 @@ test("when the email is sent the password is not on screen", async () => {
   await act(async () => { fireEvent.submit(container.querySelector("form")); });
   expect(screen.getByTestId("cv-email-sent")).toBeTruthy();
   expect(container.querySelector("#cv-temp-password")).toBeNull();
+});
+
+test("skipping the CV upload goes straight to an empty form, no parse call made", async () => {
+  const { container } = render(<CreateEmployeeModal open onClose={() => {}} onCreated={() => {}} />);
+  await act(async () => { fireEvent.click(screen.getByText("cv_skip_manual")); });
+  expect(apiClient.apiRequest).not.toHaveBeenCalled();
+  expect(container.querySelector("#cv-name").value).toBe("");
+  expect(container.querySelector("#cv-email").value).toBe("");
+  await act(async () => { fireEvent.submit(container.querySelector("form")); });
+  expect(container.textContent).toContain("cv_err_required");
 });
 
 test("an unreadable CV shows the backend reason and stays on the upload step", async () => {

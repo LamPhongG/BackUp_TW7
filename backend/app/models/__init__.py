@@ -14,7 +14,6 @@ from app.models.enums import (
     TrainingStatus,
     UserRole,
 )
-from app.models.invitation import InvitationToken
 from app.models.learning_path import LearningPath, PathAssignment, PathComment, PathSource
 from app.models.organization import Department, JobPosition, RoleRequirement, User
 
@@ -28,7 +27,6 @@ __all__ = [
     "EnrollmentStatus",
     "FinalStatus",
     "InjectionFlag",
-    "InvitationToken",
     "JobPosition",
     "LearningPath",
     "PathAssignment",

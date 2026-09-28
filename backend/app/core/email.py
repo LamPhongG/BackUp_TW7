@@ -1,4 +1,4 @@
-"""Invitation, welcome and account emails over SMTP (settings `SMTP_*` in backend/.env)."""
+"""Account emails over SMTP (settings `SMTP_*` in backend/.env)."""
 import logging
 import smtplib
 from email.message import EmailMessage
@@ -51,50 +51,6 @@ def _send(to_email: str, subject: str, html: str, text: str) -> bool:
         logger.exception("Sending email to %s failed", to_email)
         return False
     return True
-
-
-def send_invitation(
-    to_email: str,
-    register_url: str,
-    position_name: str,
-    department_name: str,
-    invited_by_name: str,
-    expires_days: int,
-) -> bool:
-    html = _page(
-        f"<p>Xin chào,</p>"
-        f"<p><strong>{escape(invited_by_name)}</strong> mời bạn tạo tài khoản SkillSprint AI.</p>"
-        f'<div class="info"><p><strong>Vị trí:</strong> {escape(position_name)}</p>'
-        f"<p><strong>Phòng ban:</strong> {escape(department_name)}</p>"
-        f"<p><strong>Link hết hạn sau:</strong> {expires_days} ngày</p></div>"
-        f'<a class="btn" href="{escape(register_url)}">Đăng ký tài khoản</a>'
-        f"<p>Hoặc mở link: {escape(register_url)}</p>"
-    )
-    text = (
-        f"{invited_by_name} mời bạn tạo tài khoản SkillSprint AI.\n"
-        f"Vị trí: {position_name}. Phòng ban: {department_name}.\n"
-        f"Đăng ký tại: {register_url}\n"
-        f"Link hết hạn sau {expires_days} ngày."
-    )
-    return _send(to_email, "Lời mời tạo tài khoản SkillSprint AI", html, text)
-
-
-def send_welcome(to_email: str, name: str, login_url: str, position_name: str) -> bool:
-    """Confirms the account. The password is never sent: the employee chose it and only its hash is stored."""
-    html = _page(
-        f"<p>Xin chào <strong>{escape(name)}</strong>,</p>"
-        f"<p>Tài khoản SkillSprint AI của bạn đã được tạo.</p>"
-        f'<div class="info"><p><strong>Email đăng nhập:</strong> {escape(to_email)}</p>'
-        f"<p><strong>Vị trí:</strong> {escape(position_name)}</p></div>"
-        f"<p>Lộ trình học sẽ hiện trong tài khoản khi lộ trình cho vị trí của bạn được phát hành.</p>"
-        f'<a class="btn" href="{escape(login_url)}">Đăng nhập</a>'
-    )
-    text = (
-        f"Xin chào {name},\n"
-        f"Tài khoản SkillSprint AI của bạn đã được tạo. Email đăng nhập: {to_email}.\n"
-        f"Đăng nhập: {login_url}"
-    )
-    return _send(to_email, "Tài khoản SkillSprint AI đã được tạo", html, text)
 
 
 def send_account_credentials(

@@ -39,7 +39,8 @@ class Settings(BaseSettings):
     generation_workers: int = 4
     prompt_version: str = "v1.1"
 
-    # Invitation emails; without SMTP the invite is still created and HR copies the link.
+    # New-account and CV-onboarding emails; without SMTP the account is still created and HR/Admin
+    # is shown the temporary password to hand over another way.
     smtp_host: str | None = None
     smtp_port: int = 587
     smtp_user: str | None = None

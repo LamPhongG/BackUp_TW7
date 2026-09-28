@@ -1,10 +1,10 @@
 import { useMemo, useRef, useState } from "react";
-import { CircleAlert, CircleCheck, Copy, Loader2, Upload } from "../../components/Icons";
-import { Button, Modal } from "../../components/UI";
-import { useLanguage } from "../../contexts/LanguageContext";
-import { apiRequest } from "../../services/apiClient";
-import { mapUser } from "../../services/apiMappers";
-import { DEPARTMENTS, ROLES as JOB_ROLES } from "../../data/company";
+import { CircleAlert, CircleCheck, Copy, Loader2, Upload } from "./Icons";
+import { Button, Modal } from "./UI";
+import { useLanguage } from "../contexts/LanguageContext";
+import { apiRequest } from "../services/apiClient";
+import { mapUser } from "../services/apiMappers";
+import { DEPARTMENTS, ROLES as JOB_ROLES } from "../data/company";
 
 const CV_ACCEPT = ".pdf,.docx,.txt,.md";
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
@@ -13,10 +13,11 @@ const EMPTY_FORM = {
 };
 
 /**
- * Tạo tài khoản nhân viên từ CV: backend đọc CV bằng Python (không lưu file, không đọc SĐT/địa chỉ/ngày sinh),
- * Admin kiểm tra và sửa thông tin, backend sinh mật khẩu và gửi email đăng nhập cho nhân viên.
+ * Tạo tài khoản nhân viên: từ CV (backend đọc CV bằng Python, không lưu file, không đọc SĐT/địa chỉ/
+ * ngày sinh) hoặc nhập tay trực tiếp. HR/Admin kiểm tra và sửa thông tin, backend sinh mật khẩu và gửi
+ * email đăng nhập cho nhân viên — nhân viên không tự đăng ký, chỉ cần đăng nhập bằng mật khẩu nhận được.
  */
-export default function CreateFromCvModal({ open, onClose, onCreated }) {
+export default function CreateEmployeeModal({ open, onClose, onCreated }) {
   const { t, tv } = useLanguage();
   const fileInput = useRef(null);
   const [step, setStep] = useState("upload"); // upload | form | done
@@ -42,6 +43,7 @@ export default function CreateFromCvModal({ open, onClose, onCreated }) {
     setResult(null); setError(""); setBusy(false); setCopied(false);
   };
   const close = () => { reset(); onClose(); };
+  const skipToForm = () => { setFileName(""); setWarnings([]); setForm(EMPTY_FORM); setStep("form"); };
 
   const readCv = async (file) => {
     if (!file) return;
@@ -124,6 +126,9 @@ export default function CreateFromCvModal({ open, onClose, onCreated }) {
               onChange={e => readCv(e.target.files?.[0])} />
             <Button type="button" disabled={busy} onClick={() => fileInput.current?.click()}>{t("cv_choose_file")}</Button>
           </div>
+          <div className="modal-actions" style={{ marginTop: 0, justifyContent: "center" }}>
+            <Button variant="ghost" type="button" disabled={busy} onClick={skipToForm}>{t("cv_skip_manual")}</Button>
+          </div>
           <small className="cell-sub">{t("cv_privacy_note")}</small>
         </div>
       )}
@@ -131,10 +136,12 @@ export default function CreateFromCvModal({ open, onClose, onCreated }) {
       {step === "form" && (
         <form onSubmit={create} className="cv-modal">
           {errorBox}
-          <div className="notice notice--info">
-            <CircleCheck size={16} />
-            <span>{t("cv_read_from", { name: fileName })}</span>
-          </div>
+          {fileName && (
+            <div className="notice notice--info">
+              <CircleCheck size={16} />
+              <span>{t("cv_read_from", { name: fileName })}</span>
+            </div>
+          )}
           {warnings.length > 0 && (
             <div className="notice notice--warning">
               <CircleAlert size={16} />

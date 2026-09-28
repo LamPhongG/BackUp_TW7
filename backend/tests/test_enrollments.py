@@ -7,8 +7,10 @@ from datetime import date, timedelta
 from uuid import uuid4
 
 import pytest
+from sqlalchemy import select
 
 from app.db import seed
+from app.models import Enrollment
 from tests.conftest import login
 from tests.factories import mandatory_source_ids, path_content, upload_ready_pdf
 
@@ -119,18 +121,16 @@ def test_onboarding_due_date_counts_from_the_joining_date(client, hr_headers, re
     assert _mine(client, linh_headers)[path["id"]]["due_date"] == expected.isoformat()
 
 
-def test_new_employee_registered_by_invitation_gets_the_onboarding_path(client, hr_headers, reviewer_headers):
+def test_newly_created_employee_gets_the_onboarding_path(client, hr_headers, reviewer_headers, db):
     path = _publish(client, hr_headers, reviewer_headers, position="cs-exec", positions=["cs-exec"])
-    token = client.post("/api/invite", headers=hr_headers,
-                        json={"job_position_id": "cs-exec", "department_code": "Customer Support"}).json()["token"]
     email = f"{uuid4().hex[:8]}@fourangrybirds.vn"
-    registered = client.post(f"/api/invite/{token}/register",
-                             json={"name": "New Hire", "email": email, "password": "Welcome#2026"})
-    assert registered.status_code == 201, registered.text
+    created = client.post("/api/users/from-cv", headers=hr_headers,
+                          json={"name": "New Hire", "email": email, "job_position_id": "cs-exec"})
+    assert created.status_code == 201, created.text
+    user_id = created.json()["user"]["id"]
 
-    headers = login(client, email, "Welcome#2026")
-    assert _mine(client, headers)[path["id"]]["status"] == "assigned"
-    assert path["id"] in _visible(client, headers)
+    enrollment = db.scalar(select(Enrollment).where(Enrollment.user_id == user_id, Enrollment.path_id == path["id"]))
+    assert enrollment is not None and enrollment.status == "assigned"
     log = client.get("/api/audit-logs", headers=hr_headers, params={"path_id": path["id"], "action": "assign"}).json()
     assert any(row["details"].get("employee") == email for row in log["items"])
 
