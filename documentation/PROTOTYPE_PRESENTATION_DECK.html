@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillSprint AI - Prototype & Luồng Hoạt Động Hệ Thống (TechWiz 7)</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #131b2e;
+      --card-border: #1f2b48;
+      --primary: #3b82f6;
+      --primary-glow: rgba(59, 130, 246, 0.4);
+      --accent: #10b981;
+      --accent-glow: rgba(16, 185, 129, 0.4);
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Bar */
+    header {
+      background: rgba(19, 27, 46, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+    }
+    .brand-badge {
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: white;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      background: #1c2742;
+      border-color: var(--primary);
+    }
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+    .slide-counter {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      min-width: 90px;
+      text-align: center;
+    }
+
+    /* Progress bar */
+    .progress-bar-container {
+      height: 4px;
+      background: rgba(255,255,255,0.08);
+      width: 100%;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #10b981);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* Presentation Area */
+    main {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(30px);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+    }
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+    }
+
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 12px;
+    }
+    .stage-tag {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #60a5fa;
+      margin-bottom: 4px;
+    }
+    .slide-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      color: #93c5fd;
+    }
+    .role-badge.reviewer {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: rgba(245, 158, 11, 0.4);
+      color: #fcd34d;
+    }
+    .role-badge.employee {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+    }
+    .role-badge.admin {
+      background: rgba(168, 85, 247, 0.15);
+      border-color: rgba(168, 85, 247, 0.4);
+      color: #d8b4fe;
+    }
+
+    /* Content Layout: Left Image, Right Info */
+    .slide-body {
+      display: grid;
+      grid-template-columns: 1.55fr 1fr;
+      gap: 24px;
+      flex: 1;
+      align-items: start;
+    }
+
+    .image-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    .image-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .image-caption {
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--card-border);
+      background: rgba(19, 27, 46, 0.8);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .info-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .card h3 {
+      font-size: 1rem;
+      color: #60a5fa;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card p, .card ul {
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: #cbd5e1;
+    }
+    .card ul {
+      padding-left: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .highlight-badge {
+      display: inline-block;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.75rem;
+    }
+
+    /* Print styles */
+    @media print {
+      body { height: auto; overflow: visible; background: white; color: black; }
+      header, .nav-controls, .progress-bar-container { display: none; }
+      .slide {
+        position: static;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+        page-break-after: always;
+        padding: 20px;
+        color: black;
+      }
+      .slide-title { color: black; }
+      .image-container { border: 1px solid #ddd; }
+      .card { background: #f8fafc; border: 1px solid #e2e8f0; color: black; }
+      .card p, .card ul { color: #334155; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header>
+    <div class="brand">
+      <span class="brand-badge">TECHWIZ 7</span>
+      <span>SkillSprint AI – Prototype & Luồng Hoạt Động</span>
+    </div>
+    <div class="nav-controls">
+      <button class="btn" onclick="prevSlide()" title="Phím mũi tên trái">‹ Trước</button>
+      <span class="slide-counter" id="slideCounter">Slide 1 / 11</span>
+      <button class="btn btn-primary" onclick="nextSlide()" title="Phím mũi tên phải hoặc phím Space">Tiếp theo ›</button>
+      <button class="btn" onclick="window.print()" title="In hoặc lưu file PDF">🖨️ In PDF</button>
+    </div>
+  </header>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-bar-fill" id="progressFill"></div>
+  </div>
+
+  <main>
+
+    <!-- Slide 1: Sơ đồ kiến trúc tổng thể -->
+    <div class="slide active">
+      <div class="slide-header">
+        <div>
+          <span class="stage-tag">TỔNG QUAN HỆ THỐNG</span>
+          <h1 class="slide-title">1. Kiến Trúc Cốt Lõi Dual-Pipeline (Trái Tim Dự Án)</h1>
+        </div>
+        <span class="role-badge">System Architecture</span>
+      </div>
+      <div class="slide-body">
+        <div class="image-container">
+          <img src="./images/system_workflow_diagram.jpg" alt="Sơ đồ Kiến trúc Dual-Pipeline">
+          <div class="image-caption">
+            <span>Sơ đồ kiến trúc luồng dữ liệu 2 Pipeline độc lập</span>
+            <span>SRS Item 1.6 & Step 46</span>
+          </div>
+        </div>
+        <div class="info-panel">
+          <div class="card">
+            <h3>🎯 Bài toán cốt lõi</h3>
+            <p>Giải quyết triệt để vấn đề <strong>Ảo giác (Hallucination)</strong> và <strong>Bỏ sót kiến thức</strong> trong các kế hoạch Onboarding doanh nghiệp.</p>
+          </div>
+          <div class="card">
+            <h3>⚡ Hai Pipeline độc lập</h3>
+            <ul>
+              <li><strong>Pipeline 1 (GenAI Pipeline):</strong> Dùng LLM (Gemini Flash / OpenAI) kết hợp Prompt Engineering v1.1 để sinh cấu trúc bài học, nhiệm vụ và câu hỏi trắc nghiệm có trích dẫn.</li>
+              <li><strong>Pipeline 2 (Python Deterministic Engine - ZERO-AI):</strong> Chạy thuần thuật toán Python, đọc trực tiếp <code>role_matrix.csv</code> để lập Ground-Truth Matrix chuẩn 100%.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>⚖️ Dual-Comparator & Reviewer Queue</h3>
+            <p>Đối chiếu song song từng dòng tại <strong>Table 1</strong>. Nếu đạt 100% Coverage và không có cờ cảnh báo thì chuyển sang khâu thẩm định con người (Human-in-the-Loop).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2: Login Portal -->
+    <div class="slide">
+      <div class="slide-header">
+        <div>
+          <span class="stage-tag">GIAI ĐOẠN 1: KHỞI TẠO & PHÂN QUYỀN</span>
+          <h1 class="slide-title">2. Cổng Đăng Nhập & Phân Quyền Vai Trò (RBAC)</h1>
+        </div>
+        <span class="role-badge admin">Bảo mật & Xác thực</span>
+      </div>
+      <div class="slide-body">
+        <div class="image-container">
+          <img src="./screenshots/01_login_portal.png" alt="Cổng Đăng Nhập">
+          <div class="image-caption">
+            <span>Màn hình đăng nhập hệ thống (/login)</span>
+            <span>SRS Item 1.6.i & 1.6.ii</span>
+          </div>
+        </div>
+        <div class="info-panel">
+          <div class="card">
+            <h3>🔒 Bảo mật & Xác thực chuẩn Enterprise</h3>
+            <ul>
+              <li>Xác thực qua JWT Token, mật khẩu mã hóa chuẩn bcrypt.</li>
+              <li>Hỗ trợ chuyển đổi song ngữ mượt mà (Tiếng Việt / English).</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>👥 Phân quyền Role-Based Access Control (RBAC)</h3>
+            <p>Hệ thống chia tách rõ 4 vai trò với bảng quyền hạn riêng biệt:</p>
+            <ul>
+              <li><strong>Administrator:</strong> Quản trị tài khoản, phân phòng ban.</li>
+              <li><strong>HR / Training Manager:</strong> Nạp tài liệu, tạo và sinh lại lộ trình.</li>
+              <li><strong>Reviewer:</strong> Thẩm định độc lập, duyệt hoặc yêu cầu chỉnh sửa.</li>
+              <li><strong>Employee:</strong> Học viên theo dõi tiến độ, làm quiz.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>⚡ Tiện ích Demo</h3>
+            <p>Trang bị các nút bấm điền nhanh tài khoản demo cho cả 4 vai trò để ban giám khảo kiểm thử nhanh chóng.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: Admin User Management -->
+    <div class="slide">
+      <div class="slide-header">
+        <div>
+          <span class="stage-tag">GIAI ĐOẠN 1: QUẢN TRỊ NHÂN SỰ</span>
+          <h1 class="slide-title">3. Quản Trị Tài Khoản & Điều Chuyển Phòng Ban</h1>
+        </div>
+        <span class="role-badge admin">Administrator</span>
+      </div>
+      <div class="slide-body">
+        <div class="image-container">
+          <img src="./screenshots/10_admin_user_management.png" alt="Quản trị người dùng">
+          <div class="image-caption">
+            <span>Giao diện quản lý người dùng (/admin/users)</span>
+            <span>SRS Item 1.6.iii & 1.6.iv</span>
+          </div>
+        </div>
+        <div class="info-panel">
+          <div class="card">
+            <h3>🏢 Quản trị Danh mục Nhân viên</h3>
+            <ul>
+              <li>Quản lý danh sách nhân sự gắn liền với 10 vị trí công việc mẫu (Software Engineer, Sales, CS, Finance...).</li>
+              <li>Tạo link mời đăng ký nhanh (Invitation link) tự động gán phòng ban.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>🔄 Cơ chế Đồng bộ khi Điều chuyển Nhân sự</h3>
+            <p><span class="highlight-badge">TÍNH NĂNG NÂNG CAO</span> Khi nhân viên được HR hoặc Admin chuyển từ phòng ban này sang phòng ban khác:</p>
+            <ul>
+              <li>Hệ thống tự động hủy các bản ghi lộ trình cũ của phòng ban trước.</li>
+              <li>Tự động ghi danh (Enrollment) nhân viên vào lộ trình Onboarding đang phát hành của phòng ban mới.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: HR Document Repository -->
+    <div class="slide">
+      <div class="slide-header">
+        <div>
+          <span class="stage-tag">GIAI ĐOẠN 2: NẠP TÀI LIỆU & AN TOÀN DỮ LIỆU</span>
+          <h1 class="slide-title">4. Kho Tài Liệu Doanh Nghiệp & Lọc Mã Độc</h1>
+        </div>
+        <span class="role-badge">HR Specialist</span>
+      </div>
+      <div class="slide-body">
+        <div class="image-container">
+          <img src="./screenshots/02_hr_documents_repository.png" alt="Kho tài liệu HR">
+          <div class="image-caption">
+            <span>Kho 28 tài liệu doanh nghiệp (/hr/documents)</span>
+            <span>SRS Step 42, 43 & Item 1.6.v-ix</span>
+          </div>
+        </div>
+        <div class="info-panel">
+          <div class="card">
+            <h3>📁 Quản lý 28/28 Tài liệu Doanh nghiệp</h3>
+            <ul>
+              <li>Đọc đa định dạng: PDF (PyMuPDF), DOCX (python-docx), CSV.</li>
+              <li>Gắn nhãn vòng đời tài liệu: Đang hiệu lực (<code>active</code>), sắp ban hành (<code>upcoming</code>), đã bị thay thế (<code>superseded</code>).</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>🛡️ Phòng vệ Prompt Injection (Step 42 & 43)</h3>
+            <p>Tài liệu tải lên chỉ được coi là dữ liệu thô (Data), không được coi là câu lệnh thực thi (Instruction). Bộ lọc tự động chặn các câu lệnh tiêm nhiễm ẩn trong file.</p>
+          </div>
+          <div class="card">
+            <h3>📑 Cắt đoạn Section Chunking có trích dẫn</h3>
+            <p>Mỗi đoạn văn bản đều lưu kèm <code>doc_id</code>, <code>section_id</code> để phục vụ truy xuất nguồn gốc (Source Traceability).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: HR Path Studio -->
+    <div class="slide">
+      <div class="slide-header">
+        <div>
+          <span class="stage-tag">GIAI ĐOẠN 2: THIẾT KẾ LỘ TRÌNH</span>
+          <h1 class="slide-title">5. Xưởng Tạo & Quản Lý Lộ Trình Onboarding</h1>
+        </div>
+        <span class="role-badge">HR Specialist</span>
+      </div>
+      <div class="slide-body">
+        <div class="image-container">
+          <img src="./screenshots/03_hr_paths_studio.png" alt="Xưởng lộ trình HR">
+          <div class="image-caption">
+            <span>Danh mục lộ trình đào tạo theo trạng thái (/hr/paths)</span>
+            <span>SRS Step 41 & Item 1.6.iv</span>
+          </div>
+        </div>
+        <div class="info-panel">
+          <div class="card">
+            <h3>⏱️ Thiết lập Thời lượng Onboarding linh hoạt</h3>
+            <p>Hỗ trợ cấu hình lộ trình <strong>7 ngày, 30 ngày hoặc 90 ngày</strong> tùy theo cấp bậc (Junior / Mid / Senior).</p>
+          </div>
+          <div class="card">
+            <h3>🏷️ Quản lý Phiên bản Revision & Trạng thái</h3>
+            <ul>
+              <li>Mỗi lần sửa đổi, nộp lại đều ghi nhận tăng số phiên bản (<code>r1, r2, r3</code>).</li>
+              <li>Theo dõi rõ trạng thái vòng đời: Bản nháp (<code>draft</code>), Đang chờ duyệt (<code>in_review</code>), Cần sửa (<code>changes_requested</code>), Đã phát hành (<code>published</code>).</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>🔍 Bộ lọc & Tìm kiếm Đa chiều</h3>
+            <p>Tìm kiếm nhanh theo vị trí công việc, phòng ban, và tỷ lệ độ phủ (Coverage Score).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: Dual-Pipeline Table 1 Comparison -->
+    <div class="slide">
+      <div class="slide-header">
+        <div>
+          <span class="stage-tag">GIAI ĐOẠN 3: ĐỐI CHIẾU 2 PIPELINE (TRỌNG TÂM ĐỀ BÀI)</span>
+          <h1 class="slide-title">6. Bảng Đối Chiếu Song Song Table 1 (Ground-Truth vs GenAI)</h1>
+        </div>
+        <span class="role-badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: #10b981;">100% Anti-Shortcut</span>
+      </div>
+      <div class="slide-body">
+        <div class="image-container">
+          <img src="./screenshots/04_hr_dual_comparison_table1.png" alt="Bảng Đối Chiếu Table 1">
+          <div class="image-caption">
+            <span>Bảng đối chiếu song song Table 1 thực tế trên hệ thống</span>
+            <span>SRS Step 46 & Item 1.6.xlii</span>
+          </div>
+        </div>
+        <div class="info-panel">
+          <div class="card">
+            <h3>🏆 Đạt 100% Độ phủ (Coverage Score)</h3>
+            <p>Chứng minh lộ trình đáp ứng đầy đủ mọi điều khoản bắt buộc của công ty trước khi cho phép gửi duyệt.</p>
+          </div>
+          <div class="card">
+            <h3>🔍 Đối chiếu chi tiết từng hàng</h3>
+            <ul>
+              <li><strong>Requirement ID & Source Document:</strong> Mã yêu cầu và tài liệu nguồn tương ứng.</li>
+              <li><strong>Python Expected Result (Pipeline 2):</strong> Kỳ vọng ma trận chuẩn từ thuật toán Python thuần (ZERO-AI).</li>
+              <li><strong>GenAI Output (Pipeline 1):</strong> Nội dung thực tế AI sinh ra.</li>
+              <li><strong>Trạng thái xác thực:</strong> Nhãn xanh lục <code>MATCH - VERIFIED</code> xác nhận khớp tuyệt đối.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>🚫 Chống gian lận (Anti-Shortcut Rule)</h3>
+            <p>Không có bất kỳ cơ chế hard-code hay bỏ qua bước chấm điểm của Python.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: HR Path Content & Self-Correction -->
+    <div class="slide">
+      <div class="slide-header">
+        <div>
+          <span class="stage-tag">GIAI ĐOẠN 3: HOÀN THIỆN NỘI DUNG</span>
+          <h1 class="slide-title">7. Chỉnh Sửa Nội Dung & Vòng Lặp Tự Sửa Chữa</h1>
+        </div>
+        <span class="role-badge">HR Specialist</span>
+      </div>
+      <div class="slide-body">
+        <div class="image-container">
+          <img src="./screenshots/05_hr_path_content_editor.png" alt="Chỉnh sửa nội dung lộ trình">
+          <div class="image-caption">
+            <span>Trang chỉnh sửa module, bài học, quiz và tiếp nhận góp ý</span>
+            <span>SRS Step 48 & Item 1.6.xlv</span>
+          </div>
+        </div>
+        <div class="info-panel">
+          <div class="card">
+            <h3>✏️ Chế độ Chỉnh sửa Thủ công (Manual Edit)</h3>
+            <ul>
+              <li>HR có thể sửa trực tiếp tên bài học, thời lượng, câu hỏi và đáp án quiz trắc nghiệm.</li>
+              <li>Mỗi chỉnh sửa đều được Python tính toán lại điểm Coverage ngay lập tức để không làm hỏng ma trận.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>🔄 Cơ chế Tự sửa chữa thông minh (Self-Correction Loop)</h3>
+            <p><span class="highlight-badge">ĐÚNG CHUẨN ĐỀ BÀI</span> Nếu lần sinh đầu tiên bị thiếu tài liệu dẫn đến điểm độ phủ thấp (ví dụ 69%):</p>
+            <ul>
+              <li>HR chỉ cần bấm nút <strong>"Sinh lại" (Regenerate)</strong>.</li>
+              <li>Hệ thống tự động kiểm tra kho tài liệu hợp lệ của công ty, tự động bổ sung tài liệu thiếu và hướng AI tập trung vào các Requirement ID bị thiếu để đạt 100% độ phủ.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8: Reviewer Approval Queue -->
+    <div class="slide">
+      <div class="slide-header">
+        <div>
+          <span class="stage-tag">GIAI ĐOẠN 4: THẨM ĐỊNH CON NGƯỜI</span>
+          <h1 class="slide-title">8. Hàng Đợi Kiểm Duyệt Độc Lập của Reviewer</h1>
+        </div>
+        <span class="role-badge reviewer">Reviewer</span>
+      </div>
+      <div class="slide-body">
+        <div class="image-container">
+          <img src="./screenshots/06_reviewer_approval_queue.png" alt="Hàng đợi Reviewer">
+          <div class="image-caption">
+            <span>Bảng điều khiển Reviewer và hàng đợi (/reviewer/dashboard)</span>
+            <span>SRS Step 47, 48 & Item 1.6.xliv</span>
+          </div>
+        </div>
+        <div class="info-panel">
+          <div class="card">
+            <h3>📋 Hàng đợi Thẩm định Tập trung (In-Review Queue)</h3>
+            <p>Chỉ hiển thị các lộ trình đã được HR nộp duyệt chính thức, tách biệt hoàn toàn với các bản nháp đang soạn thảo.</p>
+          </div>
+          <div class="card">
+            <h3>🚨 Phát hiện Điểm bất thường (Flags & Warnings)</h3>
+            <ul>
+              <li>Tự động gắn nhãn <strong>Manual Review Required</strong> nếu phát hiện cảnh báo rủi ro.</li>
+              <li>Reviewer có thể truy cập thẳng vào Bảng đối chiếu Table 1 để soi từng điểm không khớp.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>📊 Thống kê Lịch sử Quyết định</h3>
+            <p>Ghi nhận tổng số lộ trình đã duyệt, số lộ trình yêu cầu sửa đổi, và số lộ trình đã phát hành.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 9: Reviewer Decision & Override -->
+    <div class="slide">
+      <div class="slide-header">
+        <div>
+          <span class="stage-tag">GIAI ĐOẠN 4: QUYẾT ĐỊNH THẨM ĐỊNH</span>
+          <h1 class="slide-title">9. Phê Duyệt Lộ Trình & Ghi Vết Kiểm Toán (Audit Trail)</h1>
+        </div>
+        <span class="role-badge reviewer">Reviewer</span>
+      </div>
+      <div class="slide-body">
+        <div class="image-container">
+          <img src="./screenshots/07_reviewer_path_inspection.png" alt="Thẩm định lộ trình">
+          <div class="image-caption">
+            <span>Thẩm định chi tiết và thực thi quyền hạn (/reviewer/paths/:id)</span>
+            <span>SRS Step 48, 49 & Item 1.6.xlvi-xlvii</span>
+          </div>
+        </div>
+        <div class="info-panel">
+          <div class="card">
+            <h3>⚖️ Các Quyền hạn của Thẩm định viên</h3>
+            <ul>
+              <li><strong>Phê duyệt & Phát hành (Approve):</strong> Cho phép nhân viên bắt đầu học.</li>
+              <li><strong>Yêu cầu chỉnh sửa (Request Changes):</strong> Trả lộ trình về trạng thái <code>changes_requested</code> kèm nhận xét chi tiết cho HR.</li>
+              <li><strong>Chỉnh sửa trực tiếp (Direct Edit):</strong> Reviewer có thể tự sửa câu từ ngay tại khâu duyệt.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>📝 Reviewer Override & Audit Trail (Step 49)</h3>
+            <p>Khi Reviewer quyết định duyệt ngoại lệ đối với một lộ trình có cảnh báo, hệ thống <strong>bắt buộc Reviewer phải nhập lý do giải trình</strong>. Lý do này được lưu vĩnh viễn vào Nhật ký kiểm toán ISO không thể xóa sửa.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 10: Employee Learning Portal -->
+    <div class="slide">
+      <div class="slide-header">
+        <div>
+          <span class="stage-tag">GIAI ĐOẠN 5: TRẢI NGHIỆM HỌC TẬP</span>
+          <h1 class="slide-title">10. Cổng Học Tập Nhân Viên & Phát Hiện Điểm Yếu</h1>
+        </div>
+        <span class="role-badge employee">Employee</span>
+      </div>
+      <div class="slide-body">
+        <div class="image-container">
+          <img src="./screenshots/08_employee_learning_portal.png" alt="Cổng học tập nhân viên">
+          <div class="image-caption">
+            <span>Bảng điều khiển học tập Onboarding (/employee/dashboard)</span>
+            <span>SRS Step 50, 53, 54, 55</span>
+          </div>
+        </div>
+        <div class="info-panel">
+          <div class="card">
+            <h3>📈 Theo dõi Tiến độ Trực quan</h3>
+            <p>Hiển thị thanh tiến độ %, tổng số bài học đã học, số nhiệm vụ thực tế đã tích hoàn thành, và điểm thi Quiz trung bình.</p>
+          </div>
+          <div class="card">
+            <h3>🧠 Phát hiện Điểm yếu Tự động (Weak-Area Detection - Step 55)</h3>
+            <p>Hệ thống tự động phân tích các câu hỏi trắc nghiệm nhân viên làm sai, đưa ra cảnh báo và hướng dẫn nhân viên đọc lại đúng mục trong tài liệu công ty để củng cố kiến thức.</p>
+          </div>
+          <div class="card">
+            <h3>🎓 Chứng chỉ Hoàn thành (Certificate)</h3>
+            <p>Tự động cấp chứng chỉ Onboarding chính thức có mã định danh khi học viên hoàn thành 100% lộ trình.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 11: HR Analytics & Policy Impact -->
+    <div class="slide">
+      <div class="slide-header">
+        <div>
+          <span class="stage-tag">GIAI ĐOẠN 5: BÁO CÁO & PHÂN TÍCH TÁC ĐỘNG</span>
+          <h1 class="slide-title">11. Báo Cáo Tuân Thủ & Sinh Lại Có Chọn Lọc</h1>
+        </div>
+        <span class="role-badge">HR Specialist</span>
+      </div>
+      <div class="slide-body">
+        <div class="image-container">
+          <img src="./screenshots/09_hr_analytics_reports.png" alt="Báo cáo phân tích">
+          <div class="image-caption">
+            <span>Báo cáo độ phủ và tác động chính sách (/hr/reports)</span>
+            <span>SRS Step 57, 58, 59 & Item 1.6.lxi</span>
+          </div>
+        </div>
+        <div class="info-panel">
+          <div class="card">
+            <h3>📊 Ma trận Độ phủ Theo Phòng ban (Role Coverage Matrix)</h3>
+            <p>Báo cáo tỷ lệ hoàn thành đào tạo theo từng phòng ban và phân tích mức độ tuân thủ quy định bắt buộc.</p>
+          </div>
+          <div class="card">
+            <h3>🔄 Phân tích Tác động Chính sách (Step 58: Impact Analysis)</h3>
+            <p>Khi công ty cập nhật một tài liệu mới (ví dụ DOC-11 v1.0 ➔ v1.1), hệ thống tự động xác định chính xác những module nào, vị trí công việc nào bị ảnh hưởng.</p>
+          </div>
+          <div class="card">
+            <h3>⚡ Sinh lại có chọn lọc (Step 59: Selective Regeneration)</h3>
+            <p>Chỉ sinh lại đúng các module bị ảnh hưởng bởi chính sách mới, bảo toàn nguyên vẹn tiến độ các phần khác của nhân viên.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const slideCounter = document.getElementById('slideCounter');
+    const progressFill = document.getElementById('progressFill');
+
+    function updateSlide() {
+      slides.forEach((s, idx) => {
+        s.classList.toggle('active', idx === currentSlide);
+      });
+      slideCounter.textContent = `Slide ${currentSlide + 1} / ${totalSlides}`;
+      progressFill.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    // Keyboard controls
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        prevSlide();
+      }
+    });
+
+    updateSlide();
+  </script>
+</body>
+</html>
